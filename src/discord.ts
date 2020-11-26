@@ -81,7 +81,7 @@ printf("Hello world!");
 printf("Hello world!");
 \`\`\`
 You can also write commands like this: 
-\`sudo apt update\` -> \`sudo apt update\``);
+\\\`sudo apt update\\\` -> \`sudo apt update\``);
     }
   });
 
