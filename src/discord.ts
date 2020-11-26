@@ -1,4 +1,4 @@
-import { Client, Message, MessageEmbed } from 'discord.js';
+import { Client, MessageEmbed } from 'discord.js';
 
 // prefix
 import * as data from '../cfg/config.json';
