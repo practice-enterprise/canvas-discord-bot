@@ -55,6 +55,23 @@ export async function buildClient(): Promise<Client> {
 
       msg.channel.send(message);
     }
+    
+    // Sends a message about Stuvo with contact page URL
+    if (content === 'stuvo') {
+      const message = new MessageEmbed()
+        .setColor('#E63F30')
+        .setTitle('Stuvo, je buddy voor kleine en grote studentennoden')
+        .setURL('https://youtu.be/yRkTWc4Tetw')
+        .setAuthor('Thomas More')
+        .setDescription(`
+          Stuvo staat klaar om je te helpen bij de praktische kant van je studentenleven.
+          Heb je een vraag? Contacteer ons of maak een afspraak!
+          
+          https://www.thomasmore.be/studenten/maak-een-afspraak-met-stuvo
+        `);
+
+      msg.channel.send(message);
+    }
   });
 
 
