@@ -1,6 +1,6 @@
 import { Client, MessageEmbed } from 'discord.js';
 
-// prefix
+// config file
 import * as data from '../cfg/config.json';
 
 export async function buildClient(): Promise<Client> {
@@ -48,6 +48,7 @@ export async function buildClient(): Promise<Client> {
       }
     }
 
+    // formatting for an announcement
     if (content === 'announce') {
       const message = new MessageEmbed()
         .setColor('#E63F30')
@@ -69,6 +70,7 @@ export async function buildClient(): Promise<Client> {
       msg.channel.send(message);
     }
 
+    // explains codeblock formatting
     if (content === 'code'){
       msg.channel.send(`
 **Code block**
@@ -84,6 +86,25 @@ You can also write commands like this:
 \\\`sudo apt update\\\` -> \`sudo apt update\``);
     }
 
+
+    // Sends a message about Stuvo with contact page URL
+    if (content === 'stuvo') {
+      const message = new MessageEmbed()
+        .setColor('#E63F30')
+        .setTitle('Stuvo, je buddy voor kleine en grote studentennoden')
+        .setURL('https://youtu.be/yRkTWc4Tetw')
+        .setAuthor('Thomas More')
+        .setDescription(`
+          Stuvo staat klaar om je te helpen bij de praktische kant van je studentenleven.
+          Heb je een vraag? Contacteer ons of maak een afspraak!
+          
+          https://www.thomasmore.be/studenten/maak-een-afspraak-met-stuvo
+        `);
+
+      msg.channel.send(message);
+    }
+
+    // This command is making DM based messages later
     if (content.startsWith('slide')){
       const message = new MessageEmbed()
         .setColor('#E63F30')
@@ -93,6 +114,7 @@ You can also write commands like this:
 
       const taggedUser = msg.mentions.users.first();
 
+      // if empty (no mentions) it will be null, otherwise use the first mention.
       if (taggedUser == null) {
         msg.author.send(message);
       }
