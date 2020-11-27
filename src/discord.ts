@@ -7,12 +7,11 @@ export async function buildClient(): Promise<Client> {
   const client = new Client();
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
-
     /*
       Rich presence updating.
       Value may not be below 15000 (rate-limit discord api).
     */
-    const interval = (parseInt(data.discord.richpresence.interval) < 15000 ? 15000 : parseInt(data.discord.richpresence.interval));
+    const interval = Math.max(15000, parseInt(data.discord.richpresence.interval));
     const statusType = parseInt(data.discord.richpresence.statusType);
     const length = data.discord.richpresence.messages.length;
     
