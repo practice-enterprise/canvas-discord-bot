@@ -23,46 +23,41 @@ export class Formatter {
     return this.body;
   }
 
-  append(val: string): this {
-    this.body = `${this.body}${val}\n`;
-    return this;
-  }
-
-  text(val: string): this {
-    this.body = `${this.body}${val}`;
+  text(val: string, append = false): this {
+    this.body = append ? `${this.body}${val}\n` : `${this.body}${val}`;
     return this;
   }
 
   bold(val: string, nl = false): this {
-    return nl ? this.append(bold(val)) : this.text(bold(val));
+    return this.text(bold(val), nl);
   }
 
   italic(val: string, nl = false): this {
-    return nl ? this.append(italic(val)) : this.text(italic(val));
+    return this.text(italic(val), nl);
   }
 
   underline(val: string, nl = false): this {
-    return nl ? this.append(underline(val)) : this.text(underline(val));
+    return this.text(underline(val), nl);
   }
 
   strikethrough(val: string, nl = false): this {
-    return nl ? this.append(strikethrough(val)) : this.text(strikethrough(val));
+    return this.text(strikethrough(val), nl);
   }
 
   spoiler(val: string, nl = false): this {
-    return nl ? this.append(spoiler(val)) : this.text(spoiler(val));
+    return this.text(spoiler(val), nl);
   }
 
   codeblock(lang: string, val: string): this {
-    return this.append(codeblock(lang, val));
+    return this.text(codeblock(lang, val), true);
   }
 
-  command(val: string): this {
-    return this.text(command(val));
+  command(val: string, nl = false): this {
+    return this.text(command(val), nl);
   }
 
-  escape(val: string): this {
-    return this.text(escape(val));
+  escape(val: string, nl = false): this {
+    return this.text(escape(val), nl);
   }
 }
 
@@ -97,5 +92,8 @@ export function command(val: string): string {
 
 export function escape(val: string): string {
   //https://regex101.com/r/o5VvwW/3
-  return val.replace(/`/g, '\\`').replace(/\*/g, '\\*');
+  return val
+    .replace(/`/g, '\\`') //backticks from codeblocks and commands
+    .replace(/\*/g, '\\*'); //italic and bold
+  //underline, spoiler and strikethrough left
 }
