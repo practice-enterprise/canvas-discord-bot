@@ -1,18 +1,31 @@
 import { Client, MessageEmbed } from 'discord.js';
 
+// prefix
+import * as data from '../cfg/config.json';
+
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
   });
 
-  client.on('message', (msg) => {
+  client.on('message', (msg): void => {
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
-
+    
     // normalise message content
-    const content = msg.content.trim().toLocaleLowerCase();
+    let content = msg.content.trim().toLocaleLowerCase();
+
+    // get prefix and remove it from content
+    const prefix: string = data.discord.prefix;
+    if (!content.startsWith(prefix)){
+      return;
+    }
+    content = content.substr(prefix.length);
+
+    // check if something with prefix has been entered
+    console.log('Prefix trigger: '+content);
 
     // ping pong
     if (content === 'ping') {
@@ -35,7 +48,7 @@ export async function buildClient(): Promise<Client> {
       }
     }
 
-    if (content === '!announce') {
+    if (content === 'announce') {
       const message = new MessageEmbed()
         .setColor('#E63F30')
         .setTitle('Online theorie OS Fundamentals 8:15')
@@ -71,6 +84,40 @@ export async function buildClient(): Promise<Client> {
         `);
 
       msg.channel.send(message);
+    }
+
+    if (content === 'code'){
+      msg.channel.send(`
+**Code block**
+Write code in code blocks to make it more readable for others
+      
+\\\`\\\`\\\`c
+printf("Hello world!");
+\\\`\\\`\\\`
+\`\`\`c
+printf("Hello world!");
+\`\`\`
+You can also write commands like this: 
+\\\`sudo apt update\\\` -> \`sudo apt update\``);
+    }
+
+    if (content.startsWith('slide')){
+      const message = new MessageEmbed()
+        .setColor('#E63F30')
+        .setTitle('Sliding in your DM\'s')
+        .setThumbnail('https://cdn.discordapp.com/attachments/389813485120389132/781610879934267412/hemanwink.jpg')
+        .setDescription('wink wink');
+
+      const taggedUser = msg.mentions.users.first();
+
+      if (taggedUser == null) {
+        msg.author.send(message);
+      }
+      else
+      {
+        console.log('Mentioned');
+        taggedUser.send(message);
+      } 
     }
   });
 
