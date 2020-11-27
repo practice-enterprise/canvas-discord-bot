@@ -168,7 +168,7 @@ You can also write commands like this:
       } 
     }
 
-    if (content.startsWith('rooster') || content.startsWith('schedule')){
+    if (content.startsWith(prefix+'rooster') || content.startsWith(prefix+'schedule')){
       const message = new MessageEmbed()
       //temp rooster link may change later probably
         .setColor('#E63F30')
@@ -178,7 +178,6 @@ You can also write commands like this:
       
       msg.channel.send(message);
     }
-
   });
 
   await client.login(process.env.DISCORD_TOKEN);
