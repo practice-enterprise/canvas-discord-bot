@@ -7,6 +7,26 @@ export async function buildClient(): Promise<Client> {
   const client = new Client();
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
+
+    /*
+      Rich presence updating.
+      Value may not be below 15000 (rate-limit discord api).
+    */
+    const interval = (parseInt(data.discord.richpresence.interval) < 15000 ? 15000 : parseInt(data.discord.richpresence.interval));
+    const statusType = parseInt(data.discord.richpresence.statusType);
+    const length = data.discord.richpresence.messages.length;
+    
+    // cycles through rich presence messages
+    let index = 0;
+    setInterval(() => {
+      client.user?.setPresence({      
+        activity:{name: data.discord.richpresence.messages[index], type: statusType}
+      });
+
+      if(index++, index >= length){
+        index = 0;
+      }
+    },interval);
   });
 
   client.on('message', (msg): void => {
@@ -15,40 +35,43 @@ export async function buildClient(): Promise<Client> {
     }
     
     // normalise message content
-    let content = msg.content.trim().toLocaleLowerCase();
+    const content = msg.content.trim().toLocaleLowerCase();
 
-    // get prefix and remove it from content
+    // get prefix
     const prefix: string = data.discord.prefix;
-    if (!content.startsWith(prefix)){
-      return;
-    }
-    content = content.substr(prefix.length);
+    
 
     // check if something with prefix has been entered
-    console.log('Prefix trigger: '+content);
+    if (content.startsWith(prefix)){
+      console.log('Prefix trigger: '+content);
+    }
 
     // ping pong
-    if (content === 'ping') {
-      msg.channel.send('pong');
+    if (content.startsWith(prefix+'ping')) {
+      const delay = new Date().getTime() - new Date(msg.createdTimestamp).getTime();
+      msg.channel.send('Pong!'+' `'+delay+' ms to receive`');
+      // we could make it edit the message for full response time
     }
 
     // dice roll eg. 3d6 rolls 3 six sided dice
-    const match = (/^(\d+)?d(\d+)$/gm).exec(content);
-    if (match) {
-      const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
-      const dice = [];
-      for (let i = 0; i < times; i++) {
-        dice.push(Math.floor(Math.random() * Number(match[2]) + 1));
-      }
-
-      if(times === 1) {
-        msg.reply(`Rolled a ${dice[0]}`);
-      } else {
-        msg.reply(`Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`);
+    if (content.startsWith(prefix+'roll')) {
+      const match = (/^(\d+)?d(\d+)$/gm).exec(content);
+      if (match) {
+        const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
+        const dice = [];
+        for (let i = 0; i < times; i++) {
+          dice.push(Math.floor(Math.random() * Number(match[2]) + 1));
+        }
+  
+        if(times === 1) {
+          msg.reply(`Rolled a ${dice[0]}`);
+        } else {
+          msg.reply(`Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`);
+        }
       }
     }
 
-    if (content === 'announce') {
+    if (content.startsWith(prefix+'announce')) {
       const message = new MessageEmbed()
         .setColor('#E63F30')
         .setTitle('Online theorie OS Fundamentals 8:15')
@@ -70,7 +93,7 @@ export async function buildClient(): Promise<Client> {
     }
     
     // Sends a message about Stuvo with contact page URL
-    if (content === 'stuvo') {
+    if (content.startsWith(prefix+'stuvo')) {
       const message = new MessageEmbed()
         .setColor('#E63F30')
         .setTitle('Stuvo, je buddy voor kleine en grote studentennoden')
@@ -86,7 +109,7 @@ export async function buildClient(): Promise<Client> {
       msg.channel.send(message);
     }
 
-    if (content === 'code'){
+    if (content.startsWith(prefix+'code')){
       msg.channel.send(`
 **Code block**
 Write code in code blocks to make it more readable for others
@@ -101,7 +124,7 @@ You can also write commands like this:
 \\\`sudo apt update\\\` -> \`sudo apt update\``);
     }
 
-    if (content.startsWith('slide')){
+    if (content.startsWith(prefix+'slide')){
       const message = new MessageEmbed()
         .setColor('#E63F30')
         .setTitle('Sliding in your DM\'s')

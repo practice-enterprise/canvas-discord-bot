@@ -1,7 +1,44 @@
 {
     "discord": 
         {
-            "prefix": "!"
+            "prefix": "!",
+
+            "richpresence":
+            {
+                "statusType": "2",
+                "interval": "60000",
+                "messages":[
+                    "students",
+                    "?help | ?stuvo",
+                    "?help | ?pal"
+                ]  
+            },
+
+            "commands":[
+                {
+                    "help": {
+                        "name": "help",
+                        "arguments":[
+                            "page"
+                        ],
+                        "description":"List commands"
+                    },
+                    "stuvo": {
+                        "name": "stuvo",
+                        "arguments":[],
+                        "description":"Informatie over stuvo"
+                    },
+                    "pal": {
+                        "name": "pal",
+                        "arguments":[],
+                        "description":"Informatie over Peer Assisted Learning"
+                    },
+                    "ping": {
+                        "name": "ping",
+                        "arguments":[],
+                        "description":"List commands"
+                    }
+                }
+            ]
         }
-    
 }
