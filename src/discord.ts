@@ -86,6 +86,7 @@ export async function buildClient(): Promise<Client> {
       msg.channel.send(message);
     }
 
+    //sends a message about PAL
     if (content === 'pal') {
       const message = new MessageEmbed()
         .setColor('#E63F30')
@@ -142,6 +143,18 @@ You can also write commands like this:
         taggedUser.send(message);
       } 
     }
+
+    if (content.startsWith('rooster') || content.startsWith('schedule')){
+      const message = new MessageEmbed()
+      //temp rooster link may change later probably
+      .setColor('#E63F30')
+      .setTitle('Click to view schedule')
+      .setURL('https://rooster.thomasmore.be/schedule?requireLogin=true')
+      .setAuthor('Thomas more');
+      
+      msg.channel.send(message);
+    }
+
   });
 
 
