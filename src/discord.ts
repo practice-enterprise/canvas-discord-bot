@@ -77,14 +77,14 @@ export async function buildClient(): Promise<Client> {
         .setURL('https://thomasmore.instructure.com/courses/10979/discussion_topics/135013')
         .setAuthor('OS Fundamentals (YT0737)')
         .setDescription(`
-          Topic: OS Fundamental theorie
-          Time: This is a recurring meeting Meet anytime
+Topic: OS Fundamental theorie
+Time: This is a recurring meeting Meet anytime
 
-          Join Zoom Meeting
-          https://us02web.zoom.us/j/88278089824?pwd=VDMrUmhjdnAyK1oyMGdMdTRHMlFPQT09
+Join Zoom Meeting
+https://us02web.zoom.us/j/88278089824?pwd=VDMrUmhjdnAyK1oyMGdMdTRHMlFPQT09
 
-          Meeting ID: 882 7808 9824
-          Passcode: 6DR7V3
+Meeting ID: 882 7808 9824
+Passcode: 6DR7V3
         `)
         .setFooter('7:43 • 26 nov 2020');
 
@@ -99,10 +99,10 @@ export async function buildClient(): Promise<Client> {
         .setURL('https://youtu.be/yRkTWc4Tetw')
         .setAuthor('Thomas More')
         .setDescription(`
-          Stuvo staat klaar om je te helpen bij de praktische kant van je studentenleven.
-          Heb je een vraag? Contacteer ons of maak een afspraak!
-          
-          https://www.thomasmore.be/studenten/maak-een-afspraak-met-stuvo
+Stuvo staat klaar om je te helpen bij de praktische kant van je studentenleven.
+Heb je een vraag? Contacteer ons of maak een afspraak!
+
+https://www.thomasmore.be/studenten/maak-een-afspraak-met-stuvo
         `);
 
       msg.channel.send(message);
@@ -117,17 +117,17 @@ export async function buildClient(): Promise<Client> {
         .setURL('http://bouwstenenopleiding.thomasmore.be/studenten-helpen-elkaar.html')
         .setAuthor('Thomas More')
         .setDescription(`
-         Peer Assisted Learning (PAL) is een verzamelterm voor allerlei strategieën die het
-         leerproces trachten te faciliteren via de actieve en interactieve tussenkomst van 
-         andere lerenden die geen professionele leerkrachten zijn.PAL behelst met andere
-         woorden een actieve leeromgeving waarin peers elkaar ondersteunen en zelf
-         verantwoordelijkheid dragen voor het eigen leer- en instructieproces.
+Peer Assisted Learning (PAL) is een verzamelterm voor allerlei strategieën die het
+leerproces trachten te faciliteren via de actieve en interactieve tussenkomst van 
+andere lerenden die geen professionele leerkrachten zijn.PAL behelst met andere
+woorden een actieve leeromgeving waarin peers elkaar ondersteunen en zelf
+verantwoordelijkheid dragen voor het eigen leer- en instructieproces.
 
-         Indien je graag PAL wilt opstarten binnen je opleiding en je hier graag ondersteuning 
-         of informatie over wilt, aarzel dan niet om contact op te nemen met liesbeth.huybens@thomasmore.be.
-        
-         Voor meer informatie:
-            http://bouwstenenopleiding.thomasmore.be/studenten-helpen-elkaar.html        
+Indien je graag PAL wilt opstarten binnen je opleiding en je hier graag ondersteuning of informatie over wilt,
+aarzel dan niet om contact op te nemen met liesbeth.huybens@thomasmore.be.
+
+Voor meer informatie:
+http://bouwstenenopleiding.thomasmore.be/studenten-helpen-elkaar.html        
         `);
 
       msg.channel.send(message);
