@@ -11,8 +11,8 @@ export async function buildClient(): Promise<Client> {
       Rich presence updating.
       Value may not be below 15000 (rate-limit discord api).
     */
-    const interval = Math.max(15000, parseInt(data.discord.richpresence.interval));
-    const statusType = parseInt(data.discord.richpresence.statusType);
+    const interval = Math.max(15000, data.discord.richpresence.interval);
+    const statusType = data.discord.richpresence.statusType;
     const length = data.discord.richpresence.messages.length;
     
     // cycles through rich presence messages

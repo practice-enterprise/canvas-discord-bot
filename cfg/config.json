@@ -5,8 +5,8 @@
 
             "richpresence":
             {
-                "statusType": "2",
-                "interval": "60000",
+                "statusType": 2,
+                "interval": 60000,
                 "messages":[
                     "students",
                     "?help | ?stuvo",
