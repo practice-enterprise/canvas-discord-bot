@@ -109,6 +109,31 @@ export async function buildClient(): Promise<Client> {
       msg.channel.send(message);
     }
 
+    
+    //sends a message about PAL
+    if (content.startsWith(prefix+'pal')) {
+      const message = new MessageEmbed()
+        .setColor('#E63F30')
+        .setTitle('Pal: Peer assisted Learning')
+        .setURL('http://bouwstenenopleiding.thomasmore.be/studenten-helpen-elkaar.html')
+        .setAuthor('Thomas More')
+        .setDescription(`
+         Peer Assisted Learning (PAL) is een verzamelterm voor allerlei strategieën die het
+         leerproces trachten te faciliteren via de actieve en interactieve tussenkomst van 
+         andere lerenden die geen professionele leerkrachten zijn.PAL behelst met andere
+         woorden een actieve leeromgeving waarin peers elkaar ondersteunen en zelf
+         verantwoordelijkheid dragen voor het eigen leer- en instructieproces.
+
+         Indien je graag PAL wilt opstarten binnen je opleiding en je hier graag ondersteuning 
+         of informatie over wilt, aarzel dan niet om contact op te nemen met liesbeth.huybens@thomasmore.be.
+        
+         Voor meer informatie:
+            http://bouwstenenopleiding.thomasmore.be/studenten-helpen-elkaar.html        
+        `);
+
+      msg.channel.send(message);
+    }
+
     if (content.startsWith(prefix+'code')){
       msg.channel.send(`
 **Code block**
@@ -142,8 +167,19 @@ You can also write commands like this:
         taggedUser.send(message);
       } 
     }
-  });
 
+    if (content.startsWith('rooster') || content.startsWith('schedule')){
+      const message = new MessageEmbed()
+      //temp rooster link may change later probably
+        .setColor('#E63F30')
+        .setTitle('Click to view schedule')
+        .setURL('https://rooster.thomasmore.be/schedule?requireLogin=true')
+        .setAuthor('Thomas more');
+      
+      msg.channel.send(message);
+    }
+
+  });
 
   await client.login(process.env.DISCORD_TOKEN);
   return client;
