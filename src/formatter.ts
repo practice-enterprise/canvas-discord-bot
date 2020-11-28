@@ -1,4 +1,4 @@
-/* # Allows for easier formatting in messages
+/* # Allows for easier formatting in Discord messages
 
 Example to use:
 const mySecretMessage: string = new Formatter()
@@ -93,7 +93,9 @@ export function command(val: string): string {
 export function escape(val: string): string {
   //https://regex101.com/r/o5VvwW/3
   return val
-    .replace(/`/g, '\\`') //backticks from codeblocks and commands
-    .replace(/\*/g, '\\*'); //italic and bold
-  //underline, spoiler and strikethrough left
+    .replace(/`/g, '\\`') //backticks for codeblocks and commands
+    .replace(/\*/g, '\\*') //italic and bold
+    .replace(/\|\|/g, '\\||') //spoiler
+    .replace(/~~/g, '\\~~'); //strikethrough
+  //underline to go
 }
