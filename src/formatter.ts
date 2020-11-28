@@ -96,6 +96,7 @@ export function escape(val: string): string {
     .replace(/`/g, '\\`') //backticks for codeblocks and commands
     .replace(/\*/g, '\\*') //italic and bold
     .replace(/\|\|/g, '\\||') //spoiler
-    .replace(/~~/g, '\\~~'); //strikethrough
-  //underline to go
+    .replace(/~~/g, '\\~~') //strikethrough
+    .replace(/_/g, '\\_');  //underline
+
 }
