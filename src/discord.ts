@@ -1,9 +1,7 @@
-import { Client, Guild, MessageEmbed, Role } from 'discord.js';
+import { Client, MessageEmbed, Role } from 'discord.js';
 
 // prefix
 import * as data from '../cfg/config.json';
-
-import fs from 'fs';
 
 export async function buildClient(): Promise<Client> {
   const client = new Client();
@@ -192,17 +190,49 @@ You can also write commands like this:
       msg.channel.send(message);
     }
 
+    //rank and unrank commands
     if(command === 'rank') {
-      const roleToAdd = args.join('');
-      
-      console.log(roleToAdd);
-     
-      
-      const roleID = msg.guild?.roles.cache.find(role => role.name === roleToAdd) as Role;
 
-      msg.member?.roles.add(roleID);
+      if(args.length == 0)
+      {
+        msg.channel.send('No role argument. Use like `'+prefix+'rank RoleName` to assign a role to yourself.');
+      }
+      else {
+        const roleToAdd = args.join('');
+        //Since content is in lowercase the role argument will be as well
+        const roleID = msg.guild?.roles.cache.find(role => role.name === roleToAdd);
+
+        if(roleID) {
+          msg.member?.roles.add(roleID)
+            .catch(console.error);
+          msg.reply('role '+roleID.name+' succesfully assigned!');
+        }
+        else {
+          msg.reply('role '+roleToAdd+' does not exist.');
+        }
+      }      
     }
+    if(command === 'derank' || command === 'unrank') {
 
+      if(args.length == 0)
+      {
+        msg.channel.send('No role argument. Use like `'+prefix+'rank RoleName` to assign a role to yourself.');
+      }
+      else {
+        const roleToAdd = args.join('');
+        //Since content is in lowercase the role argument will be as well
+        const roleID = msg.guild?.roles.cache.find(role => role.name === roleToAdd);
+
+        if(roleID) {
+          msg.member?.roles.remove(roleID)
+            .catch(console.error);
+          msg.reply('role '+roleID.name+' succesfully removed!');
+        }
+        else {
+          msg.reply('role '+roleToAdd+' does not exist.');
+        }
+      }      
+    }
   });
 
   await client.login(process.env.DISCORD_TOKEN);
