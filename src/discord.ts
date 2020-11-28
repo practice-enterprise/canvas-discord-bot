@@ -1,7 +1,9 @@
-import { Client, MessageEmbed } from 'discord.js';
+import { Client, Guild, MessageEmbed, Role } from 'discord.js';
 
 // prefix
 import * as data from '../cfg/config.json';
+
+import fs from 'fs';
 
 export async function buildClient(): Promise<Client> {
   const client = new Client();
@@ -14,7 +16,7 @@ export async function buildClient(): Promise<Client> {
     const interval = Math.max(15000, data.discord.richpresence.interval);
     const statusType = data.discord.richpresence.statusType;
     const length = data.discord.richpresence.messages.length;
-    
+
     // cycles through rich presence messages
     let index = 0;
     setInterval(() => {
@@ -32,21 +34,33 @@ export async function buildClient(): Promise<Client> {
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
-    
-    // normalise message content
-    const content = msg.content.trim().toLocaleLowerCase();
 
+    
+    // # normalise message content
     // get prefix
     const prefix: string = data.discord.prefix;
-    
 
-    // check if something with prefix has been entered
+    //full content
+    const content = msg.content.trim().toLocaleLowerCase();
+
+    //Only if there is a prefix continue
+    if (!content.startsWith(prefix)) return;
+
+    //get arguments and command (expl: array with parts split each ' ', shift first "argument" to command)
+    const args = content.slice(prefix.length).trim().split(' ');
+    const command = args.shift();
+
+    // # debug
+    //full if prefix
     if (content.startsWith(prefix)){
       console.log('Prefix trigger: '+content);
     }
+    //cmd and args
+    console.log('Debug command: '+command+' Args: '+args);
 
     // ping pong
-    if (content.startsWith(prefix+'ping')) {
+    //if (content.startsWith(prefix+'ping')) {
+    if (command === 'ping') {
       const delay = new Date().getTime() - new Date(msg.createdTimestamp).getTime();
       msg.channel.send('Pong!'+' `'+delay+' ms to receive`');
       // we could make it edit the message for full response time
@@ -177,6 +191,18 @@ You can also write commands like this:
       
       msg.channel.send(message);
     }
+
+    if(command === 'rank') {
+      const roleToAdd = args.join('');
+      
+      console.log(roleToAdd);
+     
+      
+      const roleID = msg.guild?.roles.cache.find(role => role.name === roleToAdd) as Role;
+
+      msg.member?.roles.add(roleID);
+    }
+
   });
 
   await client.login(process.env.DISCORD_TOKEN);
