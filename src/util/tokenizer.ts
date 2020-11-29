@@ -10,7 +10,15 @@ const matchers: { type: TokenType, regex: RegExp }[] = [
   { type: 'channel', regex: /<#\d{18}>/ },
 ];
 
+/** parses given content into tokens seperated by spaces
+ * 
+ * tokens can be retrieved from the tokens property
+ */
 export class Tokenizer {
+  /** Tokens extracted from content
+   * 
+   * Available types: text, user, role, channel, command
+   */
   tokens: Token[];
 
   constructor(
@@ -28,7 +36,7 @@ export class Tokenizer {
       }
 
       if (content.startsWith(this.serverConfig.prefix)) {
-        this.tokens.push({type: 'command', content: content.substr(this.serverConfig.prefix.length) });
+        this.tokens.push({ type: 'command', content: content.substr(this.serverConfig.prefix.length) });
       } else {
         const matcher = matchers.find(m => content.match(m.regex));
         if (matcher) {
@@ -40,12 +48,13 @@ export class Tokenizer {
     }
   }
 
+  /** get command name, will return undefined if it's an invalid command */
   command(): string | undefined {
     const token: Token | undefined = this.tokens[0];
     return token?.type === 'command' ? token.content : undefined;
   }
 
-  /** return raw body after command or full if not a valid command */
+  /** return raw body after command or full if it's not a valid command */
   body(): string {
     if (this.command()) {
       return this.tokens.slice(1).map((t) => t.content).join(' ');
