@@ -3,6 +3,9 @@ import { Client, MessageEmbed } from 'discord.js';
 // prefix
 import * as data from '../cfg/config.json';
 
+// formatter, don't forget .build() for string
+import { Formatter } from './formatter';
+
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   client.on('ready', () => {
