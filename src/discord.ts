@@ -1,7 +1,9 @@
+import Axios from 'axios';
 import { Client, MessageEmbed } from 'discord.js';
 
 // prefix
 import * as data from '../cfg/config.json';
+import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
   const client = new Client();
@@ -28,32 +30,40 @@ export async function buildClient(): Promise<Client> {
     },interval);
   });
 
-  client.on('message', (msg): void => {
+  client.on('message', async (msg): Promise<void> => {
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
-    
-    // normalise message content
-    const content = msg.content.trim().toLocaleLowerCase();
 
-    // get prefix
-    const prefix: string = data.discord.prefix;
-    
-
-    // check if something with prefix has been entered
-    if (content.startsWith(prefix)){
-      console.log('Prefix trigger: '+content);
+    if (!msg.guild) {
+      return; // ignore messages not from a guild
     }
 
-    // ping pong
-    if (content.startsWith(prefix+'ping')) {
-      const delay = new Date().getTime() - new Date(msg.createdTimestamp).getTime();
-      msg.channel.send('Pong!'+' `'+delay+' ms to receive`');
-      // we could make it edit the message for full response time
+    const guildConfig = (await Axios({
+      method: 'GET',
+      url: `${process.env.API_URL}/guilds/${msg.guild.id}`
+    })).data;
+
+    const tokenizer = new Tokenizer(msg.content, guildConfig);
+
+    if (!tokenizer.command()){
+      return; // not a valid command
+    }
+
+    for (const command of guildConfig.commands) {
+      if (tokenizer.command() !== command.name) {
+        continue;
+      }
+
+      if (typeof command.response === 'string') {
+        msg.channel.send(command.response);
+      } else {
+        msg.channel.send(new MessageEmbed(command.response));
+      }
     }
 
     // dice roll eg. 3d6 rolls 3 six sided dice
-    if (content.startsWith(prefix+'roll')) {
+    /* if (content.startsWith(prefix+'roll')) {
       const match = (/^(\d+)?d(\d+)$/gm).exec(content);
       if (match) {
         const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
@@ -68,31 +78,11 @@ export async function buildClient(): Promise<Client> {
           msg.reply(`Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`);
         }
       }
-    }
-
-    if (content.startsWith(prefix+'announce')) {
-      const message = new MessageEmbed()
-        .setColor('#E63F30')
-        .setTitle('Online theorie OS Fundamentals 8:15')
-        .setURL('https://thomasmore.instructure.com/courses/10979/discussion_topics/135013')
-        .setAuthor('OS Fundamentals (YT0737)')
-        .setDescription(`
-Topic: OS Fundamental theorie
-Time: This is a recurring meeting Meet anytime
-
-Join Zoom Meeting
-https://us02web.zoom.us/j/88278089824?pwd=VDMrUmhjdnAyK1oyMGdMdTRHMlFPQT09
-
-Meeting ID: 882 7808 9824
-Passcode: 6DR7V3
-        `)
-        .setFooter('7:43 • 26 nov 2020');
-
-      msg.channel.send(message);
-    }
+    } */
     
+    // TODO: transfer to DB
     // Sends a message about Stuvo with contact page URL
-    if (content.startsWith(prefix+'stuvo')) {
+    /* if (content.startsWith(prefix+'stuvo')) {
       const message = new MessageEmbed()
         .setColor('#E63F30')
         .setTitle('Stuvo, je buddy voor kleine en grote studentennoden')
@@ -106,11 +96,11 @@ https://www.thomasmore.be/studenten/maak-een-afspraak-met-stuvo
         `);
 
       msg.channel.send(message);
-    }
+    } */
 
-    
+    // TODO: transfer to DB
     //sends a message about PAL
-    if (content.startsWith(prefix+'pal')) {
+    /* if (content.startsWith(prefix+'pal')) {
       const message = new MessageEmbed()
         .setColor('#E63F30')
         .setTitle('Pal: Peer assisted Learning')
@@ -131,9 +121,10 @@ http://bouwstenenopleiding.thomasmore.be/studenten-helpen-elkaar.html
         `);
 
       msg.channel.send(message);
-    }
+    } */
 
-    if (content.startsWith(prefix+'code')){
+    // TODO: transfer to DB
+    /* if (content.startsWith(prefix+'code')){
       msg.channel.send(`
 **Code block**
 Write code in code blocks to make it more readable for others
@@ -148,26 +139,8 @@ You can also write commands like this:
 \\\`sudo apt update\\\` -> \`sudo apt update\``);
     }
 
-    if (content.startsWith(prefix+'slide')){
-      const message = new MessageEmbed()
-        .setColor('#E63F30')
-        .setTitle('Sliding in your DM\'s')
-        .setThumbnail('https://cdn.discordapp.com/attachments/389813485120389132/781610879934267412/hemanwink.jpg')
-        .setDescription('wink wink');
-
-      const taggedUser = msg.mentions.users.first();
-
-      if (taggedUser == null) {
-        msg.author.send(message);
-      }
-      else
-      {
-        console.log('Mentioned');
-        taggedUser.send(message);
-      } 
-    }
-
-    if (content.startsWith(prefix+'rooster') || content.startsWith(prefix+'schedule')){
+    // TODO: transfer to DB
+    /* if (content.startsWith(prefix+'rooster') || content.startsWith(prefix+'schedule')){
       const message = new MessageEmbed()
       //temp rooster link may change later probably
         .setColor('#E63F30')
@@ -176,7 +149,7 @@ You can also write commands like this:
         .setAuthor('Thomas more');
       
       msg.channel.send(message);
-    }
+    } */
   });
 
   await client.login(process.env.DISCORD_TOKEN);

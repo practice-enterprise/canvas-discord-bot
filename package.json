@@ -9,6 +9,7 @@
     "serve": "nodemon"
   },
   "dependencies": {
+    "axios": "^0.21.0",
     "bufferutil": "^4.0.2",
     "discord.js": "^12.5.1",
     "utf-8-validate": "^5.0.3"
