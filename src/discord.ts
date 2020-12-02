@@ -3,6 +3,7 @@ import { Client, MessageEmbed } from 'discord.js';
 
 // prefix
 import * as data from '../cfg/config.json';
+import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -16,18 +17,18 @@ export async function buildClient(): Promise<Client> {
     const interval = Math.max(15000, data.discord.richpresence.interval);
     const statusType = data.discord.richpresence.statusType;
     const length = data.discord.richpresence.messages.length;
-    
+
     // cycles through rich presence messages
     let index = 0;
     setInterval(() => {
-      client.user?.setPresence({      
-        activity:{name: data.discord.richpresence.messages[index], type: statusType}
+      client.user?.setPresence({
+        activity: { name: data.discord.richpresence.messages[index], type: statusType }
       });
 
-      if(index++, index >= length){
+      if (index++, index >= length) {
         index = 0;
       }
-    },interval);
+    }, interval);
   });
 
   client.on('message', async (msg): Promise<void> => {
@@ -41,12 +42,13 @@ export async function buildClient(): Promise<Client> {
 
     const guildConfig = (await Axios({
       method: 'GET',
-      url: `${process.env.API_URL}/guilds/${msg.guild.id}`
+      baseURL: process.env.API_URL,
+      url: `/guilds/${msg.guild.id}`
     })).data;
 
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
-    if (!tokenizer.command()){
+    if (!tokenizer.command()) {
       return; // not a valid command
     }
 
@@ -79,7 +81,7 @@ export async function buildClient(): Promise<Client> {
         }
       }
     } */
-    
+
     // TODO: transfer to DB
     // Sends a message about Stuvo with contact page URL
     /* if (content.startsWith(prefix+'stuvo')) {
