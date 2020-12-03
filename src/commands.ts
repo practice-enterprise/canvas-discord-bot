@@ -7,13 +7,24 @@ type Command = { name: string, description: string, aliases: string[], response:
 export const commands: Command[] = [
   {
     name: 'help',
-    description: 'That\'s this command.',
+    description: 'that\'s this command.',
     aliases: [],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions {
       const help = new Formatter().bold('Available commands:', true)
         .text(commands.concat(guildConfig.commands).map( c => '`' + guildConfig.prefix + c.name + ':` ' + c.description).join('\n'))
         .build();
       return help;
+    }
+  },
+  {
+    name: 'ping',
+    description: 'play the most mundane ping pong ever with the bot. Also shows how long it took, so I guess that\'s cool.',
+    aliases: [],
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions {
+      const delay = new Date().getMilliseconds() - new Date(message.createdTimestamp).getMilliseconds();
+      return new Formatter().text('Pong! ')
+        .command(delay+' ms to receive.')
+        .build();
     }
   },
   {
