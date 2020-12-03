@@ -1,13 +1,28 @@
-import { MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
+import { Formatter } from './util/formatter';
 
-type Command = { name: string, aliases: string[], response: (tokenizer: Tokenizer) => string | MessageEmbedOptions };
+type Command = { name: string, description: string, aliases: string[], response: (message: Message, guildConfig: any) => string | MessageEmbedOptions };
 
 export const commands: Command[] = [
   {
-    name: 'roll',
+    name: 'help',
+    description: 'That\'s this command.',
     aliases: [],
-    response(tokenizer: Tokenizer): string | MessageEmbedOptions {
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions {
+      const help = new Formatter().bold('Available commands:', true)
+        .text(commands.concat(guildConfig.commands).map( c => '`' + guildConfig.prefix + c.name + ':` ' + c.description).join('\n'))
+        .build();
+      return help;
+    }
+  },
+  {
+    name: 'roll',
+    description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
+    aliases: [],
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions {
+      const tokenizer = new Tokenizer(message.content, guildConfig);
+
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
       if (match) {
         const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
@@ -28,8 +43,10 @@ export const commands: Command[] = [
   },
   {
     name: 'default',
+    description: 'sets the default channel',
     aliases: [],
-    response(tokenizer: Tokenizer): string | MessageEmbedOptions {
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions {
+      const tokenizer = new Tokenizer(message.content, guildConfig);
       if (tokenizer.tokens[1]?.type === 'channel') {
         return tokenizer.tokens[1].content; //TODO stash in db of server
       }
