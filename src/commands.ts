@@ -1,4 +1,4 @@
-import { MessageEmbedOptions } from 'discord.js';
+import { MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 
 type Command = { name: string, aliases: string[], response: (tokenizer: Tokenizer) => string | MessageEmbedOptions };
@@ -15,14 +15,26 @@ export const commands: Command[] = [
         for (let i = 0; i < times; i++) {
           dice.push(Math.floor(Math.random() * Number(match[2]) + 1));
         }
-  
-        if(times === 1) {
+
+        if (times === 1) {
           return `Rolled a ${dice[0]}`;
         } else {
           return `Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`;
         }
       } else {
         return 'no valid die found, e.g. \'3d6\'';
+      }
+    }
+  },
+  {
+    name: 'default',
+    aliases: [],
+    response(tokenizer: Tokenizer): string | MessageEmbedOptions {
+      if (tokenizer.tokens[1]?.type === 'channel') {
+        return tokenizer.tokens[1].content; //TODO stash in db of server
+      }
+      else {
+        return 'this is not a valid channel';
       }
     }
   }
