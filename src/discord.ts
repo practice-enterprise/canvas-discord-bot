@@ -32,6 +32,7 @@ export async function buildClient(): Promise<Client> {
   });
 
   client.on('message', async (msg): Promise<void> => {
+
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
@@ -58,7 +59,7 @@ export async function buildClient(): Promise<Client> {
         continue;
       }
 
-      const response = typeof command.response === 'function' ? command.response(tokenizer) : command.response;
+      const response = typeof command.response === 'function' ? command.response(msg, guildConfig) : command.response;
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;
