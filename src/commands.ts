@@ -21,9 +21,9 @@ export const commands: Command[] = [
     description: 'play the most mundane ping pong ever with the bot. Also shows how long it took, so I guess that\'s cool.',
     aliases: [],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions {
-      const delay = new Date().getMilliseconds() - new Date(message.createdTimestamp).getMilliseconds();
-      return new Formatter().text('Pong! ')
-        .command(delay+' ms to receive.')
+      //const delay = new Date().getMilliseconds() - new Date(message.createdTimestamp).getMilliseconds();
+      return new Formatter().text('Pong! :ping_pong:')
+        //.command(delay+' ms to receive.')
         .build();
     }
   },
