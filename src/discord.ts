@@ -3,7 +3,7 @@ import { Client, MessageEmbed } from 'discord.js';
 
 // prefix
 import * as data from '../cfg/config.json';
-import { Formatter } from './util/formatter';
+import { commands } from './commands';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -52,35 +52,21 @@ export async function buildClient(): Promise<Client> {
       return; // not a valid command
     }
 
-    for (const command of guildConfig.commands) {
+
+    for (const command of commands.concat(guildConfig.commands)) {
       if (tokenizer.command() !== command.name) {
         continue;
       }
 
-      if (typeof command.response === 'string') {
-        msg.channel.send(command.response);
+      const response = typeof command.response === 'function' ? command.response(tokenizer) : command.response;
+      if (typeof response === 'string') {
+        msg.channel.send(response);
+        return;
       } else {
-        msg.channel.send(new MessageEmbed(command.response));
+        msg.channel.send(new MessageEmbed(response));
+        return;
       }
     }
-
-    // dice roll eg. 3d6 rolls 3 six sided dice
-    /* if (content.startsWith(prefix+'roll')) {
-      const match = (/^(\d+)?d(\d+)$/gm).exec(content);
-      if (match) {
-        const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
-        const dice = [];
-        for (let i = 0; i < times; i++) {
-          dice.push(Math.floor(Math.random() * Number(match[2]) + 1));
-        }
-  
-        if(times === 1) {
-          msg.reply(`Rolled a ${dice[0]}`);
-        } else {
-          msg.reply(`Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`);
-        }
-      }
-    } */
   });
 
   await client.login(process.env.DISCORD_TOKEN);
