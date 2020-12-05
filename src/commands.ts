@@ -14,7 +14,6 @@ export const commands: Command[] = [
         'title': 'Help is on the way!',
         'description': commands.concat(guildConfig.commands).map(c => '`' + guildConfig.prefix + c.name + '`: ' + c.description).join('\n'),
         'color': '43B581',
-        'url': 'http://mydoc.epic',
         'footer': { text: 'Some commands support putting \'help\' behind it.' }
       };
       return help;
@@ -76,30 +75,17 @@ export const commands: Command[] = [
     aliases: ['note'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions {
       const tokenizer = new Tokenizer(message.content, guildConfig);
-
-      function getNotes(channelID: string) {
-        //TODO send something else when channel doesnt have notes (rn simply undefined)
-        let i = 0;
-        const embed: MessageEmbedOptions = {
-          'title': 'Notes',
-          'description': 'Notes for channel <#' + channelID + '>:\n'
-            + guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
-          'footer': { text: 'For help: ' + guildConfig.prefix + 'notes help' }
-        };
-        return embed;
-      }
-
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text') {
         return 'Pretend \'' + tokenizer.body(2) + '\' got succesfully added to the DB.';
       }
       //!notes #channel - get notes for a channel
       else if (tokenizer.tokens[1]?.type === 'channel') {
-        return getNotes(tokenizer.tokens[1].content.substr(2, 18));
+        return getNotes(tokenizer.tokens[1].content.substr(2, 18), guildConfig);
       }
       //!notes - get notes in channel
       else if (tokenizer.tokens.length === 1) {
-        return getNotes(message.channel.id.toString());
+        return getNotes(message.channel.id.toString(), guildConfig);
       }
       //When incorrectly used (includes !notes help)
       else {
@@ -113,3 +99,15 @@ export const commands: Command[] = [
     }
   }
 ];
+
+function getNotes(channelID: string, guildConfig: any) {
+  //TODO send something else when channel doesnt have notes (rn simply undefined)
+  let i = 0;
+  const embed: MessageEmbedOptions = {
+    'title': 'Notes',
+    'description': 'Notes for channel <#' + channelID + '>:\n'
+      + guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
+    'footer': { text: 'For help: ' + guildConfig.prefix + 'notes help' }
+  };
+  return embed;
+}
