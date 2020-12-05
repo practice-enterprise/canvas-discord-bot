@@ -12,7 +12,7 @@ export const commands: Command[] = [
     response(message: Message, guildConfig: any): string | MessageEmbedOptions {
       const help: MessageEmbedOptions = {
         'title': 'Help is on the way!',
-        'description': commands.concat(guildConfig.commands).map(c => '`' + guildConfig.prefix + c.name + '`: ' + c.description).join('\n'),
+        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n'),
         'color': '43B581',
         'footer': { text: 'Some commands support putting \'help\' behind it.' }
       };
@@ -77,7 +77,8 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(message.content, guildConfig);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text') {
-        return 'Pretend \'' + tokenizer.body(2) + '\' got succesfully added to the DB.';
+        //TODO write notes to DB
+        return `Pretend '${tokenizer.body(2)}' got succesfully added to the DB (for now).`;
       }
       //!notes #channel - get notes for a channel
       else if (tokenizer.tokens[1]?.type === 'channel') {
@@ -105,9 +106,9 @@ function getNotes(channelID: string, guildConfig: any) {
   let i = 0;
   const embed: MessageEmbedOptions = {
     'title': 'Notes',
-    'description': 'Notes for channel <#' + channelID + '>:\n'
+    'description': `Notes for channel <#${channelID}>:\n`
       + guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
-    'footer': { text: 'For help: ' + guildConfig.prefix + 'notes help' }
+    'footer': { text: `For help: ${guildConfig.prefix}notes help` }
   };
   return embed;
 }
