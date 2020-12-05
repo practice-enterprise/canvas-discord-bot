@@ -53,7 +53,6 @@ export async function buildClient(): Promise<Client> {
       return; // not a valid command
     }
 
-
     for (const command of commands.concat(guildConfig.commands)) {
       if (tokenizer.command() !== command.name) {
         continue;

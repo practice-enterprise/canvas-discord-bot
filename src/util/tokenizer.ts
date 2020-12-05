@@ -54,10 +54,14 @@ export class Tokenizer {
     return token?.type === 'command' ? token.content : undefined;
   }
 
-  /** return raw body after command or full if it's not a valid command */
-  body(): string {
+  /** return raw body after command or full if it's not a valid command
+   * @param start  (default = 1) from where it's starts to include (0 = command, default doesnt include it)
+   * @example .body() everything after the command
+   * @example .body(2) if a command has a parameter this wouldnt return that parameter
+  */
+  body(start = 1): string {
     if (this.command()) {
-      return this.tokens.slice(1).map((t) => t.content).join(' ');
+      return this.tokens.slice(start).map((t) => t.content).join(' ');
     } else {
       return this.content;
     }

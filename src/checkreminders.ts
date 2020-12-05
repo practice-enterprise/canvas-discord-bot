@@ -12,7 +12,7 @@ export function checkReminderInit(client: Client): void {
 
     //TODO check if there is a reminder that has to be sent + get the reminder message...
     if (channel.type == 'text') {
-      (channel as TextChannel).send('reminder message here'); // sends a message every minute if uncommented
+      //(channel as TextChannel).send('reminder message here'); // sends a message every minute if uncommented
     }
   }, 60000);
 }
