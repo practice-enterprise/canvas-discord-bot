@@ -17,9 +17,7 @@ export function checkreminderinit(client: Client): void {
     const channel: TextChannel = await Promise.resolve(guild.client.channels.fetch(channelID)) as TextChannel;
 
     //TODO check if there is a reminder that has to be sent + get the reminder message...
-    channel.send('reminder message here'); // sends a message every minute if uncommented
+    //channel.send('reminder message here'); // sends a message every minute if uncommented
 
   }, 60000);
-
-
 }
