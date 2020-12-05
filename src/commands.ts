@@ -10,11 +10,13 @@ export const commands: Command[] = [
     description: 'that\'s this command.',
     aliases: [],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions {
-      const help: MessageEmbedOptions = {'title': 'Help is on the way!',
-        'description': commands.concat(guildConfig.commands).map( c => '`' + guildConfig.prefix + c.name + '`: ' + c.description).join('\n'),
+      const help: MessageEmbedOptions = {
+        'title': 'Help is on the way!',
+        'description': commands.concat(guildConfig.commands).map(c => '`' + guildConfig.prefix + c.name + '`: ' + c.description).join('\n'),
         'color': '43B581',
         'url': 'http://mydoc.epic',
-        'footer': {text: 'Some commands support putting \'help\' behind it.'}};
+        'footer': { text: 'Some commands support putting \'help\' behind it.' }
+      };
       return help;
     }
   },
@@ -78,17 +80,18 @@ export const commands: Command[] = [
       function getNotes(channelID: string) {
         //TODO send something else when channel doesnt have notes (rn simply undefined)
         let i = 0;
-        const embed: MessageEmbedOptions = {'title': 'Notes',
-          'description': 'Notes for channel <#'+channelID+'>:\n'
-          +guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
-          'footer': {text: 'For help: '+guildConfig.prefix+'notes help'}
+        const embed: MessageEmbedOptions = {
+          'title': 'Notes',
+          'description': 'Notes for channel <#' + channelID + '>:\n'
+            + guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
+          'footer': { text: 'For help: ' + guildConfig.prefix + 'notes help' }
         };
         return embed;
       }
 
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text') {
-        return 'Pretend \''+tokenizer.body(2)+'\' got succesfully added to the DB.';
+        return 'Pretend \'' + tokenizer.body(2) + '\' got succesfully added to the DB.';
       }
       //!notes #channel - get notes for a channel
       else if (tokenizer.tokens[1]?.type === 'channel') {
@@ -101,10 +104,10 @@ export const commands: Command[] = [
       //When incorrectly used (includes !notes help)
       else {
         return new Formatter()
-          .bold('Help for '+command(guildConfig.prefix+'notes'),true)
-          .command(guildConfig.prefix+'notes').text(': get notes from your current channel', true)
-          .command(guildConfig.prefix+'notes #channel').text(': get notes from your favourite channel', true)
-          .command(guildConfig.prefix+'notes #channel an amazing note').text(': Enter a note in a channel', true)
+          .bold('Help for ' + command(guildConfig.prefix + 'notes'), true)
+          .command(guildConfig.prefix + 'notes').text(': get notes from your current channel', true)
+          .command(guildConfig.prefix + 'notes #channel').text(': get notes from your favourite channel', true)
+          .command(guildConfig.prefix + 'notes #channel an amazing note').text(': Enter a note in a channel', true)
           .build();
       }
     }
