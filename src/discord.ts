@@ -54,7 +54,7 @@ export async function buildClient(): Promise<Client> {
     }
 
     for (const command of commands.concat(guildConfig.commands)) {
-      if (tokenizer.command() !== command.name) {
+      if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
       }
 
