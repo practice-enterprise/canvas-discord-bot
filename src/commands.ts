@@ -122,6 +122,14 @@ export const commands: Command[] = [
           .build();
       }
     }
+  },
+  {
+    name: 'reminder',
+    description: 'set reminders in channels or dm\'s',
+    aliases: ['remindme', 'remind', 'setreminder'],
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
+      return 'your reminder has been set as: '; //TODO stach in DB and
+    }
   }
 ];
 
