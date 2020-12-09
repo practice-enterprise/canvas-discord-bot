@@ -2,8 +2,7 @@ import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
-
-type Command = { name: string, description: string, aliases: string[], response: (message: Message, guildConfig: any) => string | MessageEmbedOptions | MessageEmbed };
+import { Command } from './models/command';
 
 export const commands: Command[] = [
   {

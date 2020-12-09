@@ -4,6 +4,7 @@ import { Client, MessageEmbed } from 'discord.js';
 // prefix
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
+import { GuildConfig } from './models/guild';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -41,7 +42,7 @@ export async function buildClient(): Promise<Client> {
       return; // ignore messages not from a guild
     }
 
-    const guildConfig = (await Axios({
+    const guildConfig = (await Axios.request<GuildConfig>({
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/guilds/${msg.guild.id}`
