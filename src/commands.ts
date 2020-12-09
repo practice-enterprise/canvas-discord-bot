@@ -1,6 +1,7 @@
 import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
+import { DateTime } from 'luxon';
 
 type Command = { name: string, description: string, aliases: string[], response: (message: Message, guildConfig: any) => string | MessageEmbedOptions | MessageEmbed };
 
@@ -59,13 +60,13 @@ export const commands: Command[] = [
     name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
-    response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed  {
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
       const tokenizer = new Tokenizer(message.content, guildConfig);
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
         .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
-      
-      if(tokenizer.tokens.length === 1) {
+
+      if (tokenizer.tokens.length === 1) {
         return embed;
       }
       else if (tokenizer.tokens[1]?.content == 'heads' || tokenizer.tokens[1]?.content == 'h') {
@@ -128,7 +129,15 @@ export const commands: Command[] = [
     description: 'set reminders in channels or dm\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
-      return 'your reminder has been set as: '; //TODO stach in DB and
+      const tokenizer = new Tokenizer(message.content, guildConfig);
+      const dateFormates: string[] = ['d/m/y h:m', 'd.m.y h:m', 'd-m-y h:m'];
+      for(const format of dateFormates){
+        const time = DateTime.fromFormat(tokenizer.body(), format);
+        if (time.isValid ) {
+          return 'your reminder has been set as: ' + time.toString(); //TODO stach in DB + split Date and desciption
+        }
+      }
+      return 'this was not a valid date/time format';
     }
   }
 ];
