@@ -30,7 +30,6 @@ async function reminderDB(dateD: DateTime, contentD: string, userD: string, chan
   }).catch(() => { console.log('you made an oopsie'); }));
 }
 
-
 export const commands: Command[] = [
   {
     name: 'help',
@@ -182,19 +181,22 @@ export const commands: Command[] = [
 
       for (const format of dateFormates) {
         let time;
-        if (tokenizer.tokens[1].type == 'datetime') {
+        /*if (tokenizer.tokens[1] !=undefined &&tokenizer.tokens[1].type == 'datetime') {
           time = DateTime.fromISO(tokenizer.tokens[1].content);
-        } else if (tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
+          console.log(tokenizer.tokens[1].content);
+        } else */if (tokenizer.tokens[1] && tokenizer.tokens[2] !=undefined && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
           time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format);
+        } else {
+          time = undefined;
         }
         if (time != undefined && time.isValid) {
           if (tokenizer.tokens[tokenizer.tokens.length -1].type == 'channel') {
-            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, tokenizer.tokens[tokenizer.tokens.length].content);
+            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, tokenizer.tokens[tokenizer.tokens.length-1].content);
           } else if (message.guild != null) {
             reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, message.channel.id, message.guild?.id);
-          } else {
+          } /*else {
             reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id);
-          }
+          }*/
           return 'your reminder has been set as: ' + time.toString(); //TODO stach in DB + split Date and desciption
         }
       }
