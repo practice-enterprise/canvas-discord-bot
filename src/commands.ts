@@ -191,7 +191,7 @@ export const commands: Command[] = [
         }
         if (time != undefined && time.isValid) {
           if (tokenizer.tokens[tokenizer.tokens.length -1].type == 'channel') {
-            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, tokenizer.tokens[tokenizer.tokens.length-1].content);
+            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, tokenizer.tokens[tokenizer.tokens.length-1].content.substr(2,18), message.guild?.id);
           } else if (message.guild != null) {
             reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, message.channel.id, message.guild?.id);
           } /*else {

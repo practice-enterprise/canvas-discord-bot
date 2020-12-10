@@ -51,7 +51,7 @@ async function getChannel(guildID: string, channelID: string, client: Client): P
 }
 
 async function sendReminder(guildID: string, channelID: string, client: Client, reminderD: string) {
-  const channel = (await getChannel(guildID, channelID, client).catch(() =>{console.log('it went wrong to send the reminder');}));
+  const channel = (await getChannel(guildID, channelID, client).catch((err) => console.log(err)));
   (channel as TextChannel).send('reminder: ' + reminderD);
 }
 
