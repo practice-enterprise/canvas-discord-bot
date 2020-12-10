@@ -20,7 +20,7 @@ const matchers: { type: TokenType, regex: RegExp }[] = [
 export class Tokenizer {
   /** Tokens extracted from content
    * 
-   * Available types: text, user, role, channel, command
+   * Available types: text, user, role, channel, datetime, date, time, command 
    */
   tokens: Token[];
 

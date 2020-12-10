@@ -1,8 +1,35 @@
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Channel, Guild, Message, MessageEmbed, MessageEmbedOptions, TextChannel, User } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
 import { Command } from './models/command';
+
+import Axios from 'axios';
+import { Reminder } from './models/reminder';
+
+async function reminderDB(dateD: DateTime, contentD: string, userD: string, channelD: string | undefined = undefined, guildD: string | undefined = undefined): Promise<any> {
+  const dataD = {
+    date: dateD,
+    content: contentD,
+    target: {}
+  };
+  if (channelD != undefined) {
+    dataD.target = {
+      guild: guildD,
+      channel: channelD
+    };
+  } else {
+    dataD.target = { user: userD };
+  }
+
+  (await Axios.request<Reminder>({
+    method: 'POST',
+    baseURL: process.env.API_URL,
+    url: '/reminders',
+    data: dataD
+  }).catch(() => { console.log('you made an oopsie'); }));
+}
+
 
 export const commands: Command[] = [
   {
@@ -87,8 +114,7 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(message.content, guildConfig);
       if (tokenizer.tokens[1]?.type === 'channel') {
         return tokenizer.tokens[1].content; //TODO stash in db of server
-      }
-      else {
+      } else {
         return 'this is not a valid channel';
       }
     }
@@ -125,14 +151,28 @@ export const commands: Command[] = [
   },
   {
     name: 'reminder',
-    description: 'set reminders in channels or dm\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
+    description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
+
       const tokenizer = new Tokenizer(message.content, guildConfig);
       const dateFormates: string[] = ['d/m/y h:m', 'd.m.y h:m', 'd-m-y h:m'];
-      for(const format of dateFormates){
-        const time = DateTime.fromFormat(tokenizer.body(), format);
-        if (time.isValid ) {
+
+      for (const format of dateFormates) {
+        let time;
+        if (tokenizer.tokens[1].type == 'datetime') {
+          time = DateTime.fromISO(tokenizer.tokens[1].content);
+        } else if (tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
+          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format);
+        }
+        if (time != undefined && time.isValid) {
+          if (tokenizer.tokens[tokenizer.tokens.length -1].type == 'channel') {
+            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, tokenizer.tokens[tokenizer.tokens.length].content);
+          } else if (message.guild != null) {
+            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id, message.channel.id, message.guild?.id);
+          } else {
+            reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id);
+          }
           return 'your reminder has been set as: ' + time.toString(); //TODO stach in DB + split Date and desciption
         }
       }
