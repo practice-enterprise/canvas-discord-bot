@@ -31,8 +31,7 @@ async function reminderDB(dateD: DateTime, contentD: string, userD: string, chan
 }
 
 export const commands: Command[] = [
-  {
-    name: 'help',
+  { name: 'help',
     description: 'that\'s this command.',
     aliases: ['how', 'wtf', 'man', 'get-help'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -45,8 +44,7 @@ export const commands: Command[] = [
       return help;
     }
   },
-  {
-    name: 'ping',
+  { name: 'ping',
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -56,8 +54,7 @@ export const commands: Command[] = [
         .build();
     }
   },
-  {
-    name: 'roll',
+  { name: 'roll',
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -81,8 +78,7 @@ export const commands: Command[] = [
       }
     }
   },
-  {
-    name: 'coinflip',
+  { name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -105,8 +101,7 @@ export const commands: Command[] = [
       }
     }
   },
-  {
-    name: 'prefix',
+  { name: 'prefix',
     description: 'Set prefix for guild',
     aliases: ['pf'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -126,8 +121,7 @@ export const commands: Command[] = [
       }
     }
   },
-  {
-    name: 'default',
+  { name: 'default',
     description: 'sets the default channel',
     aliases: [],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -139,8 +133,7 @@ export const commands: Command[] = [
       }
     }
   },
-  {
-    name: 'notes',
+  { name: 'notes',
     description: 'set or get notes for channels',
     aliases: ['note'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -170,8 +163,7 @@ export const commands: Command[] = [
       }
     }
   },
-  {
-    name: 'reminder',
+  { name: 'reminder',
     description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
@@ -197,7 +189,7 @@ export const commands: Command[] = [
           } /*else {
             reminderDB(time, tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '), message.author.id);
           }*/
-          return 'your reminder has been set as: ' + time.toString(); //TODO stach in DB + split Date and desciption
+          return 'your reminder has been set as: ' + time.toString(); 
         }
       }
       return 'this was not a valid date/time format';
