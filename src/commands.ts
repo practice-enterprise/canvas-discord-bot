@@ -89,17 +89,16 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(message.content, guildConfig);
 
       if(!message.member?.hasPermission('ADMINISTRATOR')) {
-        return 'No admin permissions!';
+        return 'No admin permissions!'; 
+      }
+
+      if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && message.guild?.id != undefined) {
+        setPrefix(tokenizer.tokens[1].content, message.guild?.id);
+        console.log('yee');
+        return 'Prefix update with: '+tokenizer.tokens[1].content;
       }
       else {
-        if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && message.guild?.id != undefined) {
-          setPrefix(tokenizer.tokens[1].content, message.guild?.id);
-          console.log('yee');
-          return 'Prefix update with: '+tokenizer.tokens[1].content;
-        }
-        else {
-          return 'Use like `prefix newPrefix`';
-        }
+        return 'Use like `prefix newPrefix`';
       }
     }
   },
