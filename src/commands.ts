@@ -5,8 +5,6 @@ import { DateTime } from 'luxon';
 import { Command } from './models/command';
 import Axios from 'axios';
 import { GuildConfig } from './models/guild';
-
-import Axios from 'axios';
 import { Reminder } from './models/reminder';
 
 async function reminderDB(dateD: DateTime, contentD: string, userD: string, channelD: string | undefined = undefined, guildD: string | undefined = undefined): Promise<any> {
