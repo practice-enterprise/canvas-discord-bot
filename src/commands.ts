@@ -3,6 +3,8 @@ import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
 import { Command } from './models/command';
+import Axios from 'axios';
+import { GuildConfig } from './models/guild';
 
 export const commands: Command[] = [
   {
@@ -80,6 +82,28 @@ export const commands: Command[] = [
     }
   },
   {
+    name: 'prefix',
+    description: 'Set prefix for guild',
+    aliases: ['pf'],
+    response(message: Message, guildConfig: any): string | MessageEmbedOptions | MessageEmbed {
+      const tokenizer = new Tokenizer(message.content, guildConfig);
+
+      if(!message.member?.hasPermission('ADMINISTRATOR')) {
+        return 'No admin permissions!';
+      }
+      else {
+        if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && message.guild?.id != undefined) {
+          setPrefix(tokenizer.tokens[1].content, message.guild?.id);
+          console.log('yee');
+          return 'Prefix update with: '+tokenizer.tokens[1].content;
+        }
+        else {
+          return 'Use like `prefix newPrefix`';
+        }
+      }
+    }
+  },
+  {
     name: 'default',
     description: 'sets the default channel',
     aliases: [],
@@ -103,6 +127,7 @@ export const commands: Command[] = [
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text') {
         //TODO write notes to DB
         return `Pretend '${tokenizer.body(2)}' got succesfully added to the DB (for now).`;
+
       }
       //!notes #channel - get notes for a channel
       else if (tokenizer.tokens[1]?.type === 'channel') {
@@ -151,4 +176,24 @@ function getNotes(channelID: string, guildConfig: any) {
     'footer': { text: `For help: ${guildConfig.prefix}notes help` }
   };
   return embed;
+}
+
+async function setPrefix(newPrefix: string, guildID: string): Promise<any> {
+  
+  const Config = (await Axios.request<GuildConfig>({
+    method: 'GET',
+    baseURL: process.env.API_URL,
+    url: `/guilds/${guildID}`
+  })).data;
+
+  Config.prefix = newPrefix;
+
+  (await Axios.request<GuildConfig>({
+    method: 'PUT',
+    baseURL: process.env.API_URL,
+    url: '/guilds',
+    data: Config
+  }).catch( () => { console.log('Could not update prefix in DB'); }));
+
+  //console.log(guildConfig);
 }
