@@ -1,4 +1,4 @@
-export type TokenType = 'command' | 'text' | 'user' | 'role' | 'channel';
+export type TokenType = 'command' | 'text' | 'user' | 'role' | 'channel' | 'date' | 'datetime' | 'time';
 export type Token = {
   type: TokenType,
   content: string,
@@ -8,6 +8,9 @@ const matchers: { type: TokenType, regex: RegExp }[] = [
   { type: 'user', regex: /<@!?\d{18}>/ },
   { type: 'role', regex: /<@&\d{18}>/ },
   { type: 'channel', regex: /<#\d{18}>/ },
+  { type: 'datetime', regex: /\d{1,2}[/-]\d{1,2}[/-](\d{2,4})?[Tt]\d{1,2}:\d{1,2}/ },
+  { type: 'date', regex: /\d{1,2}[/-]\d{1,2}[/-](\d{2,4})?/ },
+  { type: 'time', regex: /\d{1,2}:\d{1,2}/ },
 ];
 
 /** parses given content into tokens seperated by spaces
