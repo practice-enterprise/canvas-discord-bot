@@ -4,4 +4,5 @@ export interface GuildConfig {
   _id: string,
   prefix: string,
   commands: Command[],
+  notes: Record<string, string[]>
 }

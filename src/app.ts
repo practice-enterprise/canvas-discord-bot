@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { buildClient } from './discord';
-import { checkReminderInit } from './checkreminders';
+import { ReminderService } from './services/reminder-service';
 
 if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
   dotenv.config();
@@ -8,5 +8,5 @@ if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
 
 (async () => {
   const client = await buildClient();
-  checkReminderInit(client);
+  ReminderService.initReminderJob(client);
 })();

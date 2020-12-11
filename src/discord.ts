@@ -1,10 +1,7 @@
-import Axios from 'axios';
 import { Client, MessageEmbed } from 'discord.js';
-
-// prefix
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
-import { GuildConfig } from './models/guild';
+import { GuildService } from './services/guild-service';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -42,12 +39,7 @@ export async function buildClient(): Promise<Client> {
       return; // ignore messages not from a guild
     }
 
-    const guildConfig = (await Axios.request<GuildConfig>({
-      method: 'GET',
-      baseURL: process.env.API_URL,
-      url: `/guilds/${msg.guild.id}`
-    })).data;
-
+    const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
     if (!tokenizer.command()) {
