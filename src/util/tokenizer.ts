@@ -1,4 +1,4 @@
-export type TokenType = 'command' | 'text' | 'user' | 'role' | 'channel';
+export type TokenType = 'command' | 'text' | 'user' | 'role' | 'channel' | 'date' | 'datetime' | 'time';
 export type Token = {
   type: TokenType,
   content: string,
@@ -8,6 +8,9 @@ const matchers: { type: TokenType, regex: RegExp }[] = [
   { type: 'user', regex: /<@!?\d{18}>/ },
   { type: 'role', regex: /<@&\d{18}>/ },
   { type: 'channel', regex: /<#\d{18}>/ },
+  //{ type: 'datetime', regex: /\d{1,2}[-]\d{1,2}[-](\d{2,4})?[Tt]\d{1,2}:\d{1,2}/ },
+  { type: 'date', regex: /\d{1,2}[/-]\d{1,2}[/-](\d{2,4})?/ },
+  { type: 'time', regex: /\d{1,2}:\d{1,2}/ },
 ];
 
 /** parses given content into tokens seperated by spaces
@@ -17,7 +20,7 @@ const matchers: { type: TokenType, regex: RegExp }[] = [
 export class Tokenizer {
   /** Tokens extracted from content
    * 
-   * Available types: text, user, role, channel, command
+   * Available types: text, user, role, channel, datetime, date, time, command 
    */
   tokens: Token[];
 
@@ -54,10 +57,14 @@ export class Tokenizer {
     return token?.type === 'command' ? token.content : undefined;
   }
 
-  /** return raw body after command or full if it's not a valid command */
-  body(): string {
+  /** return raw body after command or full if it's not a valid command
+   * @param start  (default = 1) from where it's starts to include (0 = command, default doesnt include it)
+   * @example .body() everything after the command
+   * @example .body(2) if a command has a parameter this wouldnt return that parameter
+  */
+  body(start = 1): string {
     if (this.command()) {
-      return this.tokens.slice(1).map((t) => t.content).join(' ');
+      return this.tokens.slice(start).map((t) => t.content).join(' ');
     } else {
       return this.content;
     }

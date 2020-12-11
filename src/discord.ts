@@ -1,109 +1,66 @@
 import { Client, MessageEmbed } from 'discord.js';
-
-// prefix
 import * as data from '../cfg/config.json';
+import { commands } from './commands';
+import { GuildService } from './services/guild-service';
+import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
+    /*
+      Rich presence updating.
+      Value may not be below 15000 (rate-limit discord api).
+    */
+    const interval = Math.max(15000, data.discord.richpresence.interval);
+    const statusType = data.discord.richpresence.statusType;
+    const length = data.discord.richpresence.messages.length;
+
+    // cycles through rich presence messages
+    let index = 0;
+    setInterval(() => {
+      client.user?.setPresence({
+        activity: { name: data.discord.richpresence.messages[index], type: statusType }
+      });
+
+      if (index++, index >= length) {
+        index = 0;
+      }
+    }, interval);
   });
 
-  client.on('message', (msg): void => {
+  client.on('message', async (msg): Promise<void> => {
+
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
-    
-    // normalise message content
-    let content = msg.content.trim().toLocaleLowerCase();
 
-    // get prefix and remove it from content
-    const prefix: string = data.discord.prefix;
-    if (!content.startsWith(prefix)){
-      return;
-    }
-    content = content.substr(prefix.length);
-
-    // check if something with prefix has been entered
-    console.log('Prefix trigger: '+content);
-
-    // ping pong
-    if (content === 'ping') {
-      msg.channel.send('pong');
+    if (!msg.guild) {
+      return; // ignore messages not from a guild
     }
 
-    // dice roll eg. 3d6 rolls 3 six sided dice
-    const match = (/^(\d+)?d(\d+)$/gm).exec(content);
-    if (match) {
-      const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
-      const dice = [];
-      for (let i = 0; i < times; i++) {
-        dice.push(Math.floor(Math.random() * Number(match[2]) + 1));
+    const guildConfig = await GuildService.getForId(msg.guild.id);
+    const tokenizer = new Tokenizer(msg.content, guildConfig);
+
+    if (!tokenizer.command()) {
+      return; // not a valid command
+    }
+
+    for (const command of commands.concat(guildConfig.commands)) {
+      if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
+        continue;
       }
 
-      if(times === 1) {
-        msg.reply(`Rolled a ${dice[0]}`);
+      const response = typeof command.response === 'function' ? command.response(msg, guildConfig) : command.response;
+      if (typeof response === 'string') {
+        msg.channel.send(response);
+        return;
       } else {
-        msg.reply(`Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`);
+        msg.channel.send(new MessageEmbed(response));
+        return;
       }
-    }
-
-    if (content === 'announce') {
-      const message = new MessageEmbed()
-        .setColor('#E63F30')
-        .setTitle('Online theorie OS Fundamentals 8:15')
-        .setURL('https://thomasmore.instructure.com/courses/10979/discussion_topics/135013')
-        .setAuthor('OS Fundamentals (YT0737)')
-        .setDescription(`
-          Topic: OS Fundamental theorie
-          Time: This is a recurring meeting Meet anytime
-
-          Join Zoom Meeting
-          https://us02web.zoom.us/j/88278089824?pwd=VDMrUmhjdnAyK1oyMGdMdTRHMlFPQT09
-
-          Meeting ID: 882 7808 9824
-          Passcode: 6DR7V3
-        `)
-        .setFooter('7:43 • 26 nov 2020');
-
-      msg.channel.send(message);
-    }
-
-    if (content === 'code'){
-      msg.channel.send(`
-**Code block**
-Write code in code blocks to make it more readable for others
-      
-\\\`\\\`\\\`c
-printf("Hello world!");
-\\\`\\\`\\\`
-\`\`\`c
-printf("Hello world!");
-\`\`\`
-You can also write commands like this: 
-\\\`sudo apt update\\\` -> \`sudo apt update\``);
-    }
-
-    if (content.startsWith('slide')){
-      const message = new MessageEmbed()
-        .setColor('#E63F30')
-        .setTitle('Sliding in your DM\'s')
-        .setThumbnail('https://cdn.discordapp.com/attachments/389813485120389132/781610879934267412/hemanwink.jpg')
-        .setDescription('wink wink');
-
-      const taggedUser = msg.mentions.users.first();
-
-      if (taggedUser == null) {
-        msg.author.send(message);
-      }
-      else
-      {
-        console.log('Mentioned');
-        taggedUser.send(message);
-      } 
     }
   });
-
 
   await client.login(process.env.DISCORD_TOKEN);
   return client;
