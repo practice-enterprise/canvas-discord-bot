@@ -169,7 +169,7 @@ export const commands: Command[] = [
             content: tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '),
             date: time.toString(),
             target: {
-              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content || message.channel.id,
+              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || message.channel.id,
               guild: message.guild!.id
             },
           });

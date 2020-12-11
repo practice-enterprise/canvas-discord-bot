@@ -35,12 +35,17 @@ export class ReminderService {
       for (const reminder of reminders) {
         const time = new Date(reminder.date);
         if (time.getTime() < Date.now()) {
-          if (!isUserTarget(reminder.target)) {
-            (client.guilds.resolve(reminder.target.guild)?.channels.resolve(reminder.target.channel) as TextChannel)
-              .send('reminder: ' + reminder.content);
+          try {
+            if (!isUserTarget(reminder.target)) {
+              (client.guilds.resolve(reminder.target.guild)?.channels.resolve(reminder.target.channel) as TextChannel)
+                .send('reminder: ' + reminder.content);
+            } else {
+              client.users.resolve(reminder.target.user)?.send(reminder.content);
+            }
+          } catch (err) {
+            console.error(err);
+          } finally {
             ReminderService.delete(reminder);
-          } else {
-            client.users.resolve(reminder.target.user)?.send(reminder.content);
           }
         }
       }
