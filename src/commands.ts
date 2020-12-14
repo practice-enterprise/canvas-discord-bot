@@ -2,7 +2,7 @@ import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
-import { Command } from './models/command';
+import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
@@ -13,7 +13,7 @@ export const commands: Command[] = [
     name: 'help',
     description: 'that\'s this command.',
     aliases: ['how', 'wtf', 'man', 'get-help'],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       const help: MessageEmbedOptions = {
         'title': 'Help is on the way!',
         'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n'),
@@ -27,7 +27,7 @@ export const commands: Command[] = [
     name: 'ping',
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       //const delay = new Date().getMilliseconds() - new Date(message.createdTimestamp).getMilliseconds();
       return new Formatter().text('Pong! :ping_pong:')
         //.command(delay+' ms to receive.')
@@ -38,7 +38,7 @@ export const commands: Command[] = [
     name: 'roll',
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       const tokenizer = new Tokenizer(message.content, guildConfig);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
@@ -63,7 +63,7 @@ export const commands: Command[] = [
     name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       const tokenizer = new Tokenizer(message.content, guildConfig);
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
@@ -87,7 +87,7 @@ export const commands: Command[] = [
     name: 'prefix',
     description: 'Set prefix for guild',
     aliases: ['pf'],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       const tokenizer = new Tokenizer(message.content, guildConfig);
 
       if (!message.member?.hasPermission('ADMINISTRATOR')) {
@@ -108,7 +108,7 @@ export const commands: Command[] = [
     name: 'default',
     description: 'sets the default channel',
     aliases: [],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       const tokenizer = new Tokenizer(message.content, guildConfig);
       if (tokenizer.tokens[1]?.type === 'channel') {
         return tokenizer.tokens[1].content; //TODO stash in db of server
@@ -121,11 +121,11 @@ export const commands: Command[] = [
     name: 'notes',
     description: 'set or get notes for channels',
     aliases: ['note'],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
       const tokenizer = new Tokenizer(message.content, guildConfig);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && message.guild?.id != undefined) {
-        setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), message.guild?.id).catch(() => console.log('hihihaha'));
+        await setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), message.guild?.id);
         return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
       }
       //!notes #channel - get notes for a channel
@@ -143,7 +143,7 @@ export const commands: Command[] = [
         //TODO permissions
         const noteNum: number = parseInt(tokenizer.tokens[3].content);
         //MEETING NECESSARY Promises @Tommas :)) -Peterke n jochie
-        delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), message.guild?.id);
+        await delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), message.guild?.id);
         return 'May or may not be removed :)';
       }
       //When incorrectly used (includes !notes help)
@@ -161,7 +161,7 @@ export const commands: Command[] = [
     name: 'reminder',
     description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
-    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
 
       const tokenizer = new Tokenizer(message.content, guildConfig);
       const dateFormates: string[] = ['d/m/y h:m', 'd.m.y h:m', 'd-m-y h:m'];
@@ -191,7 +191,7 @@ export const commands: Command[] = [
   }
 ];
 
-function getNotes(channelID: string, guildConfig: GuildConfig) {
+function getNotes(channelID: string, guildConfig: GuildConfig): Response {
   let i = 0;
 
   const embed: MessageEmbedOptions = {
@@ -210,15 +210,15 @@ function getNotes(channelID: string, guildConfig: GuildConfig) {
   }
 }
 
-async function setNote(note: string, channelID: string, guildID: string): Promise<void> {
+async function setNote(note: string, channelID: string, guildID: string): Promise<string> {
   //TODO for new channels, make entry in DB
   const config: GuildConfig = await GuildService.getForId(guildID);
   config.notes[channelID].push(note);
   console.log(config.notes[channelID]);
-  await GuildService.update(config);
+  return GuildService.update(config);
 }
 
-async function delNote(noteNum: number, channelID: string, guildID: string): Promise<void> {
+async function delNote(noteNum: number, channelID: string, guildID: string): Promise<string> {
   const config: GuildConfig = await GuildService.getForId(guildID);
   //TODO proper error handling
   if (!isNaN(noteNum) && noteNum > 0 && noteNum <= config.notes[channelID].length) {
@@ -226,11 +226,11 @@ async function delNote(noteNum: number, channelID: string, guildID: string): Pro
     console.log(config.notes[channelID]);
   }
 
-  await GuildService.update(config);
+  return GuildService.update(config);
 }
 
-async function setPrefix(prefix: string, guildID: string): Promise<void> {
+async function setPrefix(prefix: string, guildID: string): Promise<string> {
   const config = await GuildService.getForId(guildID);
   config.prefix = prefix;
-  await GuildService.update(config);
+  return GuildService.update(config);
 }

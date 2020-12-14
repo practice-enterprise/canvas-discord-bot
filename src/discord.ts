@@ -51,7 +51,8 @@ export async function buildClient(): Promise<Client> {
         continue;
       }
 
-      const response = typeof command.response === 'function' ? command.response(msg, guildConfig) : command.response;
+      // eslint-disable-next-line no-await-in-loop
+      const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;
