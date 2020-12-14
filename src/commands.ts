@@ -59,7 +59,7 @@ export const commands: Command[] = [
       }
     }
   },
-  { //coinflip
+  { // coinflip
     name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
@@ -124,10 +124,9 @@ export const commands: Command[] = [
     response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
       const tokenizer = new Tokenizer(message.content, guildConfig);
       //!notes #channel adds this note
-      if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text') {
-        //TODO write notes to DB
-        return `Pretend '${tokenizer.body(2)}' got succesfully added to the DB (for now).`;
-
+      if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && message.guild?.id != undefined) {
+        setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), message.guild?.id).catch(() => console.log('hihihaha'));
+        return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
       }
       //!notes #channel - get notes for a channel
       else if (tokenizer.tokens[1]?.type === 'channel') {
@@ -136,6 +135,16 @@ export const commands: Command[] = [
       //!notes - get notes in channel
       else if (tokenizer.tokens.length === 1) {
         return getNotes(message.channel.id.toString(), guildConfig);
+      }
+      //!notes remove <number>
+      else if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
+        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && message.guild?.id != undefined
+      ) {
+        //TODO permissions
+        const noteNum: number = parseInt(tokenizer.tokens[3].content);
+        //MEETING NECESSARY Promises @Tommas :)) -Peterke n jochie
+        delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), message.guild?.id);
+        return 'May or may not be removed :)';
       }
       //When incorrectly used (includes !notes help)
       else {
@@ -183,16 +192,41 @@ export const commands: Command[] = [
 ];
 
 function getNotes(channelID: string, guildConfig: GuildConfig) {
-  // TODO send something else when channel doesnt have notes (rn simply undefined)
   let i = 0;
+
   const embed: MessageEmbedOptions = {
-    'title': 'Notes',
-    'description': `Notes for channel <#${channelID}>:\n`
+    title: 'Notes',
+    description: `Notes for channel <#${channelID}>:\n`
       + guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
-    'footer': { text: `For help: ${guildConfig.prefix}notes help` }
+    footer: { text: `For help: ${guildConfig.prefix}notes help` }
   };
 
-  return embed;
+  if (guildConfig.notes[channelID] === undefined || guildConfig.notes[channelID].length === 0) {
+    embed.description = 'No notes for this channel.';
+    return embed;
+  }
+  else {
+    return embed;
+  }
+}
+
+async function setNote(note: string, channelID: string, guildID: string): Promise<void> {
+  //TODO for new channels, make entry in DB
+  const config: GuildConfig = await GuildService.getForId(guildID);
+  config.notes[channelID].push(note);
+  console.log(config.notes[channelID]);
+  await GuildService.update(config);
+}
+
+async function delNote(noteNum: number, channelID: string, guildID: string): Promise<void> {
+  const config: GuildConfig = await GuildService.getForId(guildID);
+  //TODO proper error handling
+  if (!isNaN(noteNum) && noteNum > 0 && noteNum <= config.notes[channelID].length) {
+    config.notes[channelID].splice(noteNum - 1, 1);
+    console.log(config.notes[channelID]);
+  }
+
+  await GuildService.update(config);
 }
 
 async function setPrefix(prefix: string, guildID: string): Promise<void> {
