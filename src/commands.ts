@@ -142,9 +142,7 @@ export const commands: Command[] = [
       ) {
         //TODO permissions
         const noteNum: number = parseInt(tokenizer.tokens[3].content);
-        //MEETING NECESSARY Promises @Tommas :)) -Peterke n jochie
-        await delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), message.guild?.id);
-        return 'May or may not be removed :)';
+        return delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), message.guild?.id);
       }
       //When incorrectly used (includes !notes help)
       else {
@@ -221,15 +219,15 @@ async function setNote(note: string, channelID: string, guildID: string): Promis
   return GuildService.update(config);
 }
 
-async function delNote(noteNum: number, channelID: string, guildID: string): Promise<string> {
+async function delNote(noteNum: number, channelID: string, guildID: string): Promise<Response> {
   const config: GuildConfig = await GuildService.getForId(guildID);
-  //TODO proper error handling
   if (!isNaN(noteNum) && noteNum > 0 && noteNum <= config.notes[channelID].length) {
     config.notes[channelID].splice(noteNum - 1, 1);
-    console.log(config.notes[channelID]);
+    await GuildService.update(config);
+    return 'Removed note';
+  } else {
+    return 'Failed to remove note, validate command';
   }
-
-  return GuildService.update(config);
 }
 
 async function setPrefix(prefix: string, guildID: string): Promise<string> {

@@ -30,7 +30,6 @@ export async function buildClient(): Promise<Client> {
   });
 
   client.on('message', async (msg): Promise<void> => {
-
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
