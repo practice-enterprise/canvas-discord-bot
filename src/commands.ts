@@ -211,8 +211,11 @@ function getNotes(channelID: string, guildConfig: GuildConfig): Response {
 }
 
 async function setNote(note: string, channelID: string, guildID: string): Promise<string> {
-  //TODO for new channels, make entry in DB
   const config: GuildConfig = await GuildService.getForId(guildID);
+  if (config.notes[channelID] == null) {
+    config.notes[channelID] = [];
+  }
+
   config.notes[channelID].push(note);
   console.log(config.notes[channelID]);
   return GuildService.update(config);
