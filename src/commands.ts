@@ -96,7 +96,6 @@ export const commands: Command[] = [
 
       if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && message.guild?.id != undefined) {
         setPrefix(tokenizer.tokens[1].content, message.guild?.id);
-        console.log('yee');
         return 'Prefix update with: ' + tokenizer.tokens[1].content;
       }
       else {
