@@ -7,7 +7,13 @@ import { LoggingWinston } from '@google-cloud/logging-winston';
 
 if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
   dotenv.config();
-  Logger.add(new winston.transports.Console({ format: winston.format.simple(), level: 'verbose' }));
+  Logger.add(new winston.transports.Console({ format: winston.format.combine(winston.format.colorize(), winston.format.simple()), level: 'debug' }));
+  winston.addColors({
+    warn: 'yellow',
+    error: 'red',
+    crit: 'red',
+    info: 'blue'
+  });
 } else {
   Logger.add(new LoggingWinston({ projectId: process.env.PROJECT_ID, logName: 'discord-canvas', prefix: 's0' }));
   Logger.exceptions.handle(new LoggingWinston({ projectId: process.env.PROJECT_ID, logName: 'discord-canvas', prefix: 's0' }));
