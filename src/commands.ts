@@ -6,6 +6,7 @@ import { Command } from './models/command';
 import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
+import { mesh } from './app';
 
 
 export const commands: Command[] = [
@@ -177,6 +178,16 @@ export const commands: Command[] = [
         }
       }
       return 'this was not a valid date/time format';
+    }
+  },
+  { // status
+    name: 'status',
+    description: 'get bot status',
+    aliases: [],
+    response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
+      return {
+        fields: [{ name: 'shard', value: `${mesh?.shard?.shard}` }, {name: 'health', value: `${mesh?.health}/3` }]
+      };
     }
   }
 ];

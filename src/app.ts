@@ -1,9 +1,10 @@
 import dotenv from 'dotenv';
-import { buildClient } from './discord';
-import { ReminderService } from './services/reminder-service';
 import winston from 'winston';
 import { Logger } from './util/logger';
 import { LoggingWinston } from '@google-cloud/logging-winston';
+import { MeshService } from './services/mesh-service';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const exitHook = require('async-exit-hook');
 
 if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
   dotenv.config();
@@ -19,7 +20,19 @@ if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
   Logger.exceptions.handle(new LoggingWinston({ projectId: process.env.PROJECT_ID, logName: 'discord-canvas', prefix: 's0' }));
 }
 
+export let mesh: MeshService | undefined;
+
+exitHook((callback: () => void) => {
+  if (mesh) {
+    Logger.info('Leaving mesh before shutdown');
+    mesh.destroy().then(() => callback());
+  } else {
+    callback();
+  }
+});
+
+
 (async () => {
-  const client = await buildClient();
-  ReminderService.initReminderJob(client);
+  mesh = new MeshService();
 })();
+

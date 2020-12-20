@@ -5,10 +5,10 @@ import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
 import { Tokenizer } from './util/tokenizer';
 
-export async function buildClient(): Promise<Client> {
-  const client = new Client();
+export async function buildClient(shardCount: number, shard: number): Promise<Client> {
+  const client = new Client({shardCount: shardCount, shards: shard});
   client.on('ready', () => {
-    Logger.info(`Logged in as ${client.user?.tag}`);
+    Logger.info(`Logged in as ${client.user?.tag} on shard ${shard}`);
     /*
       Rich presence updating.
       Value may not be below 15000 (rate-limit discord api).
@@ -52,7 +52,7 @@ export async function buildClient(): Promise<Client> {
         continue;
       }
 
-      Logger.verbose(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
+      Logger.debug(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
       const response = typeof command.response === 'function' ? command.response(msg, guildConfig) : command.response;
       if (typeof response === 'string') {
         msg.channel.send(response);
