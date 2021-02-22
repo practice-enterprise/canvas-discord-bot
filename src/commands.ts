@@ -6,6 +6,7 @@ import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
+import { CanvasService } from './services/canvas-service';
 
 
 export const commands: Command[] = [
@@ -186,7 +187,23 @@ export const commands: Command[] = [
       }
       return 'this was not a valid date/time format';
     }
-  }
+  },
+  //{
+  //  name: 'courses',
+  //  description: 'list courses',
+  //  aliases: [],
+  //  async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+  //    const courses: MessageEmbedOptions = {
+  //      'title': 'All z courses!',
+  //      'description': 'test',
+  //      'color': '43B581',
+  //      'footer': { text: 'Some commands support putting \'help\' behind it.' }
+  //    };
+  //    
+  //    getCourses('698YfIph5ajRdBfbvDPwsAcJIHVG2Oi2ycNIqDqzsr2oykCTTHupSCPgREk4JhXd');
+  //    return courses;
+  //  }
+  //}
 ];
 
 function getNotes(channelID: string, guildConfig: GuildConfig): Response {
@@ -235,3 +252,8 @@ async function setPrefix(prefix: string, guildID: string): Promise<string> {
   config.prefix = prefix;
   return GuildService.update(config);
 }
+//async function getCourses(token: string): Promise<Response> {
+//  const courses = await CanvasService.getCourses(token);
+//  console.log(courses);
+//  return courses.name;
+//}
