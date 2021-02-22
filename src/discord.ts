@@ -56,6 +56,19 @@ export async function buildClient(): Promise<Client> {
       }
     }
 
+    if (msg.content == '!test2') {
+      
+      if(process.env.CANVAS_TOKEN != undefined)
+      {
+        const courses = await CanvasService.getCourses(process.env.CANVAS_TOKEN);
+        console.log(courses);
+        courses[0].name = courses[0].name + 'test';
+        courses[0].course_code = courses[0].course_code + 'test';
+        console.log(courses);
+        await CanvasService.updateCourse(courses[0], courses[0].id, process.env.CANVAS_TOKEN);
+        //msg.channel.send('updated courses, hopefully');
+      }
+    }
     //const guildConfig = await GuildService.getForId(msg.guild.id);
     //const tokenizer = new Tokenizer(msg.content, guildConfig);
 

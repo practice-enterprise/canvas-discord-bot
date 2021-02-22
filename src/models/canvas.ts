@@ -1,5 +1,5 @@
 //https://canvas.instructure.com/doc/api/courses.html
-export interface CanvasCourses {
+export interface CanvasCourse {
   id: string,
   sis_course_id: string | null,
   uuid: string,
