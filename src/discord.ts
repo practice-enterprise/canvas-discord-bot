@@ -39,7 +39,7 @@ export async function buildClient(): Promise<Client> {
       return; // ignore messages not from a guild
     }
 
-    if (msg.content == '!test') {
+    if (msg.content == '!courses') {
       
       if(process.env.CANVAS_TOKEN != undefined)
       {
@@ -49,6 +49,45 @@ export async function buildClient(): Promise<Client> {
         const reply: MessageEmbed = new MessageEmbed({
           'title': 'All z courses!',
           'description': courses.map(c => `[${c.name}](${process.env.CANVAS_URL}/courses/${c.id})`).join('\n'),
+          'color': '43B581',
+          'footer': { text: 'yes yes very epic.' }
+        });
+        msg.channel.send(reply);
+      }
+    }
+
+    if (msg.content == '!update') {
+      
+      if(process.env.CANVAS_TOKEN != undefined)
+      {
+        const courses = await CanvasService.getCourses(process.env.CANVAS_TOKEN);
+        console.log(courses);
+        courses[0].name = courses[0].name + 'test';
+        courses[0].course_code = courses[0].course_code + 'test';
+        console.log(courses);
+        await CanvasService.updateCourse(courses[0], courses[0].id, process.env.CANVAS_TOKEN);
+        //msg.channel.send('updated courses, hopefully');
+      }
+    }
+
+    if (msg.content == '!modules') {
+      
+      if(process.env.CANVAS_TOKEN != undefined)
+      {
+        const modules = await CanvasService.getModules(process.env.CANVAS_TOKEN, '10959');
+        console.log(modules);
+        const items = await CanvasService.getModuleItems(process.env.CANVAS_TOKEN, modules[0].items_url);
+        console.log(items);
+      
+        const reply: MessageEmbed = new MessageEmbed({
+          'title': modules[0].name,
+          'description': items.map(i => `[${i.title}](${i.url})`).join('\n'),
+          'color': '43B581',
+          'footer': { text: 'yes yes very epic.' }
+        });
+        + new MessageEmbed({
+          'title': 'test',
+          'description': 'added?',
           'color': '43B581',
           'footer': { text: 'yes yes very epic.' }
         });
