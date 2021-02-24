@@ -4,6 +4,7 @@ import { commands } from './commands';
 import { CanvasService } from './services/canvas-service';
 import { GuildService } from './services/guild-service';
 import { Tokenizer } from './util/tokenizer';
+import { WikiService } from './services/wiki-service';
 
 export async function buildClient(): Promise<Client> {
   const client = new Client();
@@ -37,6 +38,32 @@ export async function buildClient(): Promise<Client> {
 
     if (!msg.guild) {
       return; // ignore messages not from a guild
+    }
+
+    if (msg.content.startsWith('!wiki'))
+    {
+      const search = msg.content.substring(6);
+
+      const wikiContent = await WikiService.wiki(search);
+      wikiContent.data.pages.search.results
+        .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
+
+      if(!search)
+      {
+        msg.channel.send('https://tmwiki.be');
+        return;
+      }
+
+      const embed = new MessageEmbed({
+        'title': `Wiki results for '${search}'`,
+        'url': 'https://tmwiki.be',
+        'description': wikiContent.data.pages.search.results
+          .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path}) \`${p.path}\`
+          Desc: ${p.description}`).join('\n\n')
+      });
+
+      msg.channel.send(embed)
+        .catch(err => msg.channel.send('`Message too long.`'));
     }
 
     if (msg.content == '!courses') {
@@ -93,30 +120,30 @@ export async function buildClient(): Promise<Client> {
         });
         msg.channel.send(reply);
       }
+
+      //const guildConfig = await GuildService.getForId(msg.guild.id);
+      //const tokenizer = new Tokenizer(msg.content, guildConfig);
+
+      //if (!tokenizer.command()) {
+      //  return; // not a valid command
+      //}
+
+      //for (const command of commands.concat(guildConfig.commands)) {
+      //  if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
+      //    continue;
+      //  }
+
+      //  // eslint-disable-next-line no-await-in-loop
+      //  const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
+      //  if (typeof response === 'string') {
+      //    msg.channel.send(response);
+      //    return;
+      //  } else {
+      //    msg.channel.send(new MessageEmbed(response));
+      //    return;
+      //  }
+      //}
     }
-
-    //const guildConfig = await GuildService.getForId(msg.guild.id);
-    //const tokenizer = new Tokenizer(msg.content, guildConfig);
-
-    //if (!tokenizer.command()) {
-    //  return; // not a valid command
-    //}
-
-    //for (const command of commands.concat(guildConfig.commands)) {
-    //  if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
-    //    continue;
-    //  }
-
-    //  // eslint-disable-next-line no-await-in-loop
-    //  const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
-    //  if (typeof response === 'string') {
-    //    msg.channel.send(response);
-    //    return;
-    //  } else {
-    //    msg.channel.send(new MessageEmbed(response));
-    //    return;
-    //  }
-    //}
   });
 
   await client.login(process.env.DISCORD_TOKEN);
