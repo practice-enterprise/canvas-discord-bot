@@ -5,5 +5,12 @@ export interface Command {
   name: string,
   aliases: string[],
   description: string;
-  response: string | MessageEmbedOptions | ((message: Message, guildConfig: GuildConfig) => string | MessageEmbedOptions | MessageEmbed | MessageEmbedOptions[])
+  response: string | MessageEmbedOptions | ((message: Message, guildConfig: GuildConfig) => string | MessageEmbedOptions | MessageEmbed)
+}
+
+export interface Info {
+  name: string,
+  aliases: string[],
+  description: string;
+  reply: Command[]
 }

@@ -1,7 +1,8 @@
-import { Client, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
+import { Client, Guild, MessageEmbed, } from 'discord.js';
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
 import { GuildService } from './services/guild-service';
+//import { command } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -46,6 +47,23 @@ export async function buildClient(): Promise<Client> {
       return; // not a valid command
     }
 
+
+    //info command
+    if (tokenizer.command() === guildConfig.info.name || guildConfig.info.aliases.includes(tokenizer.command()!)) {//check if command is of the info type
+      for (const info of guildConfig.info.reply) { // check the option if it's valid
+        if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].content == info.name) {
+          const response = typeof info.response === 'function' ? info.response(msg, guildConfig) : info.response;
+          if (typeof response === 'string') {
+            msg.channel.send(response);
+          } else {
+            msg.channel.send(new MessageEmbed(response));
+          }
+          return;
+        }
+      }
+      msg.channel.send(guildConfig.info.reply.map(c => `\`${guildConfig.prefix}${guildConfig.info.name} ${c.name}\`: ${c.description}`).join('\n'));
+    }
+
     for (const command of commands.concat(guildConfig.commands)) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
@@ -55,13 +73,7 @@ export async function buildClient(): Promise<Client> {
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;
-      } else if(Array.isArray(response)){
-        for(const resp of response){
-          msg.channel.send(new MessageEmbed(resp));
-        }
-        console.log('not embed');
-        return;
-      } else{
+      } else {
         msg.channel.send(new MessageEmbed(response));
       }
     }
