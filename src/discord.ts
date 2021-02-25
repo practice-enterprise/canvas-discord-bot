@@ -120,29 +120,29 @@ export async function buildClient(): Promise<Client> {
         });
         msg.channel.send(reply);
       }
+    }
+    
+    const guildConfig = await GuildService.getForId(msg.guild.id);
+    const tokenizer = new Tokenizer(msg.content, guildConfig);
 
-      //const guildConfig = await GuildService.getForId(msg.guild.id);
-      //const tokenizer = new Tokenizer(msg.content, guildConfig);
+    if (!tokenizer.command()) {
+      return; // not a valid command
+    }
 
-      //if (!tokenizer.command()) {
-      //  return; // not a valid command
-      //}
+    for (const command of commands.concat(guildConfig.commands)) {
+      if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
+        continue;
+      }
 
-      //for (const command of commands.concat(guildConfig.commands)) {
-      //  if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
-      //    continue;
-      //  }
-
-      //  // eslint-disable-next-line no-await-in-loop
-      //  const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
-      //  if (typeof response === 'string') {
-      //    msg.channel.send(response);
-      //    return;
-      //  } else {
-      //    msg.channel.send(new MessageEmbed(response));
-      //    return;
-      //  }
-      //}
+      // eslint-disable-next-line no-await-in-loop
+      const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
+      if (typeof response === 'string') {
+        msg.channel.send(response);
+        return;
+      } else {
+        msg.channel.send(new MessageEmbed(response));
+        return;
+      }
     }
   });
 
