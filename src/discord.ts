@@ -1,4 +1,4 @@
-import { Client, MessageEmbed } from 'discord.js';
+import { Client, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
 import { GuildService } from './services/guild-service';
@@ -55,9 +55,14 @@ export async function buildClient(): Promise<Client> {
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;
-      } else {
-        msg.channel.send(new MessageEmbed(response));
+      } else if(Array.isArray(response)){
+        for(const resp of response){
+          msg.channel.send(new MessageEmbed(resp));
+        }
+        console.log('not embed');
         return;
+      } else{
+        msg.channel.send(new MessageEmbed(response));
       }
     }
   });
