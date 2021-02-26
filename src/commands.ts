@@ -12,14 +12,15 @@ export const commands: Command[] = [
   { // help
     name: 'help',
     description: 'that\'s this command.',
-    aliases: ['how', 'wtf', 'man', 'get-help'],
+    aliases: ['how', 'wtf', 'man', 'get-help'], 
     response(message: Message, guildConfig: GuildConfig): string | MessageEmbedOptions | MessageEmbed {
       const help: MessageEmbedOptions = {
         'title': 'Help is on the way!',
-        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n'),
+        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`' + guildConfig.prefix + guildConfig.info.name + '`' + ': ' + guildConfig.info.description,
         'color': '43B581',
         'footer': { text: 'Some commands support putting \'help\' behind it.' }
       };
+      
       return help;
     }
   },

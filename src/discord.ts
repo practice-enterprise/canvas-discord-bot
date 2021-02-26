@@ -1,4 +1,4 @@
-import { Client, Guild, MessageEmbed, } from 'discord.js';
+import { Client, MessageEmbed, } from 'discord.js';
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
 import { GuildService } from './services/guild-service';
