@@ -8,7 +8,6 @@ import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { CanvasService } from './services/canvas-service';
 
-
 export const commands: Command[] = [
   { // help
     name: 'help',
@@ -188,23 +187,80 @@ export const commands: Command[] = [
       return 'this was not a valid date/time format';
     }
   },
-  //{
-  //  name: 'courses',
-  //  description: 'list courses',
-  //  aliases: [],
-  //  async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-  //    const courses: MessageEmbedOptions = {
-  //      'title': 'All z courses!',
-  //      'description': 'test',
-  //      'color': '43B581',
-  //      'footer': { text: 'Some commands support putting \'help\' behind it.' }
-  //    };
-  //    
-  //    getCourses('698YfIph5ajRdBfbvDPwsAcJIHVG2Oi2ycNIqDqzsr2oykCTTHupSCPgREk4JhXd');
-  //    return courses;
-  //  }
-  //}
+  // # Canvas Commands
+  //TODO: Error handling for when https requests fail and invalid tokens.
+  { // courses
+    name: 'courses',
+    description: 'Lists your courses',
+    aliases: [],
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+      // TODO: replace with user tokens!
+      const token = process.env.CANVAS_TOKEN;
+
+      if (token != undefined && token.length > 1) {
+        const courses = await CanvasService.getCourses(token);
+        //TODO: error handling (wrong/expired token etc.)
+        const embed: MessageEmbed = new MessageEmbed({
+          'title': 'All your courses!',
+          'description': '`ID` course\n' +
+            courses.map(c => `\`${c.id}\` [${c.name}](${process.env.CANVAS_URL}/courses/${c.id}) `).join('\n'),
+          'color': 'EF4A25', //Canvas color pallete
+          'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
+        });
+
+        return embed;
+      }
+      else {
+        const embed = new MessageEmbed({
+          'title': 'Undefined or incorrect token.',
+          'description': 'Are you sure you logged in?\nURL TO AUTH',
+          'color': 'EF4A25', //Canvas color pallete
+        });
+        return embed;
+      }
+    }
+  },
+  { // modules
+    name: 'modules',
+    description: 'Lists all modules of a course or all items in a module',
+    aliases: ['module'],
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+      // TODO: replace with user tokens!
+      const token = process.env.CANVAS_TOKEN;
+      if (token != undefined && token.length > 1) {
+        const tokenizer = new Tokenizer(message.content, guildConfig);
+
+        if (tokenizer.tokens[1] != undefined && tokenizer.tokens[2] != undefined) {
+          const courseID = tokenizer.tokens[1].content;
+          const moduleID = Number.parseInt(tokenizer.tokens[2].content);
+
+          return getModulesResponse(token, courseID, moduleID);
+        }
+        else if (tokenizer.tokens[1] != undefined) {
+          const courseID = tokenizer.tokens[1].content;
+
+          return getModulesResponse(token, courseID);
+        }
+        else
+          return 'Incorrect arguments';
+      }
+      else {
+        const embed = new MessageEmbed({
+          'title': 'Undefined token.',
+          'description': 'Are you sure you logged in?\nURL TO AUTH',
+          'color': 'EF4A25', //Canvas color pallete
+        });
+        return embed;
+      }
+    }
+  }
 ];
+
+async function setPrefix(prefix: string, guildID: string): Promise<string> {
+  const config = await GuildService.getForId(guildID);
+  config.prefix = prefix;
+  return GuildService.update(config);
+}
 
 function getNotes(channelID: string, guildConfig: GuildConfig): Response {
   let i = 0;
@@ -246,14 +302,38 @@ async function delNote(noteNum: number, channelID: string, guildID: string): Pro
     return 'Failed to remove note, validate command';
   }
 }
+// Canvas functions
+/**Returns all modules of a course (or items of module).
+ * @param moduleID when passed returns all items of said module. */
+async function getModulesResponse(token: string, courseID: string, moduleID?: number): Promise<Response> {
+  if (typeof moduleID === 'undefined') { //All modules of course
+    const modules = await CanvasService.getModules(token, courseID);
 
-async function setPrefix(prefix: string, guildID: string): Promise<string> {
-  const config = await GuildService.getForId(guildID);
-  config.prefix = prefix;
-  return GuildService.update(config);
+    const embed: MessageEmbed = new MessageEmbed({
+      'title': `Modules for Course ID \`${courseID}\``,
+      'description': modules.map(m => `\`${m.id}\` ${m.name}`).join('\n'),
+      'color': 'EF4A25', //Canvas color pallete
+      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
+    });
+    return embed;
+  }
+  else { //Items of moduleID
+    const modules = await CanvasService.getModules(token, courseID);
+    const moduleByID = modules.find(m => m.id == moduleID);
+
+    if (moduleByID === undefined)
+      return 'Module ID does not exist.';
+
+    const items = await CanvasService.getModuleItems(token, moduleByID.items_url);
+
+    const embed: MessageEmbed = new MessageEmbed({
+      'title': `Module \`${moduleID}\`\n` + moduleByID.name,
+      'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
+      'color': 'EF4A25', //Canvas color pallete
+      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
+    });
+
+    return embed;
+  }
+
 }
-//async function getCourses(token: string): Promise<Response> {
-//  const courses = await CanvasService.getCourses(token);
-//  console.log(courses);
-//  return courses.name;
-//}

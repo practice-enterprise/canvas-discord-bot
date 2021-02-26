@@ -39,84 +39,28 @@ export async function buildClient(): Promise<Client> {
       return; // ignore messages not from a guild
     }
 
-    if (msg.content == '!courses') {
-      
-      if(process.env.CANVAS_TOKEN != undefined)
-      {
-        const courses = await CanvasService.getCourses(process.env.CANVAS_TOKEN);
-        console.log(courses);
-      
-        const reply: MessageEmbed = new MessageEmbed({
-          'title': 'All z courses!',
-          'description': courses.map(c => `[${c.name}](${process.env.CANVAS_URL}/courses/${c.id})`).join('\n'),
-          'color': '43B581',
-          'footer': { text: 'yes yes very epic.' }
-        });
-        msg.channel.send(reply);
-      }
+    const guildConfig = await GuildService.getForId(msg.guild.id);
+    const tokenizer = new Tokenizer(msg.content, guildConfig);
+
+    if (!tokenizer.command()) {
+      return; // not a valid command
     }
 
-    if (msg.content == '!update') {
-      
-      if(process.env.CANVAS_TOKEN != undefined)
-      {
-        const courses = await CanvasService.getCourses(process.env.CANVAS_TOKEN);
-        console.log(courses);
-        courses[0].name = courses[0].name + 'test';
-        courses[0].course_code = courses[0].course_code + 'test';
-        console.log(courses);
-        await CanvasService.updateCourse(courses[0], courses[0].id, process.env.CANVAS_TOKEN);
-        //msg.channel.send('updated courses, hopefully');
+    for (const command of commands.concat(guildConfig.commands)) {
+      if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
+        continue;
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
+      if (typeof response === 'string') {
+        msg.channel.send(response);
+        return;
+      } else {
+        msg.channel.send(new MessageEmbed(response));
+        return;
       }
     }
-
-    if (msg.content == '!modules') {
-      
-      if(process.env.CANVAS_TOKEN != undefined)
-      {
-        const modules = await CanvasService.getModules(process.env.CANVAS_TOKEN, '10959');
-        console.log(modules);
-        const items = await CanvasService.getModuleItems(process.env.CANVAS_TOKEN, modules[0].items_url);
-        console.log(items);
-      
-        const reply: MessageEmbed = new MessageEmbed({
-          'title': modules[0].name,
-          'description': items.map(i => `[${i.title}](${i.url})`).join('\n'),
-          'color': '43B581',
-          'footer': { text: 'yes yes very epic.' }
-        });
-        + new MessageEmbed({
-          'title': 'test',
-          'description': 'added?',
-          'color': '43B581',
-          'footer': { text: 'yes yes very epic.' }
-        });
-        msg.channel.send(reply);
-      }
-    }
-
-    //const guildConfig = await GuildService.getForId(msg.guild.id);
-    //const tokenizer = new Tokenizer(msg.content, guildConfig);
-
-    //if (!tokenizer.command()) {
-    //  return; // not a valid command
-    //}
-
-    //for (const command of commands.concat(guildConfig.commands)) {
-    //  if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
-    //    continue;
-    //  }
-
-    //  // eslint-disable-next-line no-await-in-loop
-    //  const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
-    //  if (typeof response === 'string') {
-    //    msg.channel.send(response);
-    //    return;
-    //  } else {
-    //    msg.channel.send(new MessageEmbed(response));
-    //    return;
-    //  }
-    //}
   });
 
   await client.login(process.env.DISCORD_TOKEN);

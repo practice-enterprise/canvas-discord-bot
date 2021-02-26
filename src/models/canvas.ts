@@ -52,7 +52,7 @@ export interface CanvasCourse {
 
 /**https://canvas.instructure.com/doc/api/modules.html */
 export interface CanvasModule {
-  id: string,
+  id: number,
   workflow_state: string,
   position: string | number,
   name: string,
