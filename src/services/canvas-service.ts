@@ -8,7 +8,7 @@ export class CanvasService {
       headers: { 
         Authorization: `Bearer ${token}` 
       },
-
+      params: { per_page: '100'},
       method: 'GET',
       baseURL: process.env.CANVAS_URL,
       url: '/api/v1/courses'
