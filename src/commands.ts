@@ -200,12 +200,14 @@ export const commands: Command[] = [
       if (token != undefined && token.length > 1) {
         const courses = await CanvasService.getCourses(token);
         //TODO: error handling (wrong/expired token etc.)
+        let count = 1;
         const embed: MessageEmbed = new MessageEmbed({
           'title': 'All your courses!',
-          'description': '`ID` course\n' +
-            courses.map(c => `\`${c.id}\` [${c.name}](${process.env.CANVAS_URL}/courses/${c.id}) `).join('\n'),
+          'description': '`Nr` Course name\n' +
+            courses.map(c => `\`${count++}.\` [${c.name}](${process.env.CANVAS_URL}/courses/${c.id}) `).join('\n'),
           'color': 'EF4A25', //Canvas color pallete
-          'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
+          'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
+          'footer': { 'text': 'Use !modules <Nr> for modules in course' }
         });
 
         return embed;
@@ -229,17 +231,15 @@ export const commands: Command[] = [
       const token = process.env.CANVAS_TOKEN;
       if (token != undefined && token.length > 1) {
         const tokenizer = new Tokenizer(message.content, guildConfig);
+        const courseID = Number.parseInt(tokenizer.tokens[1].content);
 
         if (tokenizer.tokens[1] != undefined && tokenizer.tokens[2] != undefined) {
-          const courseID = tokenizer.tokens[1].content;
           const moduleID = Number.parseInt(tokenizer.tokens[2].content);
 
-          return getModulesResponse(token, courseID, moduleID);
+          return getModulesResponse(token, courseID, moduleID); //All items in module
         }
         else if (tokenizer.tokens[1] != undefined) {
-          const courseID = tokenizer.tokens[1].content;
-
-          return getModulesResponse(token, courseID);
+          return getModulesResponse(token, courseID); //All modules in course
         }
         else
           return 'Incorrect arguments';
@@ -302,32 +302,46 @@ async function delNote(noteNum: number, channelID: string, guildID: string): Pro
     return 'Failed to remove note, validate command';
   }
 }
+
 // Canvas functions
+
 /**Returns all modules of a course (or items of module).
- * @param moduleID when passed returns all items of said module. */
-async function getModulesResponse(token: string, courseID: string, moduleID?: number): Promise<Response> {
-  if (typeof moduleID === 'undefined') { //All modules of course
+ * @param moduleNr when passed returns all items of said module.
+ * */
+async function getModulesResponse(token: string, courseNr: number, moduleNr?: number): Promise<Response> {
+  const courses = await CanvasService.getCourses(token);
+
+  if(courseNr < 1 || courseNr > courses.length)
+    return '`Course number not in range.`';
+  const courseID = courses[courseNr-1].id;
+  const courseName = courses[courseNr-1].name;
+
+  let count = 1;
+
+  if (typeof moduleNr === 'undefined') { //All modules of course
     const modules = await CanvasService.getModules(token, courseID);
 
     const embed: MessageEmbed = new MessageEmbed({
-      'title': `Modules for Course ID \`${courseID}\``,
-      'description': modules.map(m => `\`${m.id}\` ${m.name}`).join('\n'),
+      'title': `\`${courseNr}.\` Modules for ${courseName}`,
+      'description': '`Nr` Module name\n' +
+        modules.map(m => `\`${count++}.\` [${m.name}](${process.env.CANVAS_URL+`/courses/${courseID}/modules`})`).join('\n'),
       'color': 'EF4A25', //Canvas color pallete
-      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
+      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
+      'footer': { text: 'Use !modules '+courseNr.toString()+' <Nr> for items in a module'}
     });
     return embed;
   }
   else { //Items of moduleID
     const modules = await CanvasService.getModules(token, courseID);
-    const moduleByID = modules.find(m => m.id == moduleID);
 
-    if (moduleByID === undefined)
-      return 'Module ID does not exist.';
+    if(moduleNr < 1 || moduleNr > modules.length)
+      return '`Module number not in range.`';
+    const moduleByID = modules[moduleNr - 1];
 
     const items = await CanvasService.getModuleItems(token, moduleByID.items_url);
 
     const embed: MessageEmbed = new MessageEmbed({
-      'title': `Module \`${moduleID}\`\n` + moduleByID.name,
+      'title': `\`${moduleNr}.\` Module ` + moduleByID.name,
       'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
       'color': 'EF4A25', //Canvas color pallete
       'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
