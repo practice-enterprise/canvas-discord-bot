@@ -7,6 +7,7 @@ import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { CanvasService } from './services/canvas-service';
+import { WikiService } from './services/wiki-service';
 
 
 export const commands: Command[] = [
@@ -188,22 +189,34 @@ export const commands: Command[] = [
       return 'this was not a valid date/time format';
     }
   },
-  //{
-  //  name: 'courses',
-  //  description: 'list courses',
-  //  aliases: [],
-  //  async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-  //    const courses: MessageEmbedOptions = {
-  //      'title': 'All z courses!',
-  //      'description': 'test',
-  //      'color': '43B581',
-  //      'footer': { text: 'Some commands support putting \'help\' behind it.' }
-  //    };
-  //    
-  //    getCourses('698YfIph5ajRdBfbvDPwsAcJIHVG2Oi2ycNIqDqzsr2oykCTTHupSCPgREk4JhXd');
-  //    return courses;
-  //  }
-  //}
+  { // wiki
+    name: 'wiki',
+    description: 'Search on the Thomas More wiki',
+    aliases: [],
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+      const tokenizer = new Tokenizer(message.content, guildConfig);
+
+      const search = tokenizer.body();
+      if(search.length == 0)
+        return 'https://tmwiki.be';
+
+      const wikiContent = await WikiService.wiki(search);
+      wikiContent.data.pages.search.results
+        .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
+  
+      const embed = new MessageEmbed({
+        'title': `Wiki results for '${search}'`,
+        'url': 'https://tmwiki.be',
+        'description': wikiContent.data.pages.search.results
+          .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path}) \`${p.path}\`
+          Desc: ${p.description}`).join('\n\n')
+      });
+
+      if(embed.length >= 2000)
+        return '`Message too long.`';
+      return embed;
+    }
+  }
 ];
 
 function getNotes(channelID: string, guildConfig: GuildConfig): Response {
