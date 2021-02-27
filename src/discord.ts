@@ -1,4 +1,4 @@
-import { Client, MessageEmbed, } from 'discord.js';
+import { Client, ClientPresenceStatus, MessageEmbed } from 'discord.js';
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
 import { GuildService } from './services/guild-service';
@@ -11,17 +11,21 @@ export async function buildClient(): Promise<Client> {
     console.log(`Logged in as ${client.user?.tag}`);
     /*
       Rich presence updating.
-      Value may not be below 15000 (rate-limit discord api).
+      Value may not be below 15000 (rate-limit discord api = 5/60).
     */
+
     const interval = Math.max(15000, data.discord.richpresence.interval);
-    const statusType = data.discord.richpresence.statusType;
-    const length = data.discord.richpresence.messages.length;
+    const length = data.discord.richpresence.states.length;
 
     // cycles through rich presence messages
     let index = 0;
     setInterval(() => {
       client.user?.setPresence({
-        activity: { name: data.discord.richpresence.messages[index], type: statusType }
+        status: <ClientPresenceStatus>data.discord.richpresence.states[index].status, 
+        activity: { 
+          name: data.discord.richpresence.states[index].activity.name,
+          type: data.discord.richpresence.states[index].activity.type,
+        }
       });
 
       if (index++, index >= length) {

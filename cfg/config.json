@@ -1,12 +1,35 @@
 {
   "discord": {
     "richpresence": {
-      "statusType": 2,
       "interval": 60000,
+      "statusType": 2,
       "messages": [
         "students",
         "?help | ?stuvo",
         "?help | ?pal"
+      ],
+      "states": [
+        {
+          "status": "online",
+          "activity": {
+            "name": "students",
+            "type": 2
+          }
+        },
+        {
+          "status": "idle",
+          "activity": {
+            "name": "?help | !info",
+            "type": 2
+          }
+        },
+        {
+          "status": "dnd",
+          "activity": {
+            "name": "you closely",
+            "type": 3
+          }
+        }  
       ]
     }
   }
