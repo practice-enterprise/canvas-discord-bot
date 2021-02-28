@@ -1,30 +1,33 @@
 import { Client, ClientPresenceStatus, MessageEmbed } from 'discord.js';
 import * as data from '../cfg/config.json';
 import { commands } from './commands';
+import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 //import { command } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
   const client = new Client();
+  const config = await ConfigService.get();
+
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
-    /*
-      Rich presence updating.
-      Value may not be below 15000 (rate-limit discord api = 5/60).
-    */
 
-    const interval = Math.max(15000, data.discord.richpresence.interval);
-    const length = data.discord.richpresence.states.length;
+    /*
+      Presence updating.
+      Value may not be below 15000 (rate-limit Discord API = 5/60s).
+    */
+    const interval = Math.max(15000, config[0].discord.richpresence.interval);
+    const length = config[0].discord.richpresence.states.length;
 
     // cycles through rich presence messages
     let index = 0;
     setInterval(() => {
       client.user?.setPresence({
-        status: <ClientPresenceStatus>data.discord.richpresence.states[index].status, 
+        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status, 
         activity: { 
-          name: data.discord.richpresence.states[index].activity.name,
-          type: data.discord.richpresence.states[index].activity.type,
+          name: config[0].discord.richpresence.states[index].activity.name,
+          type: config[0].discord.richpresence.states[index].activity.type,
         }
       });
 
@@ -35,7 +38,7 @@ export async function buildClient(): Promise<Client> {
   });
 
   client.on('message', async (msg): Promise<void> => {
-
+    
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
