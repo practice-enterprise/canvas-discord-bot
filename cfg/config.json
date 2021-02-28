@@ -3,11 +3,6 @@
     "richpresence": {
       "interval": 60000,
       "statusType": 2,
-      "messages": [
-        "students",
-        "?help | ?stuvo",
-        "?help | ?pal"
-      ],
       "states": [
         {
           "status": "online",
