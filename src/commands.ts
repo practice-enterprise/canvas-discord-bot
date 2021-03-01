@@ -8,6 +8,8 @@ import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { CanvasService } from './services/canvas-service';
 import { WikiService } from './services/wiki-service';
+import { NotesService } from './services/notes-service';
+import { Notes } from './models/notes';
 
 export const commands: Command[] = [
   { // help
@@ -127,7 +129,7 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(message.content, guildConfig);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && message.guild?.id != undefined) {
-        await setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), message.guild?.id);
+        await setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), guildConfig);
         return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
       }
       //!notes #channel - get notes for a channel
@@ -138,13 +140,13 @@ export const commands: Command[] = [
       else if (tokenizer.tokens.length === 1) {
         return getNotes(message.channel.id.toString(), guildConfig);
       }
-      //!notes remove <number>
+      //!notes remove <channel> <number>
       else if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
         && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && message.guild?.id != undefined
       ) {
         //TODO permissions
         const noteNum: number = parseInt(tokenizer.tokens[3].content);
-        return delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), message.guild?.id);
+        return delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig);
       }
       //When incorrectly used (includes !notes help)
       else {
@@ -293,42 +295,65 @@ async function setPrefix(prefix: string, guildID: string): Promise<string> {
   return GuildService.update(config);
 }
 
-function getNotes(channelID: string, guildConfig: GuildConfig): Response {
-  let i = 0;
-
-  const embed: MessageEmbedOptions = {
-    title: 'Notes',
-    description: `Notes for channel <#${channelID}>:\n`
-      + guildConfig.notes[channelID]?.map((note: string) => ++i + ' • ' + note).join('\n'),
-    footer: { text: `For help: ${guildConfig.prefix}notes help` }
-  };
-
-  if (guildConfig.notes[channelID] === undefined || guildConfig.notes[channelID].length === 0) {
-    embed.description = 'No notes for this channel.';
+async function getNotes(channelID: string, guildConfig: GuildConfig): Promise<Response> {
+  const notes = await NotesService.get();
+  const guildNotes = notes.find(n => n._id === guildConfig._id);
+  
+  if ( guildNotes?._id === undefined || guildNotes.notes[channelID] === undefined || guildNotes.notes[channelID].length === 0) {
+    const embed: MessageEmbedOptions = {
+      title: 'Notes',
+      description: 'No notes for this channel.',
+      footer: { text: `For help: ${guildConfig.prefix}notes help` }
+    };
     return embed;
   }
   else {
+    let i = 0;
+    const embed: MessageEmbedOptions = {
+      title: 'Notes',
+      description: `Notes for channel <#${channelID}>:\n`
+        + guildNotes?.notes[channelID].map((note: string) => ++i + ' • ' + note).join('\n'),
+      footer: { text: `For help: ${guildConfig.prefix}notes help` }
+    };
     return embed;
   }
 }
 
-async function setNote(note: string, channelID: string, guildID: string): Promise<string> {
-  const config: GuildConfig = await GuildService.getForId(guildID);
-  if (config.notes[channelID] == null) {
-    config.notes[channelID] = [];
+async function setNote(note: string, channelID: string, guildConfig: GuildConfig): Promise<void> {
+  const notes = await NotesService.get();
+  const guildNotes = notes.find(n => n._id === guildConfig._id);
+
+  // When a server/guild doesnt have notes at all yet
+  if (guildNotes === undefined) {
+    const newNotes: Notes = {
+      _id: guildConfig._id,
+      notes: {
+        channelID: [note]
+      }
+    };
+    console.log(newNotes);
+    return await NotesService.create(newNotes);
   }
 
-  config.notes[channelID].push(note);
-  console.log(config.notes[channelID]);
-  return GuildService.update(config);
+  // When a server has notes
+  if (guildNotes.notes[channelID] === undefined) {
+    guildNotes.notes[channelID] = []; // create empty array if channel doesnt have notes yet
+  }
+
+  guildNotes.notes[channelID].push(note);
+  console.log(guildNotes);
+  return await NotesService.update(guildNotes);
 }
 
-async function delNote(noteNum: number, channelID: string, guildID: string): Promise<Response> {
-  const config: GuildConfig = await GuildService.getForId(guildID);
-  if (!isNaN(noteNum) && noteNum > 0 && noteNum <= config.notes[channelID].length) {
-    config.notes[channelID].splice(noteNum - 1, 1);
-    await GuildService.update(config);
-    return 'Removed note';
+async function delNote(noteNum: number, channelID: string, guildConfig: GuildConfig): Promise<Response> {
+  const notes = await NotesService.get();
+  const guildNotes = notes.find(n => n._id === guildConfig._id);
+
+  // Checks if notes exist, checks if noteNum is in range
+  if ( guildNotes !== undefined && !isNaN(noteNum) && noteNum > 0 && noteNum <= guildNotes.notes[channelID].length) {
+    guildNotes.notes[channelID].splice(noteNum - 1, 1);
+    await NotesService.update(guildNotes);
+    return `Removed note \`${noteNum}\``;
   } else {
     return 'Failed to remove note, validate command';
   }
