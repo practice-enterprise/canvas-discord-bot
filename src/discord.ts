@@ -71,6 +71,10 @@ export async function buildClient(): Promise<Client> {
       msg.channel.send(guildConfig.info.reply.map(c => `\`${guildConfig.prefix}${guildConfig.info.name} ${c.name}\`: ${c.description}`).join('\n'));
     }
 
+    if (!tokenizer.command()) {
+      return; // not a valid command
+    }
+
     for (const command of commands.concat(guildConfig.commands)) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
@@ -83,6 +87,7 @@ export async function buildClient(): Promise<Client> {
         return;
       } else {
         msg.channel.send(new MessageEmbed(response));
+        return;
       }
     }
   });

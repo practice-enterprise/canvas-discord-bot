@@ -7,6 +7,7 @@ import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { CanvasService } from './services/canvas-service';
+import { WikiService } from './services/wiki-service';
 
 export const commands: Command[] = [
   { // help
@@ -188,6 +189,34 @@ export const commands: Command[] = [
       return 'this was not a valid date/time format';
     }
   },
+  { // wiki
+    name: 'wiki',
+    description: 'Search on the Thomas More wiki',
+    aliases: [],
+    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+      const tokenizer = new Tokenizer(message.content, guildConfig);
+
+      const search = tokenizer.body();
+      if(search.length == 0)
+        return 'https://tmwiki.be';
+
+      const wikiContent = await WikiService.wiki(search);
+      wikiContent.data.pages.search.results
+        .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
+  
+      const embed = new MessageEmbed({
+        'title': `Wiki results for '${search}'`,
+        'url': 'https://tmwiki.be',
+        'description': wikiContent.data.pages.search.results
+          .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path}) \`${p.path}\`
+          Desc: ${p.description}`).join('\n\n')
+      });
+
+      if(embed.length >= 2000)
+        return '`Message too long.`';
+      return embed;
+    }
+  },
   // # Canvas Commands
   //TODO: Error handling for when https requests fail and invalid tokens.
   { // courses
@@ -232,14 +261,15 @@ export const commands: Command[] = [
       const token = process.env.CANVAS_TOKEN;
       if (token != undefined && token.length > 1) {
         const tokenizer = new Tokenizer(message.content, guildConfig);
-        const courseID = Number.parseInt(tokenizer.tokens[1].content);
 
         if (tokenizer.tokens[1] != undefined && tokenizer.tokens[2] != undefined) {
+          const courseID = Number.parseInt(tokenizer.tokens[1].content);
           const moduleID = Number.parseInt(tokenizer.tokens[2].content);
 
           return getModulesResponse(token, courseID, moduleID); //All items in module
         }
         else if (tokenizer.tokens[1] != undefined) {
+          const courseID = Number.parseInt(tokenizer.tokens[1].content);
           return getModulesResponse(token, courseID); //All modules in course
         }
         else
