@@ -164,7 +164,7 @@ export const commands: Command[] = [
     async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
 
       const tokenizer = new Tokenizer(message.content, guildConfig);
-      const dateFormates: string[] = ['d/m/y h:m', 'd.m.y h:m', 'd-m-y h:m'];
+      const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
         let time;
