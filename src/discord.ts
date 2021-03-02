@@ -1,9 +1,8 @@
 import { Client, ClientPresenceStatus, MessageEmbed } from 'discord.js';
-import * as data from '../cfg/config.json';
 import { commands } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
-//import { command } from './util/formatter';
+import { NotesService } from './services/notes-service';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -53,7 +52,6 @@ export async function buildClient(): Promise<Client> {
     if (!tokenizer.command()) {
       return; // not a valid command
     }
-
 
     //info command
     if (tokenizer.command() === guildConfig.info.name || guildConfig.info.aliases.includes(tokenizer.command()!)) {//check if command is of the info type
