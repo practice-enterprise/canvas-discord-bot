@@ -62,7 +62,7 @@ export async function buildClient(): Promise<Client> {
           const response = typeof info.response === 'function' ? await info.response(msg, guildConfig) : info.response;
           if (typeof response === 'string') {
             msg.channel.send(response);
-          } else {
+          } else if (typeof response !== 'undefined') {
             msg.channel.send(new MessageEmbed(response));
           }
           return;
@@ -80,16 +80,18 @@ export async function buildClient(): Promise<Client> {
         continue;
       }
 
+
       // eslint-disable-next-line no-await-in-loop
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;
-      } else {
+      } else if (typeof response !== 'undefined') {
         msg.channel.send(new MessageEmbed(response));
         return;
       }
     }
+    return;
   });
 
   await client.login(process.env.DISCORD_TOKEN);
