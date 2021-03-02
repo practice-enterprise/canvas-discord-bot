@@ -15,14 +15,14 @@ export const commands: Command[] = [
     name: 'help',
     description: 'that\'s this command.',
     aliases: ['how', 'wtf', 'man', 'get-help'],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       const help: MessageEmbedOptions = {
         'title': 'Help is on the way!',
         'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`' + guildConfig.prefix + guildConfig.info.name + '`' + ': ' + guildConfig.info.description,
         'color': '43B581',
         'footer': { text: 'Some commands support putting \'help\' behind it.' }
       };
-      
+
       return help;
     }
   },
@@ -30,8 +30,8 @@ export const commands: Command[] = [
     name: 'ping',
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      //const delay = new Date().getMilliseconds() - new Date(message.createdTimestamp).getMilliseconds();
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      //const delay = new Date().getMilliseconds() - new Date(msg.createdTimestamp).getMilliseconds();
       return new Formatter().text('Pong! :ping_pong:')
         //.command(delay+' ms to receive.')
         .build();
@@ -41,8 +41,8 @@ export const commands: Command[] = [
     name: 'roll',
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
       if (match) {
@@ -66,8 +66,8 @@ export const commands: Command[] = [
     name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
         .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
@@ -90,15 +90,15 @@ export const commands: Command[] = [
     name: 'prefix',
     description: 'Set prefix for guild',
     aliases: ['pf'],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
 
-      if (!message.member?.hasPermission('ADMINISTRATOR')) {
+      if (!msg.member?.hasPermission('ADMINISTRATOR')) {
         return 'No admin permissions!';
       }
 
-      if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && message.guild?.id != undefined) {
-        setPrefix(tokenizer.tokens[1].content, message.guild?.id);
+      if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && msg.guild?.id != undefined) {
+        setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
         console.log('yee');
         return 'Prefix update with: ' + tokenizer.tokens[1].content;
       }
@@ -111,8 +111,8 @@ export const commands: Command[] = [
     name: 'default',
     description: 'sets the default channel',
     aliases: [],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
       if (tokenizer.tokens[1]?.type === 'channel') {
         return tokenizer.tokens[1].content; //TODO stash in db of server
       } else {
@@ -124,8 +124,8 @@ export const commands: Command[] = [
     name: 'notes',
     description: 'set or get notes for channels',
     aliases: ['note'],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && message.guild?.id != undefined) {
         await NotesService.setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), guildConfig);
@@ -141,7 +141,7 @@ export const commands: Command[] = [
       }
       //!notes remove <channel> <number>
       else if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
-        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && message.guild?.id != undefined
+        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && msg.guild?.id != undefined
       ) {
         //TODO permissions
         const noteNum: number = parseInt(tokenizer.tokens[3].content);
@@ -163,9 +163,9 @@ export const commands: Command[] = [
     name: 'reminder',
     description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
 
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
@@ -180,8 +180,8 @@ export const commands: Command[] = [
             content: tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '),
             date: time.toString(),
             target: {
-              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || message.channel.id,
-              guild: message.guild!.id
+              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
+              guild: msg.guild!.id
             },
           });
 
@@ -195,17 +195,17 @@ export const commands: Command[] = [
     name: 'wiki',
     description: 'Search on the Thomas More wiki',
     aliases: [],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
-      const tokenizer = new Tokenizer(message.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
 
       const search = tokenizer.body();
-      if(search.length == 0)
+      if (search.length == 0)
         return 'https://tmwiki.be';
 
       const wikiContent = await WikiService.wiki(search);
       wikiContent.data.pages.search.results
         .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
-  
+
       const embed = new MessageEmbed({
         'title': `Wiki results for '${search}'`,
         'url': 'https://tmwiki.be',
@@ -214,7 +214,7 @@ export const commands: Command[] = [
           Desc: ${p.description}`).join('\n\n')
       });
 
-      if(embed.length >= 2000)
+      if (embed.length >= 2000)
         return '`Message too long.`';
       return embed;
     }
@@ -225,7 +225,7 @@ export const commands: Command[] = [
     name: 'courses',
     description: 'Lists your courses',
     aliases: [],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       // TODO: replace with user tokens!
       const token = process.env.CANVAS_TOKEN;
 
@@ -258,11 +258,11 @@ export const commands: Command[] = [
     name: 'modules',
     description: 'Lists all modules of a course or all items in a module',
     aliases: ['module'],
-    async response(message: Message, guildConfig: GuildConfig): Promise<Response> {
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       // TODO: replace with user tokens!
       const token = process.env.CANVAS_TOKEN;
       if (token != undefined && token.length > 1) {
-        const tokenizer = new Tokenizer(message.content, guildConfig);
+        const tokenizer = new Tokenizer(msg.content, guildConfig);
 
         if (tokenizer.tokens[1] != undefined && tokenizer.tokens[2] != undefined) {
           const courseID = Number.parseInt(tokenizer.tokens[1].content);
@@ -303,10 +303,10 @@ async function setPrefix(prefix: string, guildID: string): Promise<string> {
 async function getModulesResponse(token: string, courseNr: number, moduleNr?: number): Promise<Response> {
   const courses = await CanvasService.getCourses(token);
 
-  if(courseNr < 1 || courseNr > courses.length)
+  if (courseNr < 1 || courseNr > courses.length)
     return '`Course number not in range.`';
-  const courseID = courses[courseNr-1].id;
-  const courseName = courses[courseNr-1].name;
+  const courseID = courses[courseNr - 1].id;
+  const courseName = courses[courseNr - 1].name;
 
   let count = 1;
 
@@ -316,17 +316,17 @@ async function getModulesResponse(token: string, courseNr: number, moduleNr?: nu
     const embed: MessageEmbed = new MessageEmbed({
       'title': `\`${courseNr}.\` Modules for ${courseName}`,
       'description': '`Nr` Module name\n' +
-        modules.map(m => `\`${count++}.\` [${m.name}](${process.env.CANVAS_URL+`/courses/${courseID}/modules`})`).join('\n'),
+        modules.map(m => `\`${count++}.\` [${m.name}](${process.env.CANVAS_URL + `/courses/${courseID}/modules`})`).join('\n'),
       'color': 'EF4A25', //Canvas color pallete
       'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
-      'footer': { text: 'Use !modules '+courseNr.toString()+' <Nr> for items in a module'}
+      'footer': { text: 'Use !modules ' + courseNr.toString() + ' <Nr> for items in a module' }
     });
     return embed;
   }
   else { //Items of moduleID
     const modules = await CanvasService.getModules(token, courseID);
 
-    if(moduleNr < 1 || moduleNr > modules.length)
+    if (moduleNr < 1 || moduleNr > modules.length)
       return '`Module number not in range.`';
     const moduleByID = modules[moduleNr - 1];
 
