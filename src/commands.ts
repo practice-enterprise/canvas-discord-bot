@@ -31,10 +31,13 @@ export const commands: Command[] = [
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      //const delay = new Date().getMilliseconds() - new Date(msg.createdTimestamp).getMilliseconds();
-      return new Formatter().text('Pong! :ping_pong:')
-        //.command(delay+' ms to receive.')
-        .build();
+      msg.channel.send('Pong!')
+        .then(m => 
+          m.edit('Pong! :ping_pong:')
+            .then(m => {
+              if (m.editedTimestamp !== null)
+                m.edit(`Pong! :ping_pong: \`${m.editedTimestamp - msg.createdTimestamp} ms | API: ${msg.client.ws.ping} ms\``);
+            }));
     }
   },
   { // roll
