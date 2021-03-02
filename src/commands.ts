@@ -127,7 +127,7 @@ export const commands: Command[] = [
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig);
       //!notes #channel adds this note
-      if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && message.guild?.id != undefined) {
+      if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && msg.guild?.id != undefined) {
         await NotesService.setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), guildConfig);
         return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
       }
@@ -137,7 +137,7 @@ export const commands: Command[] = [
       }
       //!notes - get notes in channel
       else if (tokenizer.tokens.length === 1) {
-        return NotesService.getByChannel(message.channel.id.toString(), guildConfig);
+        return NotesService.getByChannel(msg.channel.id.toString(), guildConfig);
       }
       //!notes remove <channel> <number>
       else if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
