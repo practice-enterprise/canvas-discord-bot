@@ -6,10 +6,9 @@ import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
-import { CanvasService } from './services/canvas-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
-import { CanvasCourse, CanvasModule } from './models/canvas';
+import { CoursesMenu } from './util/canvas-courses-menu';
 
 export const commands: Command[] = [
   { // help
@@ -80,14 +79,14 @@ export const commands: Command[] = [
         const oldPage = page;
 
         switch (reaction.emoji.name) {
-          case reactions[0]:
-            if (page > 0)
-              page--;
-            break;
-          case reactions[1]:
-            if (page < pages.length - 1)
-              page++;
-            break;
+        case reactions[0]:
+          if (page > 0)
+            page--;
+          break;
+        case reactions[1]:
+          if (page < pages.length - 1)
+            page++;
+          break;
         }
 
         if (oldPage !== page) { //Only edit if it's a different page.
@@ -377,10 +376,11 @@ export const commands: Command[] = [
 
       if (token != undefined && token.length > 1) {
         const botmsg = await msg.channel.send(new MessageEmbed({ title: 'Loading courses...' }));
-        coursesMenu(botmsg, msg, token);
+        
+        CoursesMenu.coursesMenu(botmsg, msg, token);
+        
+        //coursesMenu(botmsg, msg, token);
       }
-
-
       else {
         const embed = new MessageEmbed({
           'title': 'Undefined or incorrect token.',
@@ -397,338 +397,4 @@ async function setPrefix(prefix: string, guildID: string): Promise<string> {
   const config = await GuildService.getForId(guildID);
   config.prefix = prefix;
   return GuildService.update(config);
-}
-
-async function quickAddReactions(msg: Message, client: Client, emotes: string[], delay?: number): Promise<void> {
-  try {
-    /*
-    Temporarily changes the rate limit -> add emotes quickly.
-    10 ms is extremely low, reset is necessary. (Default is 500 ms)
-    */
-    if (delay === undefined)
-      delay = 10;
-
-    const TimeOffset = msg.client.options.restTimeOffset;
-    client.options.restTimeOffset = delay;
-
-    // Adding emotes
-    for (const e of emotes) {
-      await msg.react(e);
-    }
-
-    // Resetting to default time offset for ratelimit
-    client.options.restTimeOffset = TimeOffset;
-  } catch (err) {
-    console.error('One or more reactions failed.');
-  }
-}
-
-// Canvas functions
-/**Returns all modules of a course (or items of module).
- * @param moduleNr when passed returns all items of said module.
- * */
-async function getModulesResponse(token: string, courseNr: number, moduleNr?: number): Promise<MessageEmbed | string> {
-  const courses = await CanvasService.getCourses(token);
-
-  if (courseNr < 1 || courseNr > courses.length)
-    return '`Course number not in range.`';
-  const courseID = courses[courseNr - 1].id;
-  const courseName = courses[courseNr - 1].name;
-
-  let count = 1;
-
-  if (typeof moduleNr === 'undefined') { //All modules of course
-    const modules = await CanvasService.getModules(token, courseID);
-
-    const embed: MessageEmbed = new MessageEmbed({
-      'title': `\`${courseNr}.\` Modules for ${courseName}`,
-      'description': '`Nr` Module name\n' +
-        modules.map(m => `\`${count++}.\` [${m.name}](${process.env.CANVAS_URL + `/courses/${courseID}/modules`})`).join('\n'),
-      'color': 'EF4A25', //Canvas color pallete
-      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
-      'footer': { text: 'Use !modules ' + courseNr.toString() + ' <Nr> for items in a module' }
-    });
-    return embed;
-  }
-  else { //Items of moduleID
-    const modules = await CanvasService.getModules(token, courseID);
-    console.log(modules[1].items[0].html_url);
-    if (moduleNr < 1 || moduleNr > modules.length)
-      return '`Module number not in range.`';
-    const moduleByID = modules[moduleNr - 1];
-
-    const items = await CanvasService.getModuleItems(token, moduleByID.items_url);
-
-    const embed: MessageEmbed = new MessageEmbed({
-      'title': `\`${moduleNr}.\` Module ` + moduleByID.name,
-      'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
-      'color': 'EF4A25', //Canvas color pallete
-      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
-    });
-
-    return embed;
-  }
-}
-
-function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): MessageEmbed {
-  const embed: MessageEmbed = new MessageEmbed({
-    'title': 'All your courses!',
-    'description': '`Nr` Course name',
-    'color': 'EF4A25', //Canvas color pallete
-    'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
-    'footer': { text: `Page ${page + 1}` }
-  });
-
-  let count = 0;
-  for (let i = page * perPage; i < (page + 1) * perPage && i < courses.length; i++) {
-    embed.setDescription(
-      embed.description + `\n\`${++count}.\` [${courses[i].name}](${process.env.CANVAS_URL}/courses/${courses[i].id}) `
-    );
-  }
-  embed.footer = { text: `Page ${page + 1}` };
-
-  return embed;
-}
-
-async function getModulesPage(token: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed> {
-  const courseID = courses[courseNr - 1].id;
-  const courseName = courses[courseNr - 1].name;
-
-  let count = 0;
-
-  if (typeof moduleNr === 'undefined') { //All modules of course
-    const embed: MessageEmbed = new MessageEmbed({
-      'title': `Modules for ${courseName}`,
-      'description': '`Nr` Module name',
-      'color': 'EF4A25', //Canvas color pallete
-      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
-      'footer': { text: 'Use !modules ' + courseNr.toString() + ' <Nr> for items in a module' }
-    });
-
-    for (let i = page * perPage; i < (page + 1) * perPage && i < modules.length; i++) {
-      embed.setDescription(
-        embed.description + `\n\`${++count}.\` [${modules[i].name}](${process.env.CANVAS_URL}/courses/${courseID}/modules)`
-      );
-    }
-    embed.footer = { text: `Page ${page + 1}` };
-
-    return embed;
-  }
-  else {
-    const moduleByID = modules[moduleNr - 1];
-
-    const items = await CanvasService.getModuleItems(token, moduleByID.items_url);
-
-    const embed: MessageEmbed = new MessageEmbed({
-      'title': 'Module ' + moduleByID.name,
-      'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
-      'color': 'EF4A25', //Canvas color pallete
-      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
-    });
-
-    return embed;
-  }
-}
-
-async function coursesMenu(botmsg: Message, msg: Message, token: string) {
-  // Declarations
-  let page = 0;
-  const perPage = 5;
-
-  let courseNr;
-
-  const eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
-  const ePrev = '◀';
-  const eNext = '▶';
-  const eBack = '↩';
-
-  const courseReactions = [ePrev].concat(eNumbers).concat(eNext);
-
-  const courses = await CanvasService.getCourses(token);
-  
-  const time = 60000; //=1 minute
-  const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-    return eNumbers.concat(ePrev, eNext).includes(reaction.emoji.name) && user.id === msg.author.id;
-  };
-  
-  // Logic
-  botmsg.edit(''); // Clear collector end message
-  botmsg.reactions.cache.get(eBack)?.remove().catch(err => console.error('Failed to remove emote: ', err));
-  botmsg.edit(getCoursePage(courses, page, perPage));
-  quickAddReactions(botmsg, botmsg.client, courseReactions);
-
-  const collector = botmsg.createReactionCollector(filter, { time });
-
-  collector.on('collect', async (reaction, user) => {
-    collector.resetTimer(); //Reset timer everytime a reaction is used.
-
-    reaction.users.remove(user.id);
-    const oldPage = page;
-
-    console.log('course: ', reaction.emoji.name);
-
-    if (eNumbers.includes(reaction.emoji.name)) {
-      courseNr = perPage * page + (eNumbers.indexOf(reaction.emoji.name) + 1);
-      if (courseNr <= courses.length) {
-        collector.stop();
-        console.log('CourseNr: ', courseNr);
-        modulesMenu(botmsg, msg, token, courseNr);
-      }
-    }
-
-    switch (reaction.emoji.name) {
-    case ePrev:
-      if (page > 0)
-        page--;
-      break;
-    case eNext:
-      if (page < (courses.length / perPage) - 1)
-        page++;
-      break;
-    }
-
-    if (oldPage !== page) { //Only edit if it's a different page.
-
-      botmsg.edit(getCoursePage(courses, page, perPage));
-    }
-  });
-
-  collector.on('end', (reaction, user) => {
-    botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
-  });
-}
-
-async function modulesMenu(botmsg: Message, msg: Message, token: string, courseNr: number) {
-  // Declarations
-  let page = 0;
-  const perPage = 5;
-
-  let moduleNr;
-
-  const eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
-  const ePrev = '◀';
-  const eNext = '▶';
-  const eBack = '↩';
-
-  const moduleReactions = [ePrev].concat(eNumbers).concat(eNext).concat(eBack);
-
-  const courses = await CanvasService.getCourses(token);
-  const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
-
-  const time = 60000; //=1 minute
-  const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-    return moduleReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
-  };
-
-  // Logic
-  botmsg.edit(''); // Clear collector end message
-  botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
-  //quickAddReactions(botmsg, botmsg.client, moduleReactions);
-  botmsg.react(eBack);
-
-  const collector = botmsg.createReactionCollector(filter, { time });
-
-  collector.on('collect', async (reaction, user) => {
-    console.log('module: ', reaction.emoji.name);
-
-    collector.resetTimer(); //Reset timer everytime a reaction is used.
-
-    reaction.users.remove(user.id);
-    const oldPage = page;
-
-    console.log(reaction.emoji.name);
-
-    if (eNumbers.includes(reaction.emoji.name)) {
-      moduleNr = perPage * page + (eNumbers.indexOf(reaction.emoji.name) + 1);
-      if (moduleNr <= modules.length) {
-        collector.stop();
-        itemMenu(botmsg, msg, token, courseNr, moduleNr);
-      }
-    }
-
-    switch (reaction.emoji.name) {
-    case ePrev:
-      if (page > 0)
-        page--;
-      break;
-    case eNext:
-      if (page < (courses.length / perPage) - 1)
-        page++;
-      break;
-    case eBack:
-      collector.stop();
-      coursesMenu(botmsg, msg, token);
-    }
-
-    if (oldPage !== page) { //Only edit if it's a different page.
-      botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
-    }
-  });
-
-  collector.on('end', (reaction, user) => {
-    botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
-  });
-}
-
-async function itemMenu(botmsg: Message, msg: Message, token: string, courseNr: number, mooduleNr: number) {
-  // Declarations
-  let page = 0;
-  const perPage = 5;
-
-  const ePrev = '◀';
-  const eNext = '▶';
-  const eBack = '↩';
-
-  const itemReactions = [ePrev].concat(eNext).concat(eBack);
-
-  const courses = await CanvasService.getCourses(token);
-  const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
-
-  const time = 60000; //=1 minute
-  const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-    return itemReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
-  };
-
-  // Logic
-  botmsg.edit(''); // Clear collector end message
-  botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
-  //quickAddReactions(botmsg, botmsg.client, itemReactions);
-  botmsg.react(eBack);
-
-  const collector = botmsg.createReactionCollector(filter, { time });
-
-  collector.on('collect', async (reaction, user) => {
-    console.log('module: ', reaction.emoji.name);
-
-    collector.resetTimer(); //Reset timer everytime a reaction is used.
-
-    reaction.users.remove(user.id);
-    const oldPage = page;
-
-    console.log(reaction.emoji.name);
-
-    switch (reaction.emoji.name) {
-    case ePrev:
-      if (page > 0)
-        page--;
-      break;
-    case eNext:
-      if (page < (courses.length / perPage) - 1)
-        page++;
-      break;
-    case eBack:
-      collector.stop();
-      modulesMenu(botmsg, msg, token, courseNr);
-    }
-
-    console.log(page);
-
-    if (oldPage !== page) { //Only edit if it's a different page.
-      botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
-    }
-  });
-
-  collector.on('end', (reaction, user) => {
-    botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
-  });
 }
