@@ -176,12 +176,11 @@ export const commands: Command[] = [
       }
 
       if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && msg.guild?.id != undefined) {
-        setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
-        console.log('yee');
+        GuildService.setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
         return 'Prefix update with: ' + tokenizer.tokens[1].content;
       }
       else {
-        return 'Use like `prefix newPrefix`';
+        return 'Use like `prefix <new prefix>`';
       }
     }
   },
@@ -392,9 +391,3 @@ export const commands: Command[] = [
     }
   },
 ];
-
-async function setPrefix(prefix: string, guildID: string): Promise<string> {
-  const config = await GuildService.getForId(guildID);
-  config.prefix = prefix;
-  return GuildService.update(config);
-}
