@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbed, MessageEmbedOptions, ReactionCollector } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
@@ -24,6 +24,85 @@ export const commands: Command[] = [
       };
 
       return help;
+    }
+  },
+  { // setup
+    name: 'setup',
+    description: 'Quick setup and introduction for the bot',
+    aliases: [],
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const time = 300000; //300000 = 5 minutes
+      const eNext = '⏭';
+      const ePrev = '⏮';
+      const reactions = [ePrev, eNext];
+
+      const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
+        return reactions.includes(reaction.emoji.name) && user.id === msg.author.id;
+      };
+
+      if (!(msg.member?.hasPermission('ADMINISTRATOR')))
+        msg.channel.send('You need to be an admin for this command.');
+
+      let page = 0;
+      const pages: MessageEmbedOptions[] = [
+        {
+          'title': 'Setup',
+          'description': `Intro :)\nUse ${ePrev} and ${eNext} to switch pages.`,
+          'color': '7289DA',
+        },
+        {
+          'title': 'Setup',
+          'description': 'The first page!',
+          'color': '7289DA',
+          
+        },
+        {
+          'title': 'Setup',
+          'description': 'Another page',
+          'color': '7289DA',
+        },
+      ];
+
+      pages[page].footer = { text: `Page ${page + 1}` };
+
+      msg.channel.send(new MessageEmbed(pages[0]))
+        .then(msg => msg.react(reactions[0]))
+        .then(m => m.message.react(reactions[1]))
+        .then(m => {
+          const collector = new ReactionCollector(m.message, filter , { time });
+
+          collector.on('collect', (reaction, user) => {
+            reaction.users.remove(user.id);
+            console.log(reaction.emoji.name);
+
+            const oldPage = page;
+
+            switch (reaction.emoji.name) {
+            case reactions[0]:
+              if(page > 0)
+                page--;
+              break;
+            case reactions[1]:
+              if(page < pages.length - 1)
+                page++;
+              break;
+            default:
+              break;
+            }
+
+            if (oldPage !== page) //Only edit if it's a different page.
+            {
+              pages[page].footer = { text: `Page ${page + 1}` };
+              m.message.edit(new MessageEmbed(pages[page]));
+            }
+
+            console.log(page);
+          });
+
+          collector.on('end', (reaction, user) => {
+            m.message.edit(':x:`Session has ended.`\nEnter the command again for a new session.');
+          });
+        });
     }
   },
   { // ping
