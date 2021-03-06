@@ -9,66 +9,8 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
-import { inspect } from 'util';
 
 export const commands: Command[] = [
-  { // eval
-    name: 'eval',
-    description: 'Evaluates and returns result.',
-    aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const evalRole = '817824554616487946';
-
-      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
-      if (!(msg.member?.roles.cache.has(evalRole))){
-        return 'You need to have the EVAL role.';
-      }
-
-      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
-        return 'You need to be an admin for this command.';
-      }
-
-      const content = new Tokenizer(msg.content, guildConfig).body();
-
-      try {
-        const evalres = await eval(content);
-
-        let desc = new Formatter()
-          .bold('Eval content:', true)
-          .codeblock('ts', content)
-          .bold('Result/output:', true)
-          .codeblock('ts', inspect(evalres))
-          .build();
-
-        // Max msg length is 2048, 1500 for readability.
-        if (desc.length > 1500) {
-          desc = desc.substr(0, 1500);
-          desc += '\n...\n```';
-        }
-
-        const embed: MessageEmbedOptions = {
-          'title': 'Evaluation',
-          'description': desc,
-          'color': '43B581',
-        };
-        return embed;
-      }
-      catch (err) {
-        console.error(err);
-        const embed: MessageEmbedOptions = {
-          title: 'Evaluation',
-          description: new Formatter()
-            .bold('Eval content:', true)
-            .codeblock('ts', content)
-            .bold('Result/output:', true)
-            .codeblock('ts', err)
-            .build(),
-          color: 'ff0000'
-        };
-        return embed;
-      }
-    }
-  },
   { // help
     name: 'help',
     description: 'that\'s this command.',

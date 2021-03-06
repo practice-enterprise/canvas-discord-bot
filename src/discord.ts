@@ -1,8 +1,9 @@
-import { Client, ClientPresenceStatus, MessageEmbed } from 'discord.js';
+import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { inspect } from 'util';
 import { commands } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
-import { NotesService } from './services/notes-service';
+import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(): Promise<Client> {
@@ -37,7 +38,6 @@ export async function buildClient(): Promise<Client> {
   });
 
   client.on('message', async (msg): Promise<void> => {
-    
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
@@ -52,6 +52,63 @@ export async function buildClient(): Promise<Client> {
     if (!tokenizer.command()) {
       return; // not a valid command
     }
+
+    if (tokenizer.command() === 'eval') {
+      const evalRole = '817824554616487946';
+
+      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
+      if (!(msg.member?.roles.cache.has(evalRole))){
+        msg.channel.send('You need to have the EVAL role.');
+        return;
+      }
+
+      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
+        msg.channel.send('You need to be an admin for this command.');
+        return;
+      }
+
+      const content = new Tokenizer(msg.content, guildConfig).body();
+
+      try {
+        const evalres = await eval(content);
+
+        let desc = new Formatter()
+          .bold('Eval content:', true)
+          .codeblock('ts', content)
+          .bold('Result/output:', true)
+          .codeblock('ts', inspect(evalres))
+          .build();
+
+        // Max msg length is 2048, 1500 for readability.
+        if (desc.length > 1500) {
+          desc = desc.substr(0, 1500);
+          desc += '\n...\n```';
+        }
+
+        const embed: MessageEmbedOptions = {
+          'title': 'Evaluation',
+          'description': desc,
+          'color': '43B581',
+        };
+        msg.channel.send(new MessageEmbed(embed));
+      }
+      catch (err) {
+        console.error(err);
+        const embed: MessageEmbedOptions = {
+          title: 'Evaluation',
+          description: new Formatter()
+            .bold('Eval content:', true)
+            .codeblock('ts', content)
+            .bold('Result/output:', true)
+            .codeblock('ts', err)
+            .build(),
+          color: 'ff0000'
+        };
+        msg.channel.send(new MessageEmbed(embed));
+      }
+      return;
+    }
+
 
     //info command
     if (tokenizer.command() === guildConfig.info.name || guildConfig.info.aliases.includes(tokenizer.command()!)) {//check if command is of the info type
