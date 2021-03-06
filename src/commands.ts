@@ -14,17 +14,19 @@ import { inspect } from 'util';
 export const commands: Command[] = [
   { // eval
     name: 'eval',
-    description: 'Evaluates and returns.',
+    description: 'Evaluates and returns result.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       const evalRole = '817824554616487946';
-      
-      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
-      if (!(msg.member?.roles.cache.has(evalRole)))
-        return 'You need to have the EVAL role.';
 
-      if (!(msg.member?.hasPermission('ADMINISTRATOR')))
+      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
+      if (!(msg.member?.roles.cache.has(evalRole))){
+        return 'You need to have the EVAL role.';
+      }
+
+      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
         return 'You need to be an admin for this command.';
+      }
 
       const content = new Tokenizer(msg.content, guildConfig).body();
 
@@ -39,18 +41,16 @@ export const commands: Command[] = [
           .build();
 
         // Max msg length is 2048, 1500 for readability.
-        if(desc.length > 1500) {
+        if (desc.length > 1500) {
           desc = desc.substr(0, 1500);
           desc += '\n...\n```';
         }
 
         const embed: MessageEmbedOptions = {
           'title': 'Evaluation',
-          'description':  desc,
+          'description': desc,
           'color': '43B581',
         };
-
-        console.log('emded: ', embed);
         return embed;
       }
       catch (err) {
@@ -365,9 +365,9 @@ export const commands: Command[] = [
 
       if (token != undefined && token.length > 1) {
         const botmsg = await msg.channel.send(new MessageEmbed({ title: 'Loading courses...' }));
-        
+
         CoursesMenu.coursesMenu(botmsg, msg, token);
-        
+
         //coursesMenu(botmsg, msg, token);
       }
       else {
