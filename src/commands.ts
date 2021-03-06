@@ -31,14 +31,22 @@ export const commands: Command[] = [
       try {
         const evalres = await eval(content);
 
+        let desc = new Formatter()
+          .bold('Eval content:', true)
+          .codeblock('ts', content)
+          .bold('Result/output:', true)
+          .codeblock('ts', inspect(evalres))
+          .build();
+
+        // Max msg length is 2048, 1500 for readability.
+        if(desc.length > 1500) {
+          desc = desc.substr(0, 1500);
+          desc += '\n...\n```';
+        }
+
         const embed: MessageEmbedOptions = {
           'title': 'Evaluation',
-          'description':  new Formatter()
-            .bold('Eval content:', true)
-            .codeblock('ts', content)
-            .bold('Result/output:', true)
-            .codeblock('ts', inspect(evalres))
-            .build(),
+          'description':  desc,
           'color': '43B581',
         };
 
