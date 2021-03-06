@@ -1,4 +1,4 @@
-import { Client, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
@@ -9,8 +9,58 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
+import { inspect } from 'util';
 
 export const commands: Command[] = [
+  { // eval
+    name: 'eval',
+    description: 'Evaluates and returns.',
+    aliases: [],
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const evalRole = '817824554616487946';
+      
+      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
+      if (!(msg.member?.roles.cache.has(evalRole)))
+        msg.channel.send('You need to have the EVAL role.');
+
+      if (!(msg.member?.hasPermission('ADMINISTRATOR')))
+        msg.channel.send('You need to be an admin for this command.');
+
+      const content = new Tokenizer(msg.content, guildConfig).body();
+
+      try {
+        const evalres = await eval(content);
+
+        const embed: MessageEmbedOptions = {
+          'title': 'Evaluation',
+          'description':  new Formatter()
+            .bold('Eval content:', true)
+            .codeblock('ts', content)
+            .bold('Result/output:', true)
+            .codeblock('ts', inspect(evalres))
+            .build(),
+          'color': '43B581',
+        };
+
+        console.log('emded: ', embed);
+        return embed;
+      }
+      catch (err) {
+        console.error(err);
+        const embed: MessageEmbedOptions = {
+          title: 'Evaluation',
+          description: new Formatter()
+            .bold('Eval content:', true)
+            .codeblock('ts', content)
+            .bold('Result/output:', true)
+            .codeblock('ts', err)
+            .build(),
+          color: 'ff0000'
+        };
+        return embed;
+      }
+    }
+  },
   { // help
     name: 'help',
     description: 'that\'s this command.',
@@ -296,74 +346,6 @@ export const commands: Command[] = [
       return embed;
     }
   },
-  // # Canvas Commands
-  //TODO: Error handling for when https requests fail and invalid tokens.
-  // { // courses
-  //   name: 'allcourses',
-  //   description: 'Lists your courses',
-  //   aliases: [],
-  //   async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-  //     // TODO: replace with user tokens!
-  //     const token = process.env.CANVAS_TOKEN;
-
-  //     if (token != undefined && token.length > 1) {
-  //       const courses = await CanvasService.getCourses(token);
-  //       //TODO: error handling (wrong/expired token etc.)
-  //       let count = 1;
-  //       const embed: MessageEmbed = new MessageEmbed({
-  //         'title': 'All your courses!',
-  //         'description': '`Nr` Course name\n' +
-  //           courses.map(c => `\`${count++}.\` [${c.name}](${process.env.CANVAS_URL}/courses/${c.id}) `).join('\n'),
-  //         'color': 'EF4A25', //Canvas color pallete
-  //         'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
-  //         'footer': { 'text': 'Use !modules <Nr> for modules in course' }
-  //       });
-
-  //       return embed;
-  //     }
-  //     else {
-  //       const embed = new MessageEmbed({
-  //         'title': 'Undefined or incorrect token.',
-  //         'description': 'Are you sure you logged in?\nURL TO AUTH',
-  //         'color': 'EF4A25', //Canvas color pallete
-  //       });
-  //       return embed;
-  //     }
-  //   }
-  // },
-  // { // modules
-  //   name: 'specificmodules',
-  //   description: 'Lists all modules of a course or all items in a module',
-  //   aliases: ['module'],
-  //   async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-  //     // TODO: replace with user tokens!
-  //     const token = process.env.CANVAS_TOKEN;
-  //     if (token != undefined && token.length > 1) {
-  //       const tokenizer = new Tokenizer(msg.content, guildConfig);
-
-  //       if (tokenizer.tokens[1] != undefined && tokenizer.tokens[2] != undefined) {
-  //         const courseID = Number.parseInt(tokenizer.tokens[1].content);
-  //         const moduleID = Number.parseInt(tokenizer.tokens[2].content);
-
-  //         return getModulesResponse(token, courseID, moduleID); //All items in module
-  //       }
-  //       else if (tokenizer.tokens[1] != undefined) {
-  //         const courseID = Number.parseInt(tokenizer.tokens[1].content);
-  //         return getModulesResponse(token, courseID); //All modules in course
-  //       }
-  //       else
-  //         return 'Incorrect arguments';
-  //     }
-  //     else {
-  //       const embed = new MessageEmbed({
-  //         'title': 'Undefined token.',
-  //         'description': 'Are you sure you logged in?\nURL TO AUTH',
-  //         'color': 'EF4A25', //Canvas color pallete
-  //       });
-  //       return embed;
-  //     }
-  //   }
-  // },
   { // courses menu command
     name: 'courses',
     description: 'Lists your courses, modules and items with controls',
