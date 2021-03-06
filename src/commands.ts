@@ -254,7 +254,7 @@ export const commands: Command[] = [
         }
         if (time && time.isValid) {
           ReminderService.create({
-            content: tokenizer.tokens.filter((t) => t.type === 'text').map((t) => t.content).join(' '),
+            content: tokenizer.body(3),
             date: time.toString(),
             target: {
               channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
