@@ -86,3 +86,44 @@ export interface CanvasModuleItem {
     content_details: {points_possible: string | number, due_at: Date | string, unlock_at: Date | string, lock_at: Date | string},
     published: boolean
 }
+
+/**https://canvas.instructure.com/doc/api/discussion_topics.html#DiscussionTopic
+ * `GET /api/v1/announcements` returns a discussion topic
+ * https://canvas.instructure.com/doc/api/courses.html
+ */
+export interface CanvasDiscussion {
+  id: string | number,
+  title: string,
+  message: string,
+  posted_at: Date | string,
+  context_code: string,
+  html_url: string,
+  last_reply_at: Date | string,
+  require_initial_post: boolean,
+  user_can_see_posts: boolean,
+  discussion_subentry_count: 0,
+  read_state: string,
+  unread_count: number | string,
+  subscribed: boolean,
+  subscription_hold: string,
+  assignment_id: number | string | null,
+  delayed_post_at: string | null,
+  published: boolean,
+  lock_at: Date | string | null,
+  locked: boolean,
+  pinned: boolean,
+  locked_for_user: boolean,
+  lock_info: string | null,
+  lock_explanation: string | null,
+  user_name: string,
+  group_topic_children: {id: number | string ,group_id: number | number}[],
+  root_topic_id: number | string | null,
+  podcast_url: string | null,
+  discussion_type: string,
+  group_category_id: string | number | null,
+  attachments: string[] | null,
+  permissions: {attach:boolean},
+  allow_rating: boolean,
+  only_graders_can_rate: boolean,
+  sort_by_rating: boolean
+}
