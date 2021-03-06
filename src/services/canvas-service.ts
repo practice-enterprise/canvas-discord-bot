@@ -15,21 +15,6 @@ export class CanvasService {
     }).then((res) => res.data);
   }
 
-  //This currently doesn't work, don't know why yet.
-  static async updateCourse(courseData: CanvasCourse, courseID: string, token: string): Promise<string> {
-    console.log('test');
-    return Axios.request<string>({
-      headers: { 
-        Authorization: `Bearer ${token}` 
-      },
-
-      method: 'PUT',
-      baseURL: process.env.CANVAS_URL,
-      url: `/api/v1/courses/${courseID}`,
-      data: courseData
-    }).then((res) => res.data);
-  }
-
   // # Modules
   static async getModules(token: string, courseID: string): Promise<CanvasModule[]> {
     return Axios.request<CanvasModule[]>({
