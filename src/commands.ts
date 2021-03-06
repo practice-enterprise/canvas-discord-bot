@@ -21,10 +21,10 @@ export const commands: Command[] = [
       
       // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
       if (!(msg.member?.roles.cache.has(evalRole)))
-        msg.channel.send('You need to have the EVAL role.');
+        return 'You need to have the EVAL role.';
 
       if (!(msg.member?.hasPermission('ADMINISTRATOR')))
-        msg.channel.send('You need to be an admin for this command.');
+        return 'You need to be an admin for this command.';
 
       const content = new Tokenizer(msg.content, guildConfig).body();
 
