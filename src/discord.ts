@@ -4,8 +4,8 @@ import { commands } from './commands';
 import { GuildService } from './services/guild-service';
 import { Tokenizer } from './util/tokenizer';
 
-export async function buildClient(): Promise<Client> {
-  const client = new Client();
+export async function buildClient(shard: number, shardCount: number): Promise<Client> {
+  const client = new Client({ shards: shard, shardCount });
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
     /*
