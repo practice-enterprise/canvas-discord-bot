@@ -17,7 +17,7 @@ export class NotesService {
     await Axios.request<void>({
       method: 'POST',
       baseURL: process.env.API_URL,
-      url: '/reminders',
+      url: '/notes',
       data: notes
     });
   }
