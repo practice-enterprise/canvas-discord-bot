@@ -9,6 +9,8 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
+import { CanvasService } from './services/canvas-service';
+import TurndownService from 'turndown';
 
 export const commands: Command[] = [
   { // help
@@ -319,6 +321,44 @@ export const commands: Command[] = [
           'color': 'EF4A25', //Canvas color pallete
         });
         return embed;
+      }
+    }
+  },
+  { // courses menu command
+    name: 'lastannounce',
+    description: 'Last announcement',
+    aliases: [],
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      if(process.env.CANVAS_TOKEN !== undefined) {
+
+        // Uses turndown to turn HTML in markdown (not all markdown features are supported in Discord, so this might lead to some issues, however most basic features such as italic, bold, links are supported just fine).
+        const ts = new TurndownService();
+
+        const announcements = await CanvasService.getAnnouncements(process.env.CANVAS_TOKEN, '10912');
+        const courses = await CanvasService.getCourses(process.env.CANVAS_TOKEN);
+        const course = courses.find(c => c.id === 10912);
+
+        const postedTime = new Date(announcements[0].posted_at);
+        console.log(postedTime);
+        console.log(postedTime.getHours());
+        const postTimeString = postedTime.getHours() + ':' + postedTime.getMinutes() + ' • ' + postedTime.getDate() + '/' + (postedTime.getMonth() + 1) + '/' + postedTime.getFullYear();
+
+        const embed = new MessageEmbed({
+          color: '#E63F30',
+          title: announcements[0].title,
+          url: announcements[0].html_url,
+          author: {
+            name:  course?.course_code + ' - ' + announcements[0].author.display_name
+          },
+          description: ts.turndown(announcements[0].message),
+          footer: {
+            text: postTimeString
+          }
+        });
+        return embed;
+      }
+      else {
+        return 'Token undefined';
       }
     }
   },
