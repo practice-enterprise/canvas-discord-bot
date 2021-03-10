@@ -1,6 +1,7 @@
 import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
+import { CanvasService } from './services/canvas-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Formatter } from './util/formatter';
@@ -9,6 +10,8 @@ import { Tokenizer } from './util/tokenizer';
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   const config = await ConfigService.get();
+
+  console.log(await CanvasService.getInstanceForId('a40d37b54851efbcadb35e68bf039482'));
 
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
