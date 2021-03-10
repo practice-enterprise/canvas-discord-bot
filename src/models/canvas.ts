@@ -1,3 +1,10 @@
+export interface CanvasInstance {
+  _id: string,
+  endpoint: string,
+  /**CourseID key + last announcement ID*/
+  lastAnnounce: Record<string, string>,
+}
+
 /** https://canvas.instructure.com/doc/api/courses.html */
 export interface CanvasCourse {
   id: number,
@@ -89,7 +96,7 @@ export interface CanvasModuleItem {
 
 /**https://canvas.instructure.com/doc/api/discussion_topics.html#DiscussionTopic
  * `GET /api/v1/announcements` returns a discussion topic
- * https://canvas.instructure.com/doc/api/courses.html
+ * https://canvas.instructure.com/doc/api/announcements.html
  */
 export interface CanvasAnnouncement {
   id: number,
