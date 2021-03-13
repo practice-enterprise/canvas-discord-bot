@@ -20,12 +20,37 @@ export const commands: Command[] = [
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       const help: MessageEmbedOptions = {
         'title': 'Help is on the way!',
-        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`' + guildConfig.prefix + guildConfig.info.name + '`' + ': ' + guildConfig.info.description,
+        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
         'color': '43B581',
-        'footer': { text: 'Some commands support putting \'help\' behind it.' }
       };
 
       return help;
+    }
+  },
+  { // Info
+    name: 'info',
+    description: 'Displays more information.',
+    aliases: ['informatie', 'information'],
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig);
+
+      for (const reply of guildConfig.info) {
+        if (tokenizer.tokens[1] !== undefined && reply.name === tokenizer.tokens[1].content) {
+          const response = typeof reply.response === 'function' ? await reply.response(msg, guildConfig) : reply.response;
+          if (typeof response === 'string') {
+            msg.channel.send(response);
+          } else if (typeof response !== 'undefined') {
+            msg.channel.send(new MessageEmbed(response));
+          }
+          return;
+        }
+      }
+      const embed: MessageEmbedOptions = {
+        'title': 'Info commands',
+        'description': guildConfig.info.map(i => `\`${i.name}\`: ${i.description}`).join('\n'),
+        'color': '4FAFEF',
+      };
+      return embed;
     }
   },
   { // setup

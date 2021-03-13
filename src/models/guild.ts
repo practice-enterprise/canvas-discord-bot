@@ -3,7 +3,7 @@ import { Command, Info } from './command';
 export interface GuildConfig {
   _id: string,
   prefix: string,
-  info: Info,
+  info: Command[],
   commands: Command[],
   notes: Record<string, string[]>
 }
