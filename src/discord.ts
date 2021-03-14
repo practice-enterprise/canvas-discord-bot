@@ -1,6 +1,7 @@
-import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, ClientPresenceStatus, Guild, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
+import { createCourseChannels } from './services/announcement-service';
 import { CanvasService } from './services/canvas-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
@@ -10,8 +11,6 @@ import { Tokenizer } from './util/tokenizer';
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   const config = await ConfigService.get();
-
-  console.log(await CanvasService.getInstanceForId('a40d37b54851efbcadb35e68bf039482'));
 
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
@@ -27,8 +26,8 @@ export async function buildClient(): Promise<Client> {
     let index = 0;
     setInterval(() => {
       client.user?.setPresence({
-        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status, 
-        activity: { 
+        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status,
+        activity: {
           name: config[0].discord.richpresence.states[index].activity.name,
           type: config[0].discord.richpresence.states[index].activity.type,
         }
@@ -52,6 +51,9 @@ export async function buildClient(): Promise<Client> {
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
+    await createCourseChannels(msg.author.id, msg.guild);
+    console.log(guildConfig);
+
     if (!tokenizer.command()) {
       return; // not a valid command
     }
@@ -60,7 +62,7 @@ export async function buildClient(): Promise<Client> {
       const evalRole = '817824554616487946';
 
       // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
-      if (!(msg.member?.roles.cache.has(evalRole))){
+      if (!(msg.member?.roles.cache.has(evalRole))) {
         msg.channel.send('You need to have the EVAL role.');
         return;
       }
