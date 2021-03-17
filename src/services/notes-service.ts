@@ -49,7 +49,7 @@ export class NotesService {
         title: 'Notes',
         description: `Notes for channel <#${channelID}>:\n`
           + guildNotes?.notes[channelID].map((note: string) => ++i + ' • ' + note).join('\n'),
-        footer: { text: `For help: ${guildConfig.prefix}notes help` }
+        footer: { text: `For help: ${guildConfig.prefix}notes help` },
       };
       return embed;
     }
