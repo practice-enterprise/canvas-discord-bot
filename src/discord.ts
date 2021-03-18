@@ -51,8 +51,7 @@ export async function buildClient(): Promise<Client> {
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
-    await createCourseChannels(msg.author.id, msg.guild);
-    console.log(guildConfig);
+    await createCourseChannels(msg.author.id, msg.guild, guildConfig);
 
     if (!tokenizer.command()) {
       return; // not a valid command

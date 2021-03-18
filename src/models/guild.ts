@@ -3,20 +3,14 @@ import { Command, Info } from './command';
 export interface GuildConfig {
   _id: string,
   prefix: string,
-  subjectsChannel: SubjectChannel
+  courseChannels: CouresChannel
   info: Info,
   commands: Command[],
   notes: Record<string, string[]>
 }
 
-interface SubjectChannel
+export interface CouresChannel
 {
-  subjectCategoryID: string,
-  subjects: Subject[]
-
-}
-
-interface Subject{
-  subjectID: number,
-  channelID: string
+  CategoryID: string,
+  channels: Record<string, string>
 }
