@@ -1,8 +1,7 @@
-import { Client, ClientPresenceStatus, Guild, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
 import { createCourseChannels } from './services/announcement-service';
-import { CanvasService } from './services/canvas-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Formatter } from './util/formatter';
