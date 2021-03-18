@@ -21,11 +21,10 @@ export async function createCourseChannels(dcID: string, guild: Guild, guildConf
         if (channel == undefined) {
           const newChannel = await guild.channels.create(course.name, { type: 'text', parent: parent.id });
           GuildService.setChannel(course.id.toString(), newChannel.id, guildConfig._id);
-        } else if(channel.parent != parent){
+        } else if (channel.parent != parent) {
           channel.setParent(parent);
         }
       }
-      
     }
   }
 }
