@@ -114,20 +114,20 @@ export async function buildClient(): Promise<Client> {
 
 
     //info command
-    if (tokenizer.command() === guildConfig.info.name || guildConfig.info.aliases.includes(tokenizer.command()!)) {//check if command is of the info type
-      for (const info of guildConfig.info.reply) { // check the option if it's valid
-        if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].content == info.name) {
-          const response = typeof info.response === 'function' ? await info.response(msg, guildConfig) : info.response;
-          if (typeof response === 'string') {
-            msg.channel.send(response);
-          } else if (typeof response !== 'undefined') {
-            msg.channel.send(new MessageEmbed(response));
-          }
-          return;
-        }
-      }
-      msg.channel.send(guildConfig.info.reply.map(c => `\`${guildConfig.prefix}${guildConfig.info.name} ${c.name}\`: ${c.description}`).join('\n'));
-    }
+    // if (tokenizer.command() === guildConfig.info.name || guildConfig.info.aliases.includes(tokenizer.command()!)) {//check if command is of the info type
+    //   for (const info of guildConfig.info.reply) { // check the option if it's valid
+    //     if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].content == info.name) {
+    //       const response = typeof info.response === 'function' ? await info.response(msg, guildConfig) : info.response;
+    //       if (typeof response === 'string') {
+    //         msg.channel.send(response);
+    //       } else if (typeof response !== 'undefined') {
+    //         msg.channel.send(new MessageEmbed(response));
+    //       }
+    //       return;
+    //     }
+    //   }
+    //   msg.channel.send(guildConfig.info.reply.map(c => `\`${guildConfig.prefix}${guildConfig.info.name} ${c.name}\`: ${c.description}`).join('\n'));
+    // }
 
     if (!tokenizer.command()) {
       return; // not a valid command
