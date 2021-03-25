@@ -1,35 +1,45 @@
 import { Client, Message, MessageEmbed } from 'discord.js';
 import { CanvasCourse, CanvasModule } from '../models/canvas';
+import { GuildConfig } from '../models/guild';
 import { CanvasService } from '../services/canvas-service';
 
 export class CoursesMenu {
-  static eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
-  static ePrev = '◀';
-  static eNext = '▶';
-  static eBack = '↩';
-  static courseReactions = [CoursesMenu.ePrev].concat(CoursesMenu.eNumbers).concat(CoursesMenu.eNext);
-  
-  static async coursesMenu(botmsg: Message, msg: Message, token: string): Promise<void> {
+  guild: GuildConfig;
+  botmsg: Message;
+  msg: Message;
+
+  constructor(guildConfig: GuildConfig, botmessage: Message, message: Message) {
+    this.guild = guildConfig;
+    this.botmsg = botmessage;
+    this.msg = message;
+  }
+
+  readonly eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
+  readonly ePrev = '◀';
+  readonly eNext = '▶';
+  readonly eBack = '↩';
+  readonly courseReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext);
+
+  async coursesMenu(): Promise<void> {
     // Declarations
     let page = 0;
     const perPage = 5;
-  
     let courseNr;
   
-    const courses = await CanvasService.getCourses(token);
+    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
     
     const time = 60000; //=1 minute
     const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-      return this.eNumbers.concat(this.ePrev, this.eNext).includes(reaction.emoji.name) && user.id === msg.author.id;
+      return this.eNumbers.concat(this.ePrev, this.eNext).includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
     
     // Logic
-    botmsg.edit(''); // Clear collector end message
-    botmsg.reactions.cache.get(this.eBack)?.remove().catch(err => console.error('Failed to remove emote: ', err));
-    botmsg.edit(getCoursePage(courses, page, perPage));
-    quickAddReactions(botmsg, botmsg.client, this.courseReactions);
+    this.botmsg.edit(''); // Clear collector end message
+    this.botmsg.reactions.cache.get(this.eBack)?.remove().catch(err => console.error('Failed to remove emote: ', err));
+    this.botmsg.edit(getCoursePage(courses, page, perPage));
+    quickAddReactions(this.botmsg, this.botmsg.client, this.courseReactions);
   
-    const collector = botmsg.createReactionCollector(filter, { time });
+    const collector = this.botmsg.createReactionCollector(filter, { time });
   
     collector.on('collect', async (reaction, user) => {
       collector.resetTimer(); //Reset timer everytime a reaction is used.
@@ -44,7 +54,7 @@ export class CoursesMenu {
         if (courseNr <= courses.length) {
           collector.stop();
           console.log('CourseNr: ', courseNr);
-          modulesMenu(botmsg, msg, token, courseNr);
+          modulesMenu(courseNr);
         }
       }
   
@@ -61,15 +71,150 @@ export class CoursesMenu {
   
       if (oldPage !== page) { //Only edit if it's a different page.
   
-        botmsg.edit(getCoursePage(courses, page, perPage));
+        this.botmsg.edit(getCoursePage(courses, page, perPage));
       }
     });
   
     collector.on('end', (reaction, user) => {
-      botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+      this.botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
     });
   }
   
+    
+  async modulesMenu(courseNr: number): Promise<void> {
+    // Declarations
+    let page = 0;
+    const perPage = 5;
+
+    let moduleNr;
+
+    // const eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
+    // const ePrev = '◀';
+    // const eNext = '▶';
+    // const eBack = '↩';
+
+    const moduleReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext).concat(this.eBack);
+
+    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, msg.author.id);
+    const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
+
+    const time = 60000; //=1 minute
+    const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
+      return moduleReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
+    };
+
+    // Logic
+    this.botmsg.edit(''); // Clear collector end message
+    this.botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
+    //quickAddReactions(botmsg, botmsg.client, moduleReactions);
+    this.botmsg.react(this.eBack);
+
+    const collector = this.botmsg.createReactionCollector(filter, { time });
+
+    collector.on('collect', async (reaction, user) => {
+      console.log('module: ', reaction.emoji.name);
+
+      collector.resetTimer(); //Reset timer everytime a reaction is used.
+
+      reaction.users.remove(user.id);
+      const oldPage = page;
+
+      console.log(reaction.emoji.name);
+
+      if (this.eNumbers.includes(reaction.emoji.name)) {
+        moduleNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
+        if (moduleNr <= modules.length) {
+          collector.stop();
+          itemMenu(botmsg, msg, token, courseNr, moduleNr);
+        }
+      }
+
+      switch (reaction.emoji.name) {
+      case this.ePrev:
+        if (page > 0)
+          page--;
+        break;
+      case this.eNext:
+        if (page < (courses.length / perPage) - 1)
+          page++;
+        break;
+      case this.eBack:
+        collector.stop();
+        this.coursesMenu();
+      }
+
+      if (oldPage !== page) { //Only edit if it's a different page.
+        this.botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
+      }
+    });
+
+    collector.on('end', (reaction, user) => {
+      this.botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+    });
+  }
+
+  async itemMenu(botmsg: Message, msg: Message, token: string, courseNr: number, mooduleNr: number): Promise<void> {
+    // Declarations
+    let page = 0;
+    const perPage = 5;
+
+    // const ePrev = '◀';
+    // const eNext = '▶';
+    // const eBack = '↩';
+
+    const itemReactions = [this.ePrev].concat(this.eNext).concat(this.eBack);
+
+    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
+    const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
+
+    const time = 60000; //=1 minute
+    const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
+      return itemReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
+    };
+
+    // Logic
+    botmsg.edit(''); // Clear collector end message
+    botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
+    //quickAddReactions(botmsg, botmsg.client, itemReactions);
+    botmsg.react(this.eBack);
+
+    const collector = botmsg.createReactionCollector(filter, { time });
+
+    collector.on('collect', async (reaction, user) => {
+      console.log('module: ', reaction.emoji.name);
+
+      collector.resetTimer(); //Reset timer everytime a reaction is used.
+
+      reaction.users.remove(user.id);
+      const oldPage = page;
+
+      console.log(reaction.emoji.name);
+
+      switch (reaction.emoji.name) {
+      case this.ePrev:
+        if (page > 0)
+          page--;
+        break;
+      case this.eNext:
+        if (page < (courses.length / perPage) - 1)
+          page++;
+        break;
+      case this.eBack:
+        collector.stop();
+        this.modulesMenu(courseNr);
+      }
+
+      console.log(page);
+
+      if (oldPage !== page) { //Only edit if it's a different page.
+        botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
+      }
+    });
+
+    collector.on('end', (reaction, user) => {
+      botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+    });
+  }
 }
 
 // To-do: move
@@ -158,137 +303,3 @@ async function getModulesPage(token: string, courses: CanvasCourse[], modules: C
   }
 }
 
-async function modulesMenu(botmsg: Message, msg: Message, token: string, courseNr: number): Promise<void> {
-  // Declarations
-  let page = 0;
-  const perPage = 5;
-
-  let moduleNr;
-
-  const eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
-  const ePrev = '◀';
-  const eNext = '▶';
-  const eBack = '↩';
-
-  const moduleReactions = [ePrev].concat(eNumbers).concat(eNext).concat(eBack);
-
-  const courses = await CanvasService.getCourses(token);
-  const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
-
-  const time = 60000; //=1 minute
-  const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-    return moduleReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
-  };
-
-  // Logic
-  botmsg.edit(''); // Clear collector end message
-  botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
-  //quickAddReactions(botmsg, botmsg.client, moduleReactions);
-  botmsg.react(eBack);
-
-  const collector = botmsg.createReactionCollector(filter, { time });
-
-  collector.on('collect', async (reaction, user) => {
-    console.log('module: ', reaction.emoji.name);
-
-    collector.resetTimer(); //Reset timer everytime a reaction is used.
-
-    reaction.users.remove(user.id);
-    const oldPage = page;
-
-    console.log(reaction.emoji.name);
-
-    if (eNumbers.includes(reaction.emoji.name)) {
-      moduleNr = perPage * page + (eNumbers.indexOf(reaction.emoji.name) + 1);
-      if (moduleNr <= modules.length) {
-        collector.stop();
-        itemMenu(botmsg, msg, token, courseNr, moduleNr);
-      }
-    }
-
-    switch (reaction.emoji.name) {
-    case ePrev:
-      if (page > 0)
-        page--;
-      break;
-    case eNext:
-      if (page < (courses.length / perPage) - 1)
-        page++;
-      break;
-    case eBack:
-      collector.stop();
-      CoursesMenu.coursesMenu(botmsg, msg, token);
-    }
-
-    if (oldPage !== page) { //Only edit if it's a different page.
-      botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
-    }
-  });
-
-  collector.on('end', (reaction, user) => {
-    botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
-  });
-}
-
-async function itemMenu(botmsg: Message, msg: Message, token: string, courseNr: number, mooduleNr: number): Promise<void> {
-  // Declarations
-  let page = 0;
-  const perPage = 5;
-
-  const ePrev = '◀';
-  const eNext = '▶';
-  const eBack = '↩';
-
-  const itemReactions = [ePrev].concat(eNext).concat(eBack);
-
-  const courses = await CanvasService.getCourses(token);
-  const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
-
-  const time = 60000; //=1 minute
-  const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-    return itemReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
-  };
-
-  // Logic
-  botmsg.edit(''); // Clear collector end message
-  botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
-  //quickAddReactions(botmsg, botmsg.client, itemReactions);
-  botmsg.react(eBack);
-
-  const collector = botmsg.createReactionCollector(filter, { time });
-
-  collector.on('collect', async (reaction, user) => {
-    console.log('module: ', reaction.emoji.name);
-
-    collector.resetTimer(); //Reset timer everytime a reaction is used.
-
-    reaction.users.remove(user.id);
-    const oldPage = page;
-
-    console.log(reaction.emoji.name);
-
-    switch (reaction.emoji.name) {
-    case ePrev:
-      if (page > 0)
-        page--;
-      break;
-    case eNext:
-      if (page < (courses.length / perPage) - 1)
-        page++;
-      break;
-    case eBack:
-      collector.stop();
-      modulesMenu(botmsg, msg, token, courseNr);
-    }
-
-    console.log(page);
-
-    if (oldPage !== page) { //Only edit if it's a different page.
-      botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
-    }
-  });
-
-  collector.on('end', (reaction, user) => {
-    botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
-  });
-}
