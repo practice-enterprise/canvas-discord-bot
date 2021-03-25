@@ -25,17 +25,26 @@ export class CanvasService {
   }
 
   // # get data from canvas API
-  static async getCourses(token: string): Promise<CanvasCourse[]> {
+  // static async getCourses(token: string): Promise<CanvasCourse[]> {
+  //   return Axios.request<CanvasCourse[]>({
+  //     headers: {
+  //       Authorization: `Bearer ${token}`
+  //     },
+  //     params: { per_page: '50' },
+  //     method: 'GET',
+  //     baseURL: process.env.CANVAS_URL,
+  //     url: '/api/v1/courses'
+  //   }).then((res) => res.data);
+  // }
+
+  static async getCourses(canvasInstanceID: string, discordUserID: string): Promise<CanvasCourse[]> {
     return Axios.request<CanvasCourse[]>({
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      params: { per_page: '50' },
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: '/api/v1/courses'
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/courses/${discordUserID}`
     }).then((res) => res.data);
   }
+
 
   static async getModules(token: string, courseID: number): Promise<CanvasModule[]> {
     return Axios.request<CanvasModule[]>({
