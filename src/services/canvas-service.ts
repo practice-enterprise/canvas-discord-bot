@@ -41,38 +41,54 @@ export class CanvasService {
     return Axios.request<CanvasCourse[]>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/courses/${discordUserID}`
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses`
     }).then((res) => res.data);
   }
 
 
-  static async getModules(token: string, courseID: number): Promise<CanvasModule[]> {
+  // static async getModules(token: string, courseID: number): Promise<CanvasModule[]> {
+  //   return Axios.request<CanvasModule[]>({
+  //     headers: {
+  //       Authorization: `Bearer ${token}`
+  //     },
+  //     params: {
+  //       include: ['items, content_details']
+  //     },
+
+  //     method: 'GET',
+  //     baseURL: process.env.CANVAS_URL,
+  //     url: `/api/v1/courses/${courseID}/modules`
+  //   }).then((res) => res.data);
+  // }
+
+  static async getModules(canvasInstanceID: string, discordUserID: string, courseID: number): Promise<CanvasModule[]> {
     return Axios.request<CanvasModule[]>({
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      params: {
-        include: ['items, content_details']
-      },
-
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: `/api/v1/courses/${courseID}/modules`
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/modules`
     }).then((res) => res.data);
   }
 
-  static async getModuleItems(token: string, itemURL: string): Promise<CanvasModuleItem[]> {
-    return Axios.request<CanvasModuleItem[]>({
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      params: {
-        include: ['items', 'content_details']
-      },
+  // static async getModuleItems(token: string, itemURL: string): Promise<CanvasModuleItem[]> {
+  //   return Axios.request<CanvasModuleItem[]>({
+  //     headers: {
+  //       Authorization: `Bearer ${token}`
+  //     },
+  //     params: {
+  //       include: ['items', 'content_details']
+  //     },
 
+  //     method: 'GET',
+  //     baseURL: process.env.CANVAS_URL,
+  //     url: itemURL
+  //   }).then((res) => res.data);
+  // }
+
+  static async getModuleItems(canvasInstanceID: string, discordUserID: string, itemURL: string): Promise<CanvasModuleItem[]> {
+    return Axios.request<CanvasModuleItem[]>({
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: itemURL
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/items/${itemURL}`
     }).then((res) => res.data);
   }
 
@@ -97,10 +113,10 @@ export class CanvasService {
   }
 
 
-  static async buildAnnouncementEmbed(announcement: CanvasAnnouncement, courseID: number, token: string): Promise<MessageEmbed> {
+  static async buildAnnouncementEmbed(announcement: CanvasAnnouncement, courseID: number, canvasInstanceID: string, discordUserID: string): Promise<MessageEmbed> {
     const ts = new TurndownService();
 
-    const courses = await CanvasService.getCourses(token);
+    const courses = await CanvasService.getCourses(canvasInstanceID, discordUserID);
     const course = courses.find(c => c.id === courseID);
 
     const postedTime = new Date(announcement.posted_at);
@@ -168,7 +184,7 @@ export class CanvasService {
         if (instance.lastAnnounce[parseInt(courseID)] === undefined) {
           console.log('No lastAnnounceID set. Posting last announcement and setting ID.');
 
-          const embed = await this.buildAnnouncementEmbed(announcements[0], parseInt(courseID), process.env.CANVAS_TOKEN);
+          const embed = await this.buildAnnouncementEmbed(announcements[0], parseInt(courseID), guildConfig.canvasInstanceID, USERID!!!);
           (client.guilds.resolve(guildConfig._id)?.channels.resolve(guildConfig.courseChannels.channels[courseID]) as TextChannel)
             .send(embed)
             .then(() => {

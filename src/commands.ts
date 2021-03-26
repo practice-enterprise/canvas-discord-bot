@@ -10,7 +10,6 @@ import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 import { CanvasService } from './services/canvas-service';
-import TurndownService from 'turndown';
 
 export const commands: Command[] = [
   { // help
@@ -335,7 +334,7 @@ export const commands: Command[] = [
       if (token != undefined && token.length > 1) {
         const botmsg = await msg.channel.send(new MessageEmbed({ title: 'Loading courses...' }));
 
-        CoursesMenu.coursesMenu(botmsg, msg, token);
+        //new CoursesMenu(guildConfig, botmsg, msg).coursesMenu();
 
         //coursesMenu(botmsg, msg, token);
       }

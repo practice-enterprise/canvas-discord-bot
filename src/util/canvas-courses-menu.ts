@@ -54,7 +54,7 @@ export class CoursesMenu {
         if (courseNr <= courses.length) {
           collector.stop();
           console.log('CourseNr: ', courseNr);
-          modulesMenu(courseNr);
+          this.modulesMenu(courseNr);
         }
       }
   
@@ -95,17 +95,17 @@ export class CoursesMenu {
 
     const moduleReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext).concat(this.eBack);
 
-    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, msg.author.id);
-    const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
+    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
+    const modules = await CanvasService.getModules(this.guild.canvasInstanceID, this.msg.author.id, courses[courseNr - 1].id);
 
     const time = 60000; //=1 minute
     const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-      return moduleReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
+      return moduleReactions.includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
-    this.botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
+    this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr));
     //quickAddReactions(botmsg, botmsg.client, moduleReactions);
     this.botmsg.react(this.eBack);
 
@@ -125,7 +125,7 @@ export class CoursesMenu {
         moduleNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
         if (moduleNr <= modules.length) {
           collector.stop();
-          itemMenu(botmsg, msg, token, courseNr, moduleNr);
+          this.itemMenu(courseNr, moduleNr);
         }
       }
 
@@ -144,7 +144,7 @@ export class CoursesMenu {
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
-        this.botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr));
+        this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr));
       }
     });
 
@@ -153,7 +153,7 @@ export class CoursesMenu {
     });
   }
 
-  async itemMenu(botmsg: Message, msg: Message, token: string, courseNr: number, mooduleNr: number): Promise<void> {
+  async itemMenu(courseNr: number, moduleNr: number): Promise<void> {
     // Declarations
     let page = 0;
     const perPage = 5;
@@ -165,20 +165,20 @@ export class CoursesMenu {
     const itemReactions = [this.ePrev].concat(this.eNext).concat(this.eBack);
 
     const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
-    const modules = await CanvasService.getModules(token, courses[courseNr - 1].id);
+    const modules = await CanvasService.getModules(this.guild.canvasInstanceID, this.msg.author.id, courses[courseNr - 1].id);
 
     const time = 60000; //=1 minute
     const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-      return itemReactions.includes(reaction.emoji.name) && user.id === msg.author.id;
+      return itemReactions.includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
 
     // Logic
-    botmsg.edit(''); // Clear collector end message
-    botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
+    this.botmsg.edit(''); // Clear collector end message
+    this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr));
     //quickAddReactions(botmsg, botmsg.client, itemReactions);
-    botmsg.react(this.eBack);
+    this.botmsg.react(this.eBack);
 
-    const collector = botmsg.createReactionCollector(filter, { time });
+    const collector = this.botmsg.createReactionCollector(filter, { time });
 
     collector.on('collect', async (reaction, user) => {
       console.log('module: ', reaction.emoji.name);
@@ -207,12 +207,12 @@ export class CoursesMenu {
       console.log(page);
 
       if (oldPage !== page) { //Only edit if it's a different page.
-        botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));
+        this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr));
       }
     });
 
     collector.on('end', (reaction, user) => {
-      botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+      this.botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
     });
   }
 }
@@ -263,7 +263,7 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): 
   return embed;
 }
 
-async function getModulesPage(token: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed> {
+async function getModulesPage(canvasInstanceID: string, discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed> {
   const courseID = courses[courseNr - 1].id;
   const courseName = courses[courseNr - 1].name;
 
@@ -290,7 +290,7 @@ async function getModulesPage(token: string, courses: CanvasCourse[], modules: C
   else {
     const moduleByID = modules[moduleNr - 1];
 
-    const items = await CanvasService.getModuleItems(token, moduleByID.items_url);
+    const items = await CanvasService.getModuleItems(canvasInstanceID, discordUserID, moduleByID.items_url);
 
     const embed: MessageEmbed = new MessageEmbed({
       'title': 'Module ' + moduleByID.name,
