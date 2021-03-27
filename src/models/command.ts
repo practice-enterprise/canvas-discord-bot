@@ -1,9 +1,10 @@
 import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { GuildConfig } from './guild';
 
+export type Response = string | MessageEmbedOptions | MessageEmbed;
 export interface Command {
   name: string,
   aliases: string[],
   description: string;
-  response: string | MessageEmbedOptions | ((message: Message, guildConfig: GuildConfig) => string | MessageEmbedOptions | MessageEmbed)
+  response: Response | ((msg: Message, guildConfig: GuildConfig) => PromiseLike<Response | void>)
 }

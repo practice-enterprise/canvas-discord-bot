@@ -18,4 +18,10 @@ export class GuildService {
       data: config
     }).then((res) => res.data);
   }
+
+  static async setPrefix(prefix: string, guildID: string): Promise<string> {
+    const config = await this.getForId(guildID);
+    config.prefix = prefix;
+    return this.update(config);
+  }
 }
