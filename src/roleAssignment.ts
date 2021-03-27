@@ -1,10 +1,7 @@
 //import Axios from 'axios';
-import { Client, Guild } from 'discord.js'; 
-//import { stringify } from 'querystring';
-//import { GuildConfig } from './models/guild';
+import { Client, Guild } from 'discord.js';
 import { CanvasService } from './services/canvas-service';
 import { GuildService } from './services/guild-service';
-//import { GuildService } from './services/guild-service';
 
 export class RoleAssignmentService {
   static async RoleAssignmentInit(client: Client): Promise<void> {
@@ -13,7 +10,7 @@ export class RoleAssignmentService {
     const serverID = '780572565240414208';
     const guild = await client.guilds.fetch(serverID);
     const config = await GuildService.getForId(serverID);
-    const canvasToken: string[] = [process.env.USERTOKENCANVAS1, process.env.USERTOKENCANVAS2];//from authO flow or DB
+    const canvasToken: string[] = [process.env.USERTOKENCANVAS1, /*process.env.USERTOKENCANVAS2*/];//from authO flow or DB
 
     for (const token of canvasToken) {
       // eslint-disable-next-line no-await-in-loop
@@ -33,30 +30,33 @@ export class RoleAssignmentService {
       await userBoy.roles.add(role);
     }
   }
-}
 
-/*
-TODO remove role function
-  check every id of config.roles check id == enrolement type if not exist remove role[id]
-  for(const k in config.roles)
-    {
-      k -> id like config.roles[k]
+  static async deleteRoles(client: Client) {
+    const discordUserID = '223928391559151618';
+    const serverID = '780572565240414208';
+    const guild = await client.guilds.fetch(serverID);
+    const user = await guild.members.fetch(discordUserID);
+    const config = await GuildService.getForId(serverID);
+    if (process.env.USERTOKENCANVAS1) {
+      const courses = await CanvasService.getCourses(process.env.USERTOKENCANVAS1);
+      const shouldHave: string[] = [];
+
+      for (const course of courses) {
+        for (const enrollment of course.enrollments) {
+          if (!shouldHave.includes(enrollment.type)) {
+            shouldHave.push(enrollment.type);
+          }
+        }
+      }
+
+      for (const configRole in config.roles) {
+        if (user.roles.cache.has(config.roles[configRole]) && !shouldHave.includes(configRole)) {
+          const roleToRemove = guild.roles.cache.get(config.roles[configRole]);
+          if (roleToRemove != undefined) {
+            user.roles.remove(roleToRemove);
+          }
+        }
+      }
     }
- */
-
-//extra functionele code
-/*
-//get all roles from guild id
-const guild = await client.guilds.fetch(serverID);
-guild?.roles.cache.forEach(element => {
-console.log(element.name);
-});
-*/
-/*
-//get all roles of user
-const guild = await client.guilds.fetch(serverID);
-const userboy = await guild?.members.fetch(discordUserID);
-userboy.roles.cache.forEach(element => {
-console.log(element.name);
-});
-*/
+  }
+}

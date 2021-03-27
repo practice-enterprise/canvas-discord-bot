@@ -156,7 +156,7 @@ export interface CanvasAnnouncement {
   todo_date: null | Date | string
 }
 
-interface Enrolement{
+export interface Enrolement{
   type: string,
   role: string,
   role_id: number,

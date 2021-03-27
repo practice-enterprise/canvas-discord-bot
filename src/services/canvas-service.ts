@@ -121,7 +121,7 @@ export class CanvasService {
       const instance = await this.getInstanceForId(CanvasInstanceId);
       const guildConfig = await GuildService.getForId(guildID);
 
-      console.log('Canvas domain: ', instance.endpoint);
+      //console.log('Canvas domain: ', instance.endpoint);
 
       if (process.env.CANVAS_TOKEN === undefined) {
         console.log('Token undefined.');
@@ -140,12 +140,12 @@ export class CanvasService {
         // Maybe?: call for mutliple courses once instead of for each course (courseID[])
         const announcements = await this.getAnnouncements(process.env.CANVAS_TOKEN, parseInt(courseID));
 
-        console.log('length ', announcements.length);
-        console.log('courseID:', courseID);
+        //console.log('length ', announcements.length);
+        //console.log('courseID:', courseID);
 
         // There are no announcements
         if (announcements.length === 0) {
-          console.log('No announcements for this subject');
+          //console.log('No announcements for this subject');
           continue;
         }
 
@@ -172,13 +172,13 @@ export class CanvasService {
         }
 
 
-        console.log('Checking announcements for courseID', courseID);
+        //console.log('Checking announcements for courseID', courseID);
 
         const lastAnnounceID = instance.lastAnnounce[parseInt(courseID)];
         const index = announcements.findIndex(a => a.id === lastAnnounceID);
 
         if (index === 0) {
-          console.log('Already last announcement.');
+          //console.log('Already last announcement.');
         }
         else {
           console.log('New announcement(s)!');
