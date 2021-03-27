@@ -7,6 +7,7 @@ export class CoursesMenu {
   guild: GuildConfig;
   botmsg: Message;
   msg: Message;
+  stopMsg = ':grey_exclamation: `Loading or session has ended.`';
 
   constructor(guildConfig: GuildConfig, botmessage: Message, message: Message) {
     this.guild = guildConfig;
@@ -25,6 +26,8 @@ export class CoursesMenu {
     let page = 0;
     const perPage = 5;
     let courseNr;
+
+    console.log('here: ', this.guild.canvasInstanceID, this.botmsg.content, this.msg.content);
   
     const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
     
@@ -76,7 +79,7 @@ export class CoursesMenu {
     });
   
     collector.on('end', (reaction, user) => {
-      this.botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+      this.botmsg.edit(this.stopMsg);
     });
   }
   
@@ -85,13 +88,7 @@ export class CoursesMenu {
     // Declarations
     let page = 0;
     const perPage = 5;
-
     let moduleNr;
-
-    // const eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
-    // const ePrev = '◀';
-    // const eNext = '▶';
-    // const eBack = '↩';
 
     const moduleReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext).concat(this.eBack);
 
@@ -135,7 +132,7 @@ export class CoursesMenu {
           page--;
         break;
       case this.eNext:
-        if (page < (courses.length / perPage) - 1)
+        if (page < (modules.length / perPage) - 1)
           page++;
         break;
       case this.eBack:
@@ -149,11 +146,13 @@ export class CoursesMenu {
     });
 
     collector.on('end', (reaction, user) => {
-      this.botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+      this.botmsg.edit(this.stopMsg);
     });
   }
 
   async itemMenu(courseNr: number, moduleNr: number): Promise<void> {
+    console.log('ITEM MENU!');
+
     // Declarations
     let page = 0;
     const perPage = 5;
@@ -190,13 +189,15 @@ export class CoursesMenu {
 
       console.log(reaction.emoji.name);
 
+      console.log('Length: ', modules[moduleNr].items_count);
       switch (reaction.emoji.name) {
       case this.ePrev:
         if (page > 0)
           page--;
         break;
       case this.eNext:
-        if (page < (courses.length / perPage) - 1)
+        // TODO length of items
+        if (page < (modules[moduleNr].items_count / perPage) - 1)
           page++;
         break;
       case this.eBack:
@@ -212,7 +213,7 @@ export class CoursesMenu {
     });
 
     collector.on('end', (reaction, user) => {
-      this.botmsg.edit(':grey_exclamation: `Loading or session has ended.`');
+      this.botmsg.edit(this.stopMsg);
     });
   }
 }
@@ -242,7 +243,6 @@ async function quickAddReactions(msg: Message, client: Client, emotes: string[],
   }
 }
 
-
 function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): MessageEmbed {
   const embed: MessageEmbed = new MessageEmbed({
     'title': 'All your courses!',
@@ -266,7 +266,7 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): 
 async function getModulesPage(canvasInstanceID: string, discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed> {
   const courseID = courses[courseNr - 1].id;
   const courseName = courses[courseNr - 1].name;
-
+  console.log('Getting page!');
   let count = 0;
 
   if (typeof moduleNr === 'undefined') { //All modules of course
@@ -289,13 +289,12 @@ async function getModulesPage(canvasInstanceID: string, discordUserID: string, c
   }
   else {
     const moduleByID = modules[moduleNr - 1];
-
+    console.log(moduleByID.items_url);
     const items = await CanvasService.getModuleItems(canvasInstanceID, discordUserID, moduleByID.items_url);
-
     const embed: MessageEmbed = new MessageEmbed({
       'title': 'Module ' + moduleByID.name,
       'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
-      'color': 'EF4A25', //Canvas color pallete
+      'color': 'EF4A25',
       'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
     });
 

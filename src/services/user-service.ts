@@ -18,13 +18,20 @@ export class UserService {
     }).then((res) => res.data);
   }
 
-  /* Doesn't work yet, needs indexer.*/
-  static async getForCourse(courseID: string): Promise<User> {
+  static async getForCourse(courseID: string): Promise<User | undefined> {
     return Axios.request<User>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/users/course/${courseID}`
-    }).then((res) => res.data);
+      url: `/users/course/${courseID}`,
+      validateStatus: () => true,
+    }).then((res) => {
+      if (res.status === 200) {
+        return res.data;
+      }
+      else {
+        return undefined;
+      }
+    });
   }
 
   static async update(user: User): Promise<string> {

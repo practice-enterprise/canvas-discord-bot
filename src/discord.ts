@@ -9,7 +9,6 @@ import { Tokenizer } from './util/tokenizer';
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   const config = await ConfigService.get();
-
   
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
