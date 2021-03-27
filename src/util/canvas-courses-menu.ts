@@ -26,8 +26,6 @@ export class CoursesMenu {
     let page = 0;
     const perPage = 5;
     let courseNr;
-
-    console.log('here: ', this.guild.canvasInstanceID, this.botmsg.content, this.msg.content);
   
     const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
     
@@ -50,13 +48,10 @@ export class CoursesMenu {
       reaction.users.remove(user.id);
       const oldPage = page;
   
-      console.log('course: ', reaction.emoji.name);
-  
       if (this.eNumbers.includes(reaction.emoji.name)) {
         courseNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
         if (courseNr <= courses.length) {
           collector.stop();
-          console.log('CourseNr: ', courseNr);
           this.modulesMenu(courseNr);
         }
       }
@@ -109,14 +104,10 @@ export class CoursesMenu {
     const collector = this.botmsg.createReactionCollector(filter, { time });
 
     collector.on('collect', async (reaction, user) => {
-      console.log('module: ', reaction.emoji.name);
-
       collector.resetTimer(); //Reset timer everytime a reaction is used.
 
       reaction.users.remove(user.id);
       const oldPage = page;
-
-      console.log(reaction.emoji.name);
 
       if (this.eNumbers.includes(reaction.emoji.name)) {
         moduleNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
@@ -151,8 +142,6 @@ export class CoursesMenu {
   }
 
   async itemMenu(courseNr: number, moduleNr: number): Promise<void> {
-    console.log('ITEM MENU!');
-
     // Declarations
     let page = 0;
     const perPage = 5;
@@ -180,16 +169,11 @@ export class CoursesMenu {
     const collector = this.botmsg.createReactionCollector(filter, { time });
 
     collector.on('collect', async (reaction, user) => {
-      console.log('module: ', reaction.emoji.name);
-
       collector.resetTimer(); //Reset timer everytime a reaction is used.
 
       reaction.users.remove(user.id);
       const oldPage = page;
 
-      console.log(reaction.emoji.name);
-
-      console.log('Length: ', modules[moduleNr].items_count);
       switch (reaction.emoji.name) {
       case this.ePrev:
         if (page > 0)
@@ -204,8 +188,6 @@ export class CoursesMenu {
         collector.stop();
         this.modulesMenu(courseNr);
       }
-
-      console.log(page);
 
       if (oldPage !== page) { //Only edit if it's a different page.
         this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr));
@@ -289,7 +271,6 @@ async function getModulesPage(canvasInstanceID: string, discordUserID: string, c
   }
   else {
     const moduleByID = modules[moduleNr - 1];
-    console.log(moduleByID.items_url);
     const items = await CanvasService.getModuleItems(canvasInstanceID, discordUserID, moduleByID.items_url);
     const embed: MessageEmbed = new MessageEmbed({
       'title': 'Module ' + moduleByID.name,
