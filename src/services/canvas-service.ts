@@ -25,68 +25,29 @@ export class CanvasService {
     }).then((res) => res.data);
   }
 
-  // # get data from canvas API
-  // static async getCourses(token: string): Promise<CanvasCourse[]> {
-  //   return Axios.request<CanvasCourse[]>({
-  //     headers: {
-  //       Authorization: `Bearer ${token}`
-  //     },
-  //     params: { per_page: '50' },
-  //     method: 'GET',
-  //     baseURL: process.env.CANVAS_URL,
-  //     url: '/api/v1/courses'
-  //   }).then((res) => res.data);
-  // }
-
-  static async getCourses(canvasInstanceID: string, discordUserID: string): Promise<CanvasCourse[]> {
-
+  static async getCourses(canvasInstanceID: string, discordUserID: string): Promise<CanvasCourse[] | undefined> {
     return Axios.request<CanvasCourse[]>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses`
-    }).then((res) => res.data);
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
-
-  // static async getModules(token: string, courseID: number): Promise<CanvasModule[]> {
-  //   return Axios.request<CanvasModule[]>({
-  //     headers: {
-  //       Authorization: `Bearer ${token}`
-  //     },
-  //     params: {
-  //       include: ['items, content_details']
-  //     },
-
-  //     method: 'GET',
-  //     baseURL: process.env.CANVAS_URL,
-  //     url: `/api/v1/courses/${courseID}/modules`
-  //   }).then((res) => res.data);
-  // }
-
-  static async getModules(canvasInstanceID: string, discordUserID: string, courseID: number): Promise<CanvasModule[]> {
+  static async getModules(canvasInstanceID: string, discordUserID: string, courseID: number): Promise<CanvasModule[] | undefined> {
     return Axios.request<CanvasModule[]>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/modules`
-    }).then((res) => res.data);
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/modules`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
-  // static async getModuleItems(token: string, itemURL: string): Promise<CanvasModuleItem[]> {
-  //   return Axios.request<CanvasModuleItem[]>({
-  //     headers: {
-  //       Authorization: `Bearer ${token}`
-  //     },
-  //     params: {
-  //       include: ['items', 'content_details']
-  //     },
-
-  //     method: 'GET',
-  //     baseURL: process.env.CANVAS_URL,
-  //     url: itemURL
-  //   }).then((res) => res.data);
-  // }
-
-  static async getModuleItems(canvasInstanceID: string, discordUserID: string, itemURL: string): Promise<CanvasModuleItem[]> {
+  static async getModuleItems(canvasInstanceID: string, discordUserID: string, itemURL: string): Promise<CanvasModuleItem[] | undefined> {
     return Axios.request<CanvasModuleItem[]>({
       headers: {
         itemurl: itemURL
@@ -94,17 +55,23 @@ export class CanvasService {
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/canvas/${canvasInstanceID}/${discordUserID}/items/` + encodeURIComponent(itemURL),
-    }).then((res) => res.data);
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
   // # Announcements job
   // ## get last (default: 10) announcements
-  static async getAnnouncements(canvasInstanceID: string, discordUserID: string, courseID: string): Promise<CanvasAnnouncement[]> {
+  static async getAnnouncements(canvasInstanceID: string, discordUserID: string, courseID: string): Promise<CanvasAnnouncement[] | undefined> {
     return Axios.request<CanvasAnnouncement[]>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/announcements`
-    }).then((res) => res.data);
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/announcements`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
 
@@ -112,8 +79,11 @@ export class CanvasService {
     const ts = new TurndownService();
 
     const courses = await CanvasService.getCourses(canvasInstanceID, discordUserID);
+    if (courses === undefined) {
+      throw new Error('Courses not defined. Likely invaled or undefined token from users.');
+    }
     const course = courses.find(c => c.id === parseInt(courseID));
-
+    
     const postedTime = new Date(announcement.posted_at);
     const postTimeString = postedTime.getHours() + ':' + postedTime.getMinutes() + ' • ' + postedTime.getDate() + '/' + (postedTime.getMonth() + 1) + '/' + postedTime.getFullYear();
 
@@ -160,7 +130,14 @@ export class CanvasService {
         if (user === undefined) { console.error('No user was found for subject ', courseID); continue;}
 
         // Maybe?: call for mutliple courses once instead of for each course (courseID[])
+        // FIX: The random user we took may not have a token
+        
+        //= this.getAnnouncements(CanvasInstanceID, user.discord.id, courseID)
+        //.catch((err) => {throw err;});
         const announcements = await this.getAnnouncements(CanvasInstanceID, user.discord.id, courseID);
+        if (announcements === undefined) {
+          throw new Error('Announcements undefined. Likely invaled or undefined token from users.');
+        }
 
         console.log('length ', announcements.length);
         console.log('courseID:', courseID);
