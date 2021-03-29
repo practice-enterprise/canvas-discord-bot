@@ -60,6 +60,10 @@ export async function buildClient(): Promise<Client> {
       const evalRole = '817824554616487946';
 
       // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
+      if(process.env.NODE_ENV != 'development'){
+        msg.channel.send('you are not in a development enviroment');
+      }
+
       if (!(msg.member?.roles.cache.has(evalRole))) {
         msg.channel.send('You need to have the EVAL role.');
         return;
