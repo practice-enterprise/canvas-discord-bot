@@ -1,7 +1,7 @@
 //import Axios from 'axios';
 import { Client, Guild } from 'discord.js';
-import { CanvasService } from './services/canvas-service';
-import { GuildService } from './services/guild-service';
+import { CanvasService } from './canvas-service';
+import { GuildService } from './guild-service';
 
 export class RoleAssignmentService {
   static async RoleAssignmentInit(client: Client): Promise<void> {
