@@ -1,7 +1,6 @@
 import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
-import { CanvasService } from './services/canvas-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Formatter } from './util/formatter';
@@ -10,10 +9,10 @@ import { Tokenizer } from './util/tokenizer';
 export async function buildClient(): Promise<Client> {
   const client = new Client();
   const config = await ConfigService.get();
-
+  
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
-
+    
     /*
       Presence updating.
       Value may not be below 15000 (rate-limit Discord API = 5/60s).

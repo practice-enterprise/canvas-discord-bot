@@ -66,7 +66,7 @@ export interface CanvasModule {
   unlock_at: Date | string,
   require_sequential_progress: boolean,
   prerequisite_module_ids: string[] | number[] | string | number,
-  items_count: string | number,
+  items_count: number,
   items_url: string,
   items: any,
   state: string,

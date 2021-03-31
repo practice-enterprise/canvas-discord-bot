@@ -4,6 +4,7 @@ import { stringify } from 'querystring';
 import TurndownService from 'turndown';
 import { CanvasAnnouncement, CanvasCourse, CanvasInstance, CanvasModule, CanvasModuleItem } from '../models/canvas';
 import { GuildService } from './guild-service';
+import { UserService } from './user-service';
 
 export class CanvasService {
   // # Canvas instance
@@ -24,76 +25,65 @@ export class CanvasService {
     }).then((res) => res.data);
   }
 
-  // # get data from canvas API
-  static async getCourses(token: string): Promise<CanvasCourse[]> {
+  static async getCourses(canvasInstanceID: string, discordUserID: string): Promise<CanvasCourse[] | undefined> {
     return Axios.request<CanvasCourse[]>({
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      params: { per_page: '50' },
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: '/api/v1/courses'
-    }).then((res) => res.data);
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
-  static async getModules(token: string, courseID: number): Promise<CanvasModule[]> {
+  static async getModules(canvasInstanceID: string, discordUserID: string, courseID: number): Promise<CanvasModule[] | undefined> {
     return Axios.request<CanvasModule[]>({
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      params: {
-        include: ['items, content_details']
-      },
-
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: `/api/v1/courses/${courseID}/modules`
-    }).then((res) => res.data);
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/modules`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
-  static async getModuleItems(token: string, itemURL: string): Promise<CanvasModuleItem[]> {
+  static async getModuleItems(canvasInstanceID: string, discordUserID: string, itemURL: string): Promise<CanvasModuleItem[] | undefined> {
     return Axios.request<CanvasModuleItem[]>({
       headers: {
-        Authorization: `Bearer ${token}`
+        itemurl: itemURL
       },
-      params: {
-        include: ['items', 'content_details']
-      },
-
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: itemURL
-    }).then((res) => res.data);
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/items/` + encodeURIComponent(itemURL),
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
   // # Announcements job
   // ## get last (default: 10) announcements
-  static async getAnnouncements(token: string, courseID: number): Promise<CanvasAnnouncement[]> {
-    // context_codes param supports arrays.
-    // console.log(Array.isArray(courseID));
-
+  static async getAnnouncements(canvasInstanceID: string, discordUserID: string, courseID: string): Promise<CanvasAnnouncement[] | undefined> {
     return Axios.request<CanvasAnnouncement[]>({
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      params: {
-        context_codes: ['course_' + courseID]
-      },
-
       method: 'GET',
-      baseURL: process.env.CANVAS_URL,
-      url: '/api/v1/announcements'
-    }).then((res) => res.data);
+      baseURL: process.env.API_URL,
+      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/announcements`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
   }
 
 
-  static async buildAnnouncementEmbed(announcement: CanvasAnnouncement, courseID: number, token: string): Promise<MessageEmbed> {
+  static async buildAnnouncementEmbed(announcement: CanvasAnnouncement, courseID: string, canvasInstanceID: string, discordUserID: string): Promise<MessageEmbed> {
     const ts = new TurndownService();
 
-    const courses = await CanvasService.getCourses(token);
-    const course = courses.find(c => c.id === courseID);
-
+    const courses = await CanvasService.getCourses(canvasInstanceID, discordUserID);
+    if (courses === undefined) {
+      throw new Error('Courses not defined. Likely invaled or undefined token from users.');
+    }
+    const course = courses.find(c => c.id === parseInt(courseID));
+    
     const postedTime = new Date(announcement.posted_at);
     const postTimeString = postedTime.getHours() + ':' + postedTime.getMinutes() + ' • ' + postedTime.getDate() + '/' + (postedTime.getMonth() + 1) + '/' + postedTime.getFullYear();
 
@@ -115,10 +105,9 @@ export class CanvasService {
 
   // ## Checking announcements for changes
   // TODO: check rate limits. Currently 1 minute. We want this as low as is allowed.
-  // TODO: Loop through all guildconfigs.
-  static initAnnouncementJob(CanvasInstanceId: string, client: Client, guildID: string): NodeJS.Timeout {
+  static initAnnouncementJob(CanvasInstanceID: string, client: Client, guildID: string): NodeJS.Timeout {
     return setInterval(async () => {
-      const instance = await this.getInstanceForId(CanvasInstanceId);
+      const canvas = await this.getInstanceForId(CanvasInstanceID);
       const guildConfig = await GuildService.getForId(guildID);
 
       //console.log('Canvas domain: ', instance.endpoint);
@@ -129,16 +118,26 @@ export class CanvasService {
       }
 
       // Canvas Instance for announcements is undefined or empty
-      if (instance.lastAnnounce === undefined || (stringify(instance.lastAnnounce) === stringify({}))) {
-        instance.lastAnnounce = {};
-        this.updateInstance(instance);
+      if (canvas.lastAnnounce === undefined || (stringify(canvas.lastAnnounce) === stringify({}))) {
+        canvas.lastAnnounce = {};
+        this.updateInstance(canvas);
       }
 
       // TODO: Delay for ratelimit
       for (const courseID in guildConfig.courseChannels.channels) {
-        // TODO: grab a valid token from a user for courseID
+        const user = await UserService.getForCourse(courseID);
+
+        if (user === undefined) { console.error('No user was found for subject ', courseID); continue;}
+
         // Maybe?: call for mutliple courses once instead of for each course (courseID[])
-        const announcements = await this.getAnnouncements(process.env.CANVAS_TOKEN, parseInt(courseID));
+        // FIX: The random user we took may not have a token
+        
+        //= this.getAnnouncements(CanvasInstanceID, user.discord.id, courseID)
+        //.catch((err) => {throw err;});
+        const announcements = await this.getAnnouncements(CanvasInstanceID, user.discord.id, courseID);
+        if (announcements === undefined) {
+          throw new Error('Announcements undefined. Likely invaled or undefined token from users.');
+        }
 
         //console.log('length ', announcements.length);
         //console.log('courseID:', courseID);
@@ -156,15 +155,15 @@ export class CanvasService {
         }
 
         // Last announcement ID is undefined
-        if (instance.lastAnnounce[parseInt(courseID)] === undefined) {
+        if (canvas.lastAnnounce[parseInt(courseID)] === undefined) {
           console.log('No lastAnnounceID set. Posting last announcement and setting ID.');
 
-          const embed = await this.buildAnnouncementEmbed(announcements[0], parseInt(courseID), process.env.CANVAS_TOKEN);
+          const embed = await this.buildAnnouncementEmbed(announcements[0], courseID, CanvasInstanceID, user.discord.id);
           (client.guilds.resolve(guildConfig._id)?.channels.resolve(guildConfig.courseChannels.channels[courseID]) as TextChannel)
             .send(embed)
             .then(() => {
-              instance.lastAnnounce[parseInt(courseID)] = announcements[0].id;
-              this.updateInstance(instance);
+              canvas.lastAnnounce[parseInt(courseID)] = announcements[0].id;
+              this.updateInstance(canvas);
               console.log('Updated!');
             });
 
@@ -174,7 +173,7 @@ export class CanvasService {
 
         //console.log('Checking announcements for courseID', courseID);
 
-        const lastAnnounceID = instance.lastAnnounce[parseInt(courseID)];
+        const lastAnnounceID = canvas.lastAnnounce[parseInt(courseID)];
         const index = announcements.findIndex(a => a.id === lastAnnounceID);
 
         if (index === 0) {
@@ -186,7 +185,7 @@ export class CanvasService {
           for (let i = index - 1; i >= 0; i--) {
             console.log('Posting: ' + announcements[i].title);
 
-            const embed = await this.buildAnnouncementEmbed(announcements[i], parseInt(courseID), process.env.CANVAS_TOKEN)
+            const embed = await this.buildAnnouncementEmbed(announcements[i], courseID, CanvasInstanceID, user.discord.id)
               .catch(() => {
                 console.error('Couldn\'t make announcement embed. Invalid announcement obj, courseID and/or token?');
               });
@@ -201,10 +200,10 @@ export class CanvasService {
           }
 
           // Update the lastAnnounceID
-          instance.lastAnnounce[parseInt(courseID)] = announcements[0].id;
-          this.updateInstance(instance);
+          canvas.lastAnnounce[parseInt(courseID)] = announcements[0].id;
+          this.updateInstance(canvas);
 
-          console.log('Last announcements are now: ', instance.lastAnnounce);
+          console.log('Last announcements are now: ', canvas.lastAnnounce);
         }
       }
 
