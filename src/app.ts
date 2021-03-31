@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { buildClient } from './discord';
-import { RoleAssignmentService } from './roleAssignment';
+import { RoleAssignmentService } from './services/role-assignment-service';
 import { CanvasService } from './services/canvas-service';
 import { ReminderService } from './services/reminder-service';
 
