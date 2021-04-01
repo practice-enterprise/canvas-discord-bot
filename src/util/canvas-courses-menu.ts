@@ -11,9 +11,9 @@ export class CoursesMenu {
 
   undefinedTokenEmbed: MessageEmbed = new MessageEmbed({
     color: 'F04747',
-    title: ':warning: can\'t fetch courses',
-    description: 'If you\'re not logged in, please do so for this command to work.',
-    footer: { text: 'Err: invalid token' }
+    title: ':warning: Can\'t fetch courses',
+    description: 'If you\'re not logged in, please do so for this command to work.\nManual canvas tokens might not be valid anymore.',
+    footer: { text: 'Error: invalid token' }
   });
 
   constructor(guildConfig: GuildConfig, botmessage: Message, message: Message) {
@@ -269,7 +269,6 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): 
 async function getModulesPage( canvasInstanceID: string, discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed | undefined> {
   const courseID = courses[courseNr - 1].id;
   const courseName = courses[courseNr - 1].name;
-  console.log('Getting page!');
   let count = 0;
 
   if (typeof moduleNr === 'undefined') { //All modules of course
