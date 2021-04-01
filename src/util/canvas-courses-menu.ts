@@ -106,7 +106,9 @@ export class CoursesMenu {
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
-    this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr));
+    const modulePage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr);
+    if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    this.botmsg.edit(modulePage);
     //quickAddReactions(botmsg, botmsg.client, moduleReactions);
     this.botmsg.react(this.eBack);
 
@@ -141,7 +143,9 @@ export class CoursesMenu {
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
-        this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr));
+        const modulePage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr);
+        if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+        this.botmsg.edit(modulePage);
       }
     });
 
@@ -173,7 +177,9 @@ export class CoursesMenu {
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
-    this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr));
+    const itemPage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr);
+    if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    this.botmsg.edit(itemPage);
     //quickAddReactions(botmsg, botmsg.client, itemReactions);
     this.botmsg.react(this.eBack);
 
@@ -201,7 +207,9 @@ export class CoursesMenu {
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
-        this.botmsg.edit(await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr));
+        const itemPage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr);
+        if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+        this.botmsg.edit(itemPage);
       }
     });
 
@@ -209,6 +217,8 @@ export class CoursesMenu {
       this.botmsg.edit(this.stopMsg);
     });
   }
+
+
 }
 
 // To-do: move
@@ -256,7 +266,7 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): 
   return embed;
 }
 
-async function getModulesPage(canvasInstanceID: string, discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed> {
+async function getModulesPage( canvasInstanceID: string, discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed | undefined> {
   const courseID = courses[courseNr - 1].id;
   const courseName = courses[courseNr - 1].name;
   console.log('Getting page!');
@@ -283,6 +293,9 @@ async function getModulesPage(canvasInstanceID: string, discordUserID: string, c
   else {
     const moduleByID = modules[moduleNr - 1];
     const items = await CanvasService.getModuleItems(canvasInstanceID, discordUserID, moduleByID.items_url);
+    if (items === undefined) {
+      return undefined;
+    }
     const embed: MessageEmbed = new MessageEmbed({
       'title': 'Module ' + moduleByID.name,
       'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
