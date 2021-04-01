@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { stringify } from 'querystring';
@@ -74,6 +75,16 @@ export class CanvasService {
     });
   }
 
+  static async updateRoles():Promise<IdCourse[]>{
+    return Axios.request<IdCourse[]>(
+      {
+        method: 'GET',
+        baseURL: process.env.API_URL,
+        url:'/users/update/roles',
+        validateStatus: () => true
+      }
+    ).then((res) => { console.log('rolesUpdate'); return res.data;});
+  }
 
   static async buildAnnouncementEmbed(announcement: CanvasAnnouncement, courseID: string, canvasInstanceID: string, discordUserID: string): Promise<MessageEmbed> {
     const ts = new TurndownService();
@@ -218,4 +229,9 @@ export class CanvasService {
       // })(10);
     }, 60000);
   }
+}
+
+interface IdCourse{
+  id: string,
+  courses: CanvasCourse[]
 }
