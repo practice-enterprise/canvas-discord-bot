@@ -16,5 +16,5 @@ if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
   ReminderService.initReminderJob(client);
   RoleAssignmentService.RoleAssignmentInit(client);
   RoleAssignmentService.deleteRoles(client);
-  await CanvasService.updateRoles();
+  
 })();
