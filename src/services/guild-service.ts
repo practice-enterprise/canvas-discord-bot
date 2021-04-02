@@ -18,4 +18,22 @@ export class GuildService {
       data: config
     }).then((res) => res.data);
   }
+
+  static async setPrefix(prefix: string, guildID: string): Promise<string> {
+    const config = await this.getForId(guildID);
+    config.prefix = prefix;
+    return this.update(config);
+  }
+
+  static async setCategoryID(categoryID: string, guildID: string): Promise<string>{
+    const config = await this.getForId(guildID);
+    config.courseChannels.CategoryID = categoryID;
+    return this.update(config);
+  }
+
+  static async setChannel(courseID: string, channelID: string, guildID: string): Promise<string>{
+    const config = await this.getForId(guildID);
+    config.courseChannels.channels[courseID] = channelID;
+    return this.update(config);
+  }
 }
