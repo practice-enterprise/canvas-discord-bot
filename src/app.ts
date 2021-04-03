@@ -10,6 +10,4 @@ if (process.env.NODE_ENV == null || process.env.NODE_ENV === 'develepmont') {
 
 (async () => {
   new ShardService(process.env.API_URL || '');
-  // ReminderService.initReminderJob(client);
-  // CanvasService.initAnnouncementJob('a40d37b54851efbcadb35e68bf03d698', client, '780572565240414208'); //Hard coded for now.
 })();

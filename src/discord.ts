@@ -10,6 +10,7 @@ import { Tokenizer } from './util/tokenizer';
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
   const client = new Client({ shards: shard, shardCount });
   const config = await ConfigService.get();
+  
   client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`);
 
