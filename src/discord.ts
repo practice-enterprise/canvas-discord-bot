@@ -4,6 +4,7 @@ import { commands } from './commands';
 import { createCourseChannels } from './services/announcement-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
+import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
@@ -12,8 +13,7 @@ export async function buildClient(): Promise<Client> {
   const config = await ConfigService.get();
 
   client.on('ready', () => {
-    console.log(`Logged in as ${client.user?.tag}`);
-
+    Logger.info(`Logged in as ${client.user?.tag}`);
     /*
       Presence updating.
       Value may not be below 15000 (rate-limit Discord API = 5/60s).
@@ -143,9 +143,10 @@ export async function buildClient(): Promise<Client> {
         continue;
       }
 
-
+      Logger.verbose(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
       // eslint-disable-next-line no-await-in-loop
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
+
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;
