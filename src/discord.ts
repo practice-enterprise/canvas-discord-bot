@@ -1,7 +1,7 @@
 import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
-import { createCourseChannels } from './services/announcement-service';
+// import { createCourseChannels } from './services/announcement-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
@@ -50,7 +50,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
-    await createCourseChannels(msg.author.id, msg.guild, guildConfig);
+    // await createCourseChannels(msg.author.id, msg.guild, guildConfig);
 
     if (!tokenizer.command()) {
       return; // not a valid command
