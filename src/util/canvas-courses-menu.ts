@@ -1,6 +1,7 @@
 import { Client, Message, MessageEmbed } from 'discord.js';
 import { CanvasCourse, CanvasModule } from '../models/canvas';
 import { CanvasService } from '../services/canvas-service';
+import { Logger } from './logger';
 
 export class CoursesMenu {
   static eNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']; //.length needs to be equal to perPage
@@ -37,13 +38,13 @@ export class CoursesMenu {
       reaction.users.remove(user.id);
       const oldPage = page;
   
-      console.log('course: ', reaction.emoji.name);
+      Logger.debug('course: ', reaction.emoji.name);
   
       if (this.eNumbers.includes(reaction.emoji.name)) {
         courseNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
         if (courseNr <= courses.length) {
           collector.stop();
-          console.log('CourseNr: ', courseNr);
+          Logger.debug('CourseNr: ', courseNr);
           modulesMenu(botmsg, msg, token, courseNr);
         }
       }
@@ -189,14 +190,14 @@ async function modulesMenu(botmsg: Message, msg: Message, token: string, courseN
   const collector = botmsg.createReactionCollector(filter, { time });
 
   collector.on('collect', async (reaction, user) => {
-    console.log('module: ', reaction.emoji.name);
+    Logger.debug('module: ', reaction.emoji.name);
 
     collector.resetTimer(); //Reset timer everytime a reaction is used.
 
     reaction.users.remove(user.id);
     const oldPage = page;
 
-    console.log(reaction.emoji.name);
+    Logger.debug(reaction.emoji.name);
 
     if (eNumbers.includes(reaction.emoji.name)) {
       moduleNr = perPage * page + (eNumbers.indexOf(reaction.emoji.name) + 1);
@@ -258,14 +259,14 @@ async function itemMenu(botmsg: Message, msg: Message, token: string, courseNr: 
   const collector = botmsg.createReactionCollector(filter, { time });
 
   collector.on('collect', async (reaction, user) => {
-    console.log('module: ', reaction.emoji.name);
+    Logger.debug('module: ', reaction.emoji.name);
 
     collector.resetTimer(); //Reset timer everytime a reaction is used.
 
     reaction.users.remove(user.id);
     const oldPage = page;
 
-    console.log(reaction.emoji.name);
+    Logger.debug(reaction.emoji.name);
 
     switch (reaction.emoji.name) {
     case ePrev:
@@ -281,7 +282,7 @@ async function itemMenu(botmsg: Message, msg: Message, token: string, courseNr: 
       modulesMenu(botmsg, msg, token, courseNr);
     }
 
-    console.log(page);
+    Logger.debug(page);
 
     if (oldPage !== page) { //Only edit if it's a different page.
       botmsg.edit(await getModulesPage(token, courses, modules, page, perPage, courseNr, mooduleNr));

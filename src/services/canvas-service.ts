@@ -3,6 +3,7 @@ import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { stringify } from 'querystring';
 import TurndownService from 'turndown';
 import { CanvasAnnouncement, CanvasCourse, CanvasInstance, CanvasModule, CanvasModuleItem } from '../models/canvas';
+import { Logger } from '../util/logger';
 import { GuildService } from './guild-service';
 
 export class CanvasService {
@@ -71,7 +72,6 @@ export class CanvasService {
   // ## get last (default: 10) announcements
   static async getAnnouncements(token: string, courseID: number): Promise<CanvasAnnouncement[]> {
     // context_codes param supports arrays.
-    // console.log(Array.isArray(courseID));
 
     return Axios.request<CanvasAnnouncement[]>({
       headers: {
@@ -121,10 +121,10 @@ export class CanvasService {
       const instance = await this.getInstanceForId(CanvasInstanceId);
       const guildConfig = await GuildService.getForId(guildID);
 
-      console.log('Canvas domain: ', instance.endpoint);
+      Logger.debug('Canvas domain: ', instance.endpoint);
 
       if (process.env.CANVAS_TOKEN === undefined) {
-        console.log('Token undefined.');
+        Logger.error('Token undefined.');
         return;
       }
 
@@ -140,24 +140,24 @@ export class CanvasService {
         // Maybe?: call for mutliple courses once instead of for each course (courseID[])
         const announcements = await this.getAnnouncements(process.env.CANVAS_TOKEN, parseInt(courseID));
 
-        console.log('length ', announcements.length);
-        console.log('courseID:', courseID);
+        Logger.debug('length ', announcements.length);
+        Logger.debug('courseID:', courseID);
 
         // There are no announcements
         if (announcements.length === 0) {
-          console.log('No announcements for this subject');
+          Logger.info('No announcements for this subject: ' + courseID);
           continue;
         }
 
         // No channel is set for a course.
         if (guildConfig.courseChannels.channels[courseID].length === 0) {
-          console.error('No channelID was set for this course in the config!');
+          Logger.warn('No channelID was set for this course in the config!');
           continue;
         }
 
         // Last announcement ID is undefined
         if (instance.lastAnnounce[parseInt(courseID)] === undefined) {
-          console.log('No lastAnnounceID set. Posting last announcement and setting ID.');
+          Logger.info('No lastAnnounceID set. Posting last announcement and setting ID.');
 
           const embed = await this.buildAnnouncementEmbed(announcements[0], parseInt(courseID), process.env.CANVAS_TOKEN);
           (client.guilds.resolve(guildConfig._id)?.channels.resolve(guildConfig.courseChannels.channels[courseID]) as TextChannel)
@@ -165,37 +165,33 @@ export class CanvasService {
             .then(() => {
               instance.lastAnnounce[parseInt(courseID)] = announcements[0].id;
               this.updateInstance(instance);
-              console.log('Updated!');
             });
 
           continue;
         }
 
 
-        console.log('Checking announcements for courseID', courseID);
+        Logger.debug('Checking announcements for courseID', courseID);
 
         const lastAnnounceID = instance.lastAnnounce[parseInt(courseID)];
         const index = announcements.findIndex(a => a.id === lastAnnounceID);
 
-        if (index === 0) {
-          console.log('Already last announcement.');
-        }
-        else {
-          console.log('New announcement(s)!');
+        if (index !== 0) {
+          Logger.debug('New announcement(s)!');
 
           for (let i = index - 1; i >= 0; i--) {
-            console.log('Posting: ' + announcements[i].title);
+            Logger.debug('Posting: ' + announcements[i].title);
 
             const embed = await this.buildAnnouncementEmbed(announcements[i], parseInt(courseID), process.env.CANVAS_TOKEN)
               .catch(() => {
-                console.error('Couldn\'t make announcement embed. Invalid announcement obj, courseID and/or token?');
+                Logger.error('Couldn\'t make announcement embed. Invalid announcement obj, courseID and/or token?');
               });
 
             if (embed !== undefined) {
               (client.guilds.resolve(guildConfig._id)?.channels.resolve(guildConfig.courseChannels.channels[courseID]) as TextChannel)
                 .send(embed)
                 .catch(() => {
-                  console.error('Couldn\'t post announcement. Likely wrong channel/guildID.');
+                  Logger.error('Couldn\'t post announcement. Likely wrong channel/guildID.');
                 });
             }
           }
@@ -204,19 +200,9 @@ export class CanvasService {
           instance.lastAnnounce[parseInt(courseID)] = announcements[0].id;
           this.updateInstance(instance);
 
-          console.log('Last announcements are now: ', instance.lastAnnounce);
+          Logger.debug('Last announcements are now: ', instance.lastAnnounce);
         }
       }
-
-      // // Loop with delay, perhaps for ratelimits
-      // (function Loop (i) {
-      //   setTimeout(function () {
-      //     console.log(i);
-      //     if (--i) {       
-      //       Loop(i);       
-      //     }
-      //   }, 30);
-      // })(10);
     }, 60000);
   }
 }
