@@ -1,7 +1,7 @@
 import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
-import { CanvasService } from './services/canvas-service';
+import { createCourseChannels } from './services/announcement-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
@@ -25,8 +25,8 @@ export async function buildClient(): Promise<Client> {
     let index = 0;
     setInterval(() => {
       client.user?.setPresence({
-        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status, 
-        activity: { 
+        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status,
+        activity: {
           name: config[0].discord.richpresence.states[index].activity.name,
           type: config[0].discord.richpresence.states[index].activity.type,
         }
@@ -50,6 +50,8 @@ export async function buildClient(): Promise<Client> {
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
+    await createCourseChannels(msg.author.id, msg.guild, guildConfig);
+
     if (!tokenizer.command()) {
       return; // not a valid command
     }
@@ -58,7 +60,12 @@ export async function buildClient(): Promise<Client> {
       const evalRole = '817824554616487946';
 
       // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
-      if (!(msg.member?.roles.cache.has(evalRole))){
+      if(process.env.NODE_ENV != 'development'){
+        msg.channel.send('you are not in a development enviroment');
+        return;
+      }
+
+      if (!(msg.member?.roles.cache.has(evalRole))) {
         msg.channel.send('You need to have the EVAL role.');
         return;
       }
