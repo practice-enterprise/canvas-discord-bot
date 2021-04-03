@@ -21,13 +21,11 @@ export class ShardService {
 
     this.socket.on('connect', (socket: SocketIOClient.Socket) => {
       // TODO: socket undefined at this point?
-      // console.log(socket);
       // console.log(`connected to api with ID ${socket.id}`);
     });
 
     this.socket.on('system', async (str: string) => {
       const msg = JSON.parse(str);
-      console.log(msg)
       if (msg.opcode == 0) {
         // FIX: client starts 2 shards if a reconnect request was sent before the first client was done building
         console.log(`reconnecting as shard ${msg.data.number} of ${msg.data.total}`);
