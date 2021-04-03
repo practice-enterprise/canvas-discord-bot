@@ -1,7 +1,6 @@
 import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
-import { createCourseChannels } from './services/announcement-service';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
@@ -50,33 +49,17 @@ export async function buildClient(): Promise<Client> {
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
-    await createCourseChannels(msg.author.id, msg.guild, guildConfig);
-
     if (!tokenizer.command()) {
       return; // not a valid command
     }
 
     if (tokenizer.command() === 'eval') {
-      const evalRole = '817824554616487946';
-
-      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
-      if(process.env.NODE_ENV != 'development'){
-        msg.channel.send('you are not in a development enviroment');
-        return;
-      }
-
-      if (!(msg.member?.roles.cache.has(evalRole))) {
-        msg.channel.send('You need to have the EVAL role.');
-        return;
-      }
-
-      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
-        msg.channel.send('You need to be an admin for this command.');
+      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can.
+      if(process.env.NODE_ENV != 'development' || !(msg.member?.hasPermission('ADMINISTRATOR')) || !(msg.member?.roles.cache.has('817824554616487946'))) {
         return;
       }
 
       const content = new Tokenizer(msg.content, guildConfig).body();
-
       try {
         const evalres = await eval(content);
 
