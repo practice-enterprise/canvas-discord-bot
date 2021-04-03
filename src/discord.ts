@@ -7,10 +7,10 @@ import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
-export async function buildClient(): Promise<Client> {
-  const client = new Client();
+export async function buildClient(shard: number, shardCount: number): Promise<Client> {
+  const client = new Client({ shards: shard, shardCount });
   const config = await ConfigService.get();
-
+  
   client.on('ready', () => {
     Logger.info(`Logged in as ${client.user?.tag}`);
     /*
