@@ -2,8 +2,8 @@ import Axios from 'axios';
 import { Config } from '../models/config';
 
 export class ConfigService {
-  static async get(): Promise<Config[]> {
-    return Axios.request<Config[]>({
+  static async get(): Promise<Config> {
+    return Axios.request<Config>({
       method: 'GET',
       baseURL: process.env.API_URL,
       url: '/config'
