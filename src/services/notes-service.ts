@@ -67,7 +67,6 @@ export class NotesService {
           channelID: [note]
         }
       };
-      console.log(newNotes);
       return await NotesService.create(newNotes);
     }
   
@@ -77,7 +76,6 @@ export class NotesService {
     }
   
     guildNotes.notes[channelID].push(note);
-    console.log(guildNotes);
     return await NotesService.update(guildNotes);
   }
 

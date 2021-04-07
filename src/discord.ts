@@ -3,16 +3,16 @@ import { inspect } from 'util';
 import { commands } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
+import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
-export async function buildClient(): Promise<Client> {
-  const client = new Client();
+export async function buildClient(shard: number, shardCount: number): Promise<Client> {
+  const client = new Client({ shards: shard, shardCount });
   const config = await ConfigService.get();
   
   client.on('ready', () => {
-    console.log(`Logged in as ${client.user?.tag}`);
-    
+    Logger.info(`Logged in as ${client.user?.tag}`);
     /*
       Presence updating.
       Value may not be below 15000 (rate-limit Discord API = 5/60s).
@@ -24,8 +24,8 @@ export async function buildClient(): Promise<Client> {
     let index = 0;
     setInterval(() => {
       client.user?.setPresence({
-        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status, 
-        activity: { 
+        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status,
+        activity: {
           name: config[0].discord.richpresence.states[index].activity.name,
           type: config[0].discord.richpresence.states[index].activity.type,
         }
@@ -54,21 +54,12 @@ export async function buildClient(): Promise<Client> {
     }
 
     if (tokenizer.command() === 'eval') {
-      const evalRole = '817824554616487946';
-
-      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can't.
-      if (!(msg.member?.roles.cache.has(evalRole))){
-        msg.channel.send('You need to have the EVAL role.');
-        return;
-      }
-
-      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
-        msg.channel.send('You need to be an admin for this command.');
+      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can.
+      if(process.env.NODE_ENV != 'development' || !(msg.member?.hasPermission('ADMINISTRATOR')) || !(msg.member?.roles.cache.has('817824554616487946'))) {
         return;
       }
 
       const content = new Tokenizer(msg.content, guildConfig).body();
-
       try {
         const evalres = await eval(content);
 
@@ -135,9 +126,10 @@ export async function buildClient(): Promise<Client> {
         continue;
       }
 
-
+      Logger.verbose(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
       // eslint-disable-next-line no-await-in-loop
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
+
       if (typeof response === 'string') {
         msg.channel.send(response);
         return;

@@ -4,6 +4,7 @@ import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { stringify } from 'querystring';
 import TurndownService from 'turndown';
 import { CanvasAnnouncement, CanvasCourse, CanvasInstance, CanvasModule, CanvasModuleItem } from '../models/canvas';
+import { Logger } from '../util/logger';
 import { GuildService } from './guild-service';
 import { UserService } from './user-service';
 
@@ -124,7 +125,7 @@ export class CanvasService {
       //console.log('Canvas domain: ', instance.endpoint);
 
       if (process.env.CANVAS_TOKEN === undefined) {
-        console.log('Token undefined.');
+        Logger.error('Token undefined.');
         return;
       }
 
@@ -161,7 +162,7 @@ export class CanvasService {
 
         // No channel is set for a course.
         if (guildConfig.courseChannels.channels[courseID].length === 0) {
-          console.error('No channelID was set for this course in the config!');
+          Logger.warn('No channelID was set for this course in the config!');
           continue;
         }
 
@@ -187,25 +188,22 @@ export class CanvasService {
         const lastAnnounceID = canvas.lastAnnounce[parseInt(courseID)];
         const index = announcements.findIndex(a => a.id === lastAnnounceID);
 
-        if (index === 0) {
-          //console.log('Already last announcement.');
-        }
-        else {
-          console.log('New announcement(s)!');
+        if (index !== 0) {
+          Logger.debug('New announcement(s)!');
 
           for (let i = index - 1; i >= 0; i--) {
-            console.log('Posting: ' + announcements[i].title);
+            Logger.debug('Posting: ' + announcements[i].title);
 
             const embed = await this.buildAnnouncementEmbed(announcements[i], courseID, CanvasInstanceID, user.discord.id)
               .catch(() => {
-                console.error('Couldn\'t make announcement embed. Invalid announcement obj, courseID and/or token?');
+                Logger.error('Couldn\'t make announcement embed. Invalid announcement obj, courseID and/or token?');
               });
 
             if (embed !== undefined) {
               (client.guilds.resolve(guildConfig._id)?.channels.resolve(guildConfig.courseChannels.channels[courseID]) as TextChannel)
                 .send(embed)
                 .catch(() => {
-                  console.error('Couldn\'t post announcement. Likely wrong channel/guildID.');
+                  Logger.error('Couldn\'t post announcement. Likely wrong channel/guildID.');
                 });
             }
           }
@@ -217,16 +215,6 @@ export class CanvasService {
           console.log('Last announcements are now: ', canvas.lastAnnounce);
         }
       }
-
-      // // Loop with delay, perhaps for ratelimits
-      // (function Loop (i) {
-      //   setTimeout(function () {
-      //     console.log(i);
-      //     if (--i) {       
-      //       Loop(i);       
-      //     }
-      //   }, 30);
-      // })(10);
     }, 60000);
   }
 }

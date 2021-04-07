@@ -2,6 +2,7 @@ import { Client, Message, MessageEmbed } from 'discord.js';
 import { CanvasCourse, CanvasModule } from '../models/canvas';
 import { GuildConfig } from '../models/guild';
 import { CanvasService } from '../services/canvas-service';
+import { Logger } from './logger';
 
 export class CoursesMenu {
   guild: GuildConfig;
@@ -55,7 +56,6 @@ export class CoursesMenu {
 
       reaction.users.remove(user.id);
       const oldPage = page;
-
       if (this.eNumbers.includes(reaction.emoji.name)) {
         courseNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
         if (courseNr <= courses.length) {
