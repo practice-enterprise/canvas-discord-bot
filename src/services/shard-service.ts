@@ -3,6 +3,7 @@ import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
 import { AnnouncementService } from './announcement-service';
 import { ReminderService } from './reminder-service';
+import { RoleAssignmentService, RoleUpdateData } from './role-assignment-service';
 
 export class ShardService {
   socket: SocketIOClient.Socket
@@ -46,15 +47,23 @@ export class ShardService {
 
     this.socket.connect();
 
+    this.socket.on('updateRoles', (data: RoleUpdateData) =>{
+      if (this.client !== undefined)
+        RoleAssignmentService.updateRoles(data, this.client);
+    });
+    
     this.socket.on('announcement', (data: any) => {
       if (this.client !== undefined)
         AnnouncementService.postAnnouncement(data, this.client);
     });
+
+    
   }
 
   private async build(msg: any): Promise<void> {
     this.client = await buildClient(msg.data.number, msg.data.total);
     this.reminderJob = ReminderService.initReminderJob(this.client);
+
     //this.announcementJob = CanvasService.initAnnouncementJob('a40d37b54851efbcadb35e68bf03d698', this.client, '780572565240414208'); //Hard coded for now.
   }
 
