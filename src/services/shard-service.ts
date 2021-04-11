@@ -2,6 +2,7 @@ import { Client } from 'discord.js';
 import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
 import { AnnouncementService } from './announcement-service';
+import { ChannelCreationService, createChannelsData } from './channel-creation-service';
 import { ReminderService } from './reminder-service';
 
 export class ShardService {
@@ -49,6 +50,12 @@ export class ShardService {
     this.socket.on('announcement', (data: any) => {
       if (this.client !== undefined)
         AnnouncementService.postAnnouncement(data, this.client);
+    });
+
+    this.socket.on('createChannels', (data: createChannelsData) =>{
+      if (this.client !== undefined){
+        ChannelCreationService.createChannels(data, this.client);
+      }
     });
   }
 
