@@ -105,14 +105,14 @@ export const commands: Command[] = [
         const oldPage = page;
 
         switch (reaction.emoji.name) {
-        case reactions[0]:
-          if (page > 0)
-            page--;
-          break;
-        case reactions[1]:
-          if (page < pages.length - 1)
-            page++;
-          break;
+          case reactions[0]:
+            if (page > 0)
+              page--;
+            break;
+          case reactions[1]:
+            if (page < pages.length - 1)
+              page++;
+            break;
         }
 
         if (oldPage !== page) { //Only edit if it's a different page.
@@ -278,7 +278,7 @@ export const commands: Command[] = [
         } else {
           time = undefined;
         }
-        if (time && time.isValid) {
+        if (time && time.isValid && msg.guild != null) {
           ReminderService.create({
             content: tokenizer.body(3),
             date: time.toString(),
@@ -291,6 +291,7 @@ export const commands: Command[] = [
           return 'your reminder has been set as: ' + time.toString();
         }
       }
+
       return 'this was not a valid date/time format';
     }
   },

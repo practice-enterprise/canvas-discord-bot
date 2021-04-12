@@ -1,6 +1,7 @@
 import { Client } from 'discord.js';
 import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
+import { Reminder } from '../models/reminder';
 import { AnnouncementService } from './announcement-service';
 import { ReminderService } from './reminder-service';
 
@@ -50,19 +51,21 @@ export class ShardService {
       if (this.client !== undefined)
         AnnouncementService.postAnnouncement(data, this.client);
     });
+
+    this.socket.on('reminder', (data: Reminder) => {
+      if (this.client !== undefined)
+        ReminderService.sendReminder(data, this.client);
+    });
+
   }
 
   private async build(msg: any): Promise<void> {
     this.client = await buildClient(msg.data.number, msg.data.total);
-    this.reminderJob = ReminderService.initReminderJob(this.client);
     //this.announcementJob = CanvasService.initAnnouncementJob('a40d37b54851efbcadb35e68bf03d698', this.client, '780572565240414208'); //Hard coded for now.
   }
 
   private destroy(): void {
     this.client?.destroy();
-    if (this.reminderJob) {
-      clearInterval(this.reminderJob);
-    }
     if (this.announcementJob) {
       clearInterval(this.announcementJob);
     }
