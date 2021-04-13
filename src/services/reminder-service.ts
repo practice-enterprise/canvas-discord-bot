@@ -1,5 +1,6 @@
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
+import TurndownService from 'turndown';
 import { AssignmentDM, isUserTarget, Reminder } from '../models/reminder';
 
 
@@ -38,8 +39,10 @@ export class ReminderService {
   }
 
   static async sendAssignment(data: AssignmentDM, client: Client){
+    // TODO: prettify and link to assignment in title
+    const ts = new TurndownService();
     const user =  await client.users.fetch('223928391559151618');
-    await user?.send(new MessageEmbed({'title': data.title, 'description': data.description}))
+    await user?.send(new MessageEmbed({'title': data.title, 'description': ts.turndown(data.description)}))
     .catch((err)=> console.error(err));
     await this.updateLastAssignment(data.id, data.assignmentID)
       .catch((err)=>console.log(err));
