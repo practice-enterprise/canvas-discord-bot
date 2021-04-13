@@ -1,7 +1,7 @@
 import { Client } from 'discord.js';
 import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
-import { Reminder } from '../models/reminder';
+import { AssignmentDM, Reminder } from '../models/reminder';
 import { AnnouncementService } from './announcement-service';
 import { ReminderService } from './reminder-service';
 
@@ -55,6 +55,11 @@ export class ShardService {
     this.socket.on('reminder', (data: Reminder) => {
       if (this.client !== undefined)
         ReminderService.sendReminder(data, this.client);
+    });
+
+    this.socket.on('assignmentDM', (data: AssignmentDM) => {
+      if (this.client !== undefined)
+        ReminderService.sendAssignment(data, this.client);
     });
 
   }

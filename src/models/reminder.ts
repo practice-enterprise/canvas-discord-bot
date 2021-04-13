@@ -15,3 +15,12 @@ export interface Reminder {
 export function isUserTarget(target: ReminderTarget): target is ({ user: string }) {
   return (target as { user: string }).user != null;
 }
+
+export interface AssignmentDM {
+  id: string
+  assignmentID:string
+  userDiscordID: string,
+  title: string,
+  description: string
+}
+

@@ -1,6 +1,7 @@
 import Axios from 'axios';
-import { Client, TextChannel } from 'discord.js';
-import { isUserTarget, Reminder } from '../models/reminder';
+import { Client, MessageEmbed, TextChannel } from 'discord.js';
+import { AssignmentDM, isUserTarget, Reminder } from '../models/reminder';
+
 
 export class ReminderService {
   static async delete(reminder: Reminder): Promise<void> {
@@ -36,4 +37,19 @@ export class ReminderService {
     }
   }
 
+  static async sendAssignment(data: AssignmentDM, client: Client){
+    const user =  await client.users.fetch('223928391559151618');
+    await user?.send(new MessageEmbed({'title': data.title, 'description': data.description}))
+    .catch((err)=> console.error(err));
+    await this.updateLastAssignment(data.id, data.assignmentID)
+      .catch((err)=>console.log(err));
+  }
+
+  static async updateLastAssignment(userID: string, lastAssignment: string){
+    return Axios.request<void>({
+      method: 'PUT',
+      baseURL: process.env.API_URL,
+      url: `/reminders/${userID}/${lastAssignment}`,
+    });
+  }
 }
