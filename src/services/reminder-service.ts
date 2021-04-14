@@ -47,7 +47,7 @@ export class ReminderService {
 
   static async sendAssignment(data: AssignmentDM, client: Client) {
     // TODO: prettify and link to assignment in title
-    const user = await client.users.fetch('223928391559151618');
+    const user = await client.users.fetch(data.userDiscordID);
     user?.send(new MessageEmbed(data.message))
       .catch((err) => console.error(err));
     await this.updateLastAssignment(data.id, data.assignmentID)
