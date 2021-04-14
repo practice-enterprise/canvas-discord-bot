@@ -17,17 +17,17 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       Presence updating.
       Value may not be below 15000 (rate-limit Discord API = 5/60s).
     */
-    const interval = Math.max(15000, config[0].discord.richpresence.interval);
-    const length = config[0].discord.richpresence.states.length;
+    const interval = Math.max(15000, config.discord.richpresence.interval);
+    const length = config.discord.richpresence.states.length;
 
     // cycles through rich presence messages
     let index = 0;
     setInterval(() => {
       client.user?.setPresence({
-        status: <ClientPresenceStatus>config[0].discord.richpresence.states[index].status,
+        status: <ClientPresenceStatus>config.discord.richpresence.states[index].status,
         activity: {
-          name: config[0].discord.richpresence.states[index].activity.name,
-          type: config[0].discord.richpresence.states[index].activity.type,
+          name: config.discord.richpresence.states[index].activity.name,
+          type: config.discord.richpresence.states[index].activity.type,
         }
       });
 
