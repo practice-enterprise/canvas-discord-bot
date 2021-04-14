@@ -55,7 +55,6 @@ export class CoursesMenu {
 
       reaction.users.remove(user.id);
       const oldPage = page;
-
       if (this.eNumbers.includes(reaction.emoji.name)) {
         courseNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
         if (courseNr <= courses.length) {
