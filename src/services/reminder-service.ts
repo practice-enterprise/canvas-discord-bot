@@ -1,12 +1,12 @@
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import TurndownService from 'turndown';
-import { AssignmentDM, isUserTarget, Reminder } from '../models/reminder';
+import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 
 
 export class ReminderService {
-  static async delete(reminder: Reminder): Promise<void> {
-    await Axios.request<Reminder>({
+  static async delete(reminder: GuildReminder | UserReminder): Promise<void> {
+    await Axios.request<GuildReminder | UserReminder>({
       method: 'DELETE',
       baseURL: process.env.API_URL,
       url: '/reminders',
@@ -14,7 +14,7 @@ export class ReminderService {
     });
   }
 
-  static async create(reminder: Omit<Reminder, 'id'>): Promise<void> {
+  static async create(reminder: Omit<GuildReminder, 'id'>): Promise<void> {
     await Axios.request<void>({
       method: 'POST',
       baseURL: process.env.API_URL,
@@ -23,14 +23,11 @@ export class ReminderService {
     });
   }
 
-  static sendReminder(reminder: Reminder, client: Client): void {
+  static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
-      if (!isUserTarget(reminder.target)) {
-        (client.channels.resolve(reminder.target.channel) as TextChannel)
-          .send('reminder: ' + reminder.content);
-      } else {
-        client.users.resolve(reminder.target.user)?.send(reminder.content);//TODO 
-      }
+
+      (client.channels.resolve(reminder.target.channel) as TextChannel)
+        .send(reminder.content);
     } catch (err) {
       console.error(err);
     } finally {
@@ -38,17 +35,26 @@ export class ReminderService {
     }
   }
 
-  static async sendAssignment(data: AssignmentDM, client: Client){
-    // TODO: prettify and link to assignment in title
-    const ts = new TurndownService();
-    const user =  await client.users.fetch('223928391559151618');
-    await user?.send(new MessageEmbed({'title': data.title, 'description': ts.turndown(data.description)}))
-    .catch((err)=> console.error(err));
-    await this.updateLastAssignment(data.id, data.assignmentID)
-      .catch((err)=>console.log(err));
+  static sendUserReminder(reminder: UserReminder, client: Client): void {
+    try {
+      client.users.resolve(reminder.target.user)?.send(reminder.content);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      ReminderService.delete(reminder);
+    }
   }
 
-  static async updateLastAssignment(userID: string, lastAssignment: string){
+  static async sendAssignment(data: AssignmentDM, client: Client) {
+    // TODO: prettify and link to assignment in title
+    const user = await client.users.fetch('223928391559151618');
+    user?.send(new MessageEmbed(data.message))
+      .catch((err) => console.error(err));
+    await this.updateLastAssignment(data.id, data.assignmentID)
+      .catch((err) => console.log(err));
+  }
+
+  static async updateLastAssignment(userID: string, lastAssignment: string) {
     return Axios.request<void>({
       method: 'PUT',
       baseURL: process.env.API_URL,

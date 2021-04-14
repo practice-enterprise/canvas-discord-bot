@@ -10,7 +10,7 @@ import { Tokenizer } from './util/tokenizer';
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
   const client = new Client({ shards: shard, shardCount });
   const config = await ConfigService.get();
-  
+
   client.on('ready', () => {
     Logger.info(`Logged in as ${client.user?.tag}`);
     /*
@@ -41,11 +41,11 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
-
+    
     if (!msg.guild) {
       return; // ignore messages not from a guild
     }
-
+    
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
@@ -55,7 +55,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
 
     if (tokenizer.command() === 'eval') {
       // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can.
-      if(process.env.NODE_ENV != 'development' || !(msg.member?.hasPermission('ADMINISTRATOR')) || !(msg.member?.roles.cache.has('817824554616487946'))) {
+      if (process.env.NODE_ENV != 'development' || !(msg.member?.hasPermission('ADMINISTRATOR')) || !(msg.member?.roles.cache.has('817824554616487946'))) {
         return;
       }
 
