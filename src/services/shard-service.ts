@@ -1,9 +1,9 @@
 import { Client } from 'discord.js';
 import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
+import { CreateChannelsData } from '../models/channel-creation-data';
 import { AnnouncementService } from './announcement-service';
-import { ChannelCreationService, createChannelsData } from './channel-creation-service';
-import { ReminderService } from './reminder-service';
+import { ChannelCreationService } from './channel-creation-service';
 
 export class ShardService {
   socket: SocketIOClient.Socket
@@ -52,16 +52,16 @@ export class ShardService {
         AnnouncementService.postAnnouncement(data, this.client);
     });
 
-    this.socket.on('createChannels', (data: createChannelsData) =>{
+    this.socket.on('createChannels', (data: CreateChannelsData) =>{
       if (this.client !== undefined){
-        ChannelCreationService.createChannels(data, this.client);
+        ChannelCreationService.createChannels(data, this.client)
+          .catch(err => console.log(err));
       }
     });
   }
 
   private async build(msg: any): Promise<void> {
     this.client = await buildClient(msg.data.number, msg.data.total);
-    this.reminderJob = ReminderService.initReminderJob(this.client);
     //this.announcementJob = CanvasService.initAnnouncementJob('a40d37b54851efbcadb35e68bf03d698', this.client, '780572565240414208'); //Hard coded for now.
   }
 

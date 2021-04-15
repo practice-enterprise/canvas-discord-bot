@@ -10,9 +10,9 @@ export interface GuildConfig {
   notes: Record<string, string[]>
 }
 
-export interface CourseChannels{
-  CategoryID: string,
-  //Record<courseID, channelID), courseID should be number -> parseInt()
+export interface CourseChannels {
+  categoryID: string,
+  //Record<courseID, channelID)
   channels: Record<string, string>
 }
 
