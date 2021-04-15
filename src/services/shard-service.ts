@@ -4,6 +4,10 @@ import { buildClient } from '../discord';
 import { CreateChannelsData } from '../models/channel-creation-data';
 import { AnnouncementService } from './announcement-service';
 import { ChannelCreationService } from './channel-creation-service';
+import { ReminderService } from './reminder-service';
+import { RoleUpdateData } from '../models/role-update-data';
+import { RoleAssignmentService } from './role-assignment-service';
+
 
 export class ShardService {
   socket: SocketIOClient.Socket
@@ -47,6 +51,12 @@ export class ShardService {
 
     this.socket.connect();
 
+    this.socket.on('updateRoles', (data: RoleUpdateData) =>{
+      if (this.client !== undefined)
+        RoleAssignmentService.updateRoles(data, this.client)
+          .catch((err) => console.log(err));
+    });
+    
     this.socket.on('announcement', (data: any) => {
       if (this.client !== undefined)
         AnnouncementService.postAnnouncement(data, this.client);
