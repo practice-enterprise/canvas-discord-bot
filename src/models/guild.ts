@@ -4,12 +4,17 @@ export interface GuildConfig {
   _id: string,
   prefix: string,
   canvasInstanceID: string,
-  courseChannels: {
-    CategoryID: string,
-    //Record<courseID, channelID), courseID should be number -> parseInt()
-    channels: Record<string, string>
-  }
+  courseChannels: CourseChannels,
   info: Command[],
   commands: Command[],
   notes: Record<string, string[]>
+  //role type (student, teacher), channelID
+  roles: Record<string, string>
 }
+
+export interface CourseChannels {
+  categoryID: string,
+  //Record<courseID, channelID)
+  channels: Record<string, string>
+}
+

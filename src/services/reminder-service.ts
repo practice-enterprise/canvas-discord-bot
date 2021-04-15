@@ -44,7 +44,7 @@ export class ReminderService {
     }
   }
 
-  static async sendAssignment(data: AssignmentDM, client: Client) {
+  static async sendAssignment(data: AssignmentDM, client: Client): Promise<void> {
     // TODO: prettify
     const user = await client.users.fetch(data.userDiscordID);
     if (typeof (data.message) === 'string') {
@@ -55,8 +55,8 @@ export class ReminderService {
     await this.updateLastAssignment(data.id, data.assignmentID);
   }
 
-  static async updateLastAssignment(userID: string, lastAssignment: string) {
-    return Axios.request<void>({
+  static async updateLastAssignment(userID: string, lastAssignment: string): Promise<void> {
+    await Axios.request<void>({
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: `/reminders/${userID}/${lastAssignment}`,
