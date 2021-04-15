@@ -57,7 +57,7 @@ export class ShardService {
         ReminderService.sendGuildReminder(data, this.client);
     });
 
-    this.socket.on('reminderGuild', (data: UserReminder) => {
+    this.socket.on('reminderUser', (data: UserReminder) => {
       if (this.client !== undefined)
         ReminderService.sendUserReminder(data, this.client);
     });

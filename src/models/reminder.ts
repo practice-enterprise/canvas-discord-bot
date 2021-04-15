@@ -21,8 +21,8 @@ export interface UserReminder {
 
 export interface AssignmentDM {
   id: string
-  assignmentID:string
+  assignmentID: string
   userDiscordID: string,
-  message: MessageEmbedOptions
+  message: MessageEmbedOptions | string
 }
 
