@@ -1,6 +1,7 @@
 import { Client } from 'discord.js';
 import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
+import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 import { CreateChannelsData } from '../models/channel-creation-data';
 import { AnnouncementService } from './announcement-service';
 import { ChannelCreationService } from './channel-creation-service';
@@ -62,6 +63,21 @@ export class ShardService {
         AnnouncementService.postAnnouncement(data, this.client);
     });
 
+    this.socket.on('reminderGuild', (data: GuildReminder) => {
+      if (this.client !== undefined)
+        ReminderService.sendGuildReminder(data, this.client);
+    });
+
+    this.socket.on('reminderUser', (data: UserReminder) => {
+      if (this.client !== undefined)
+        ReminderService.sendUserReminder(data, this.client);
+    });
+
+    this.socket.on('assignmentDM', (data: AssignmentDM) => {
+      if (this.client !== undefined)
+        ReminderService.sendAssignment(data, this.client);
+    });
+
     this.socket.on('createChannels', (data: CreateChannelsData) =>{
       if (this.client !== undefined){
         ChannelCreationService.createChannels(data, this.client)
@@ -77,9 +93,6 @@ export class ShardService {
 
   private destroy(): void {
     this.client?.destroy();
-    if (this.reminderJob) {
-      clearInterval(this.reminderJob);
-    }
     if (this.announcementJob) {
       clearInterval(this.announcementJob);
     }

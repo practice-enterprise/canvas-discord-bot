@@ -1,17 +1,28 @@
-export type ReminderTarget = {
-  user: string
-} | {
-  guild: string,
-  channel: string
-};
+import { MessageEmbedOptions } from 'discord.js';
 
-export interface Reminder {
-  _id: string;
+export interface GuildReminder {
+  id: string;
   date: Date | string,
   content: string;
-  target: ReminderTarget
+  target: {
+    guild: string,
+    channel: string
+  };
 }
 
-export function isUserTarget(target: ReminderTarget): target is ({ user: string }) {
-  return (target as { user: string }).user != null;
+export interface UserReminder {
+  id: string;
+  date: Date | string,
+  content: string;
+  target: {
+    user: string
+  }
 }
+
+export interface AssignmentDM {
+  id: string
+  assignmentID: string
+  userDiscordID: string,
+  message: MessageEmbedOptions | string
+}
+
