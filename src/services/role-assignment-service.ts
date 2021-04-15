@@ -1,13 +1,18 @@
 /* eslint-disable no-await-in-loop */
-import { Client, FetchMemberOptions } from 'discord.js';
+import { Client } from 'discord.js';
+import { RoleUpdateData } from '../models/role-update-data';
 
 export class RoleAssignmentService {
-  static async updateRoles(data: RoleUpdateData, client: Client): Promise<boolean> {
+  static async updateRoles(data: RoleUpdateData, client: Client): Promise<void> {
     const guild = await client.guilds.fetch(data.guildID).catch((err) => console.log(err));
-    if (!guild) { return false; }
+    if (!guild) { 
+      throw new Error(`could get guild: ${data.guildID}`);
+    }
 
     const member = await guild.members.fetch({ 'user': data.userID, 'cache': true, 'force': true }).catch((err) => console.log(err))/*cache.get(data.userID)*/;
-    if (!member) { return false; }
+    if (!member) { 
+      throw new Error(`could not get member: ${data.userID}`);
+    }
 
     const roleList = member.roles.cache.map((role) => role.id);
 
@@ -24,15 +29,5 @@ export class RoleAssignmentService {
         }
       }
     }
-    return true;
   }
 }
-
-export interface RoleUpdateData {
-  guildID: string,
-  userID: string,
-  roleTypes: string[],
-  configRoles: Record<string, string>
-}
-
-//guild.id, 'UpdateRoles', { 'userID': user.id, 'roleTypes': validRoleTypes, 'courseChannels': guild.courseChannels 

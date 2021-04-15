@@ -3,7 +3,8 @@ import { connect, } from 'socket.io-client';
 import { buildClient } from '../discord';
 import { AnnouncementService } from './announcement-service';
 import { ReminderService } from './reminder-service';
-import { RoleAssignmentService, RoleUpdateData } from './role-assignment-service';
+import { RoleUpdateData } from '../models/role-update-data';
+import { RoleAssignmentService } from './role-assignment-service';
 
 export class ShardService {
   socket: SocketIOClient.Socket
@@ -49,7 +50,8 @@ export class ShardService {
 
     this.socket.on('updateRoles', (data: RoleUpdateData) =>{
       if (this.client !== undefined)
-        RoleAssignmentService.updateRoles(data, this.client);
+        RoleAssignmentService.updateRoles(data, this.client)
+          .catch((err) => console.log(err));
     });
     
     this.socket.on('announcement', (data: any) => {

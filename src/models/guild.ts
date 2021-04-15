@@ -13,5 +13,5 @@ export interface GuildConfig {
   commands: Command[],
   notes: Record<string, string[]>
   //role type (student, teacher), channelID
-  Roles: Record<string, string>
+  roles: Record<string, string>
 }
