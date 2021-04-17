@@ -1,4 +1,4 @@
-import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions, TextChannel } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
 import { ConfigService } from './services/config-service';
@@ -117,10 +117,6 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     //   msg.channel.send(guildConfig.info.reply.map(c => `\`${guildConfig.prefix}${guildConfig.info.name} ${c.name}\`: ${c.description}`).join('\n'));
     // }
 
-    if (!tokenizer.command()) {
-      return; // not a valid command
-    }
-
     for (const command of commands.concat(guildConfig.commands)) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
@@ -131,14 +127,27 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
 
       if (typeof response === 'string') {
-        msg.channel.send(response);
+        msg.channel.send(response).catch((err) => console.log(err));
         return;
       } else if (typeof response !== 'undefined') {
-        msg.channel.send(new MessageEmbed(response));
+        msg.channel.send(new MessageEmbed(response)).catch(err => console.error(err));
         return;
       }
     }
     return;
+  });
+
+  client.on('guildCreate', async guild => {
+
+    const channels = (guild.channels.cache.array());
+    for(const channel of channels)
+    {
+      if(channel.isText())
+      {
+        channel.send('joined');
+        return;
+      }
+    }
   });
 
   await client.login(process.env.DISCORD_TOKEN);
