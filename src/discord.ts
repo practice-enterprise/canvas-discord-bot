@@ -1,4 +1,5 @@
-import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+/* eslint-disable no-await-in-loop */
+import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
 import { inspect } from 'util';
 import { commands } from './commands';
 import { ConfigService } from './services/config-service';
@@ -41,11 +42,11 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     if (msg.author.bot) {
       return; // ignore messages by bots and as a result itself
     }
-    
+
     if (!msg.guild) {
       return; // ignore messages not from a guild
     }
-    
+
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig);
 
@@ -117,16 +118,12 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     //   msg.channel.send(guildConfig.info.reply.map(c => `\`${guildConfig.prefix}${guildConfig.info.name} ${c.name}\`: ${c.description}`).join('\n'));
     // }
 
-    if (!tokenizer.command()) {
-      return; // not a valid command
-    }
-
     for (const command of commands.concat(guildConfig.commands)) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
       }
 
-      Logger.verbose(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
+      Logger.debug(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
       // eslint-disable-next-line no-await-in-loop
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
 
@@ -139,6 +136,17 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       }
     }
     return;
+  });
+
+  client.on('guildCreate', async guild => {
+    const roleNames = ['student', 'teacher'];
+
+    const roleIDs: Record<string, string> = {};
+    for (const roleName of roleNames) {
+      const role = await guild.roles.create({ data: { name: roleName } });
+      roleIDs[roleName] = role.id;
+    }
+    GuildService.createDefault({ guildID: guild.id, roles: roleIDs });
   });
 
   await client.login(process.env.DISCORD_TOKEN);
