@@ -25,9 +25,26 @@ export class GuildService {
     return this.update(config);
   }
 
-  static async updateCourseChannels(guildID: string, courseChannels: CourseChannels): Promise<string>{
+  static async updateCourseChannels(guildID: string, courseChannels: CourseChannels): Promise<string> {
     const config = await this.getForId(guildID);
     config.courseChannels = courseChannels;
     return this.update(config);
+  }
+
+  static async create(data: { guildID: string, roles: Record<string, string> }): Promise<string> {
+    console.log('create call');
+
+    return Axios.request<string>({
+      method: 'PUT',
+      baseURL: process.env.API_URL,
+      url: `/guilds/create/${data.guildID}`,
+      data: {
+        commands: [],
+        canvasInstance: '',
+        info: [],
+        prefix: '!',
+        roles: data.roles
+      }
+    }).then((res) => res.data);
   }
 }
