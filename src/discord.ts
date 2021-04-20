@@ -128,10 +128,10 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
 
       if (typeof response === 'string') {
-        msg.channel.send(response).catch((err) => console.log(err));
+        msg.channel.send(response);
         return;
       } else if (typeof response !== 'undefined') {
-        msg.channel.send(new MessageEmbed(response)).catch(err => console.error(err));
+        msg.channel.send(new MessageEmbed(response));
         return;
       }
     }
@@ -139,18 +139,14 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
   });
 
   client.on('guildCreate', async guild => {
-    const roleNames = ['student', 'teacher']
+    const roleNames = ['student', 'teacher'];
 
     const roleIDs: Record<string, string> = {};
     for (const roleName of roleNames) {
       const role = await guild.roles.create({ data: { name: roleName } });
       roleIDs[roleName] = role.id;
     }
-    GuildService.create({ guildID: guild.id, roles: roleIDs }).catch(() => console.error('error'));
-
-    return;
-
-
+    GuildService.createDefault({ guildID: guild.id, roles: roleIDs });
   });
 
   await client.login(process.env.DISCORD_TOKEN);

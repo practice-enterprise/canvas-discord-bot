@@ -31,9 +31,7 @@ export class GuildService {
     return this.update(config);
   }
 
-  static async create(data: { guildID: string, roles: Record<string, string> }): Promise<string> {
-    console.log('create call');
-
+  static async createDefault(data: { guildID: string, roles: Record<string, string> }): Promise<string> {
     return Axios.request<string>({
       method: 'PUT',
       baseURL: process.env.API_URL,
