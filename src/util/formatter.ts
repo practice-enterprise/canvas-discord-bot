@@ -1,4 +1,4 @@
-import { MessageEmbedOptions } from 'discord.js';
+import { MessageEmbed, MessageEmbedOptions } from 'discord.js';
 
 /**Allows for easier formatting in Discord messages. \
  * Read ../docs/formatterts.md for more info.
@@ -146,8 +146,8 @@ export function escape(val: string): string {
  * @param append string to append trimmed content
  */
 export function preventExceed(content: string, maxLength?: number, append?: string): string;
-export function preventExceed(content: MessageEmbedOptions, maxLength?: number, append?: string): MessageEmbedOptions;
-export function preventExceed(content: string | MessageEmbedOptions, maxLength = 2000, append = ' ...'): string | MessageEmbedOptions {
+export function preventExceed(content: MessageEmbedOptions | MessageEmbed, maxLength?: number, append?: string): MessageEmbedOptions | MessageEmbed;
+export function preventExceed(content: string | MessageEmbedOptions | MessageEmbed, maxLength = 2000, append = ' ...'): string | MessageEmbedOptions | MessageEmbed{
   if (maxLength > 2000)
     maxLength = 2000;
   if (typeof content == 'string') {
