@@ -1,3 +1,5 @@
+import { MessageEmbedOptions } from 'discord.js';
+
 /**Allows for easier formatting in Discord messages. \
  * Read ../docs/formatterts.md for more info.
  * @example
@@ -100,7 +102,7 @@ export class Formatter {
 }
 
 export function bold(val: string): string {
-  
+
   return `**${val}**`;
 }
 
@@ -135,4 +137,44 @@ export function escape(val: string): string {
     .replace(/\|\|/g, '\\||') //spoiler
     .replace(/~~/g, '\\~~') //strikethrough
     .replace(/_/g, '\\_');  //underline
+}
+
+/**Will cut content if too long to prevent the message to be too long for discord.
+ * Consider using the .trim() method on string messages instead
+ * @param content string or embed to trim if too long
+ * @param maxLength Max length of string/embed description
+ * @param append string to append trimmed content
+ */
+export function preventExceed(content: string, maxLength?: number, append?: string): string;
+export function preventExceed(content: MessageEmbedOptions, maxLength?: number, append?: string): MessageEmbedOptions;
+export function preventExceed(content: string | MessageEmbedOptions, maxLength = 2000, append = ' ...'): string | MessageEmbedOptions {
+  if (maxLength > 2000)
+    maxLength = 2000;
+  if (typeof content == 'string') {
+    return content.length > maxLength ? content.slice(0, maxLength - append.length).concat(append) : content;
+  }
+  // https://discord.com/developers/docs/resources/channel#embed-limits
+  else {
+    if (content.description != null && content.description.length > maxLength)
+      content.description = content.description.slice(0, maxLength - append.length).concat(append);
+
+    if (content.title != null && content.title.length > 256)
+      content.title = content.title.slice(0, 256 - append.length).concat(append);
+
+    if (content.footer?.text != null && content.footer.text.length > 256)
+      content.footer.text = content.footer.text.slice(0, 256 - append.length).concat(append);
+
+    if (content.author?.name != null && content.author.name.length > 256)
+      content.author.name = content.author.name.slice(0, 256 - append.length).concat(append);
+
+    if (content.fields != null) {
+      if (content.fields.length > 25)
+        content.fields = content.fields.slice(0, 25);
+      // TODO check length of field object entries
+      // content.fields.forEach(field => {
+      // });
+    }
+
+    return content;
+  }
 }
