@@ -8,6 +8,7 @@ import { ChannelCreationService } from './channel-creation-service';
 import { ReminderService } from './reminder-service';
 import { RoleUpdateData } from '../models/role-update-data';
 import { RoleAssignmentService } from './role-assignment-service';
+import { AnnouncementData } from '../models/announcement-data';
 
 
 export class ShardService {
@@ -58,7 +59,7 @@ export class ShardService {
           .catch((err) => console.log(err));
     });
     
-    this.socket.on('announcement', (data: any) => {
+    this.socket.on('announcement', (data: AnnouncementData) => {
       if (this.client !== undefined)
         AnnouncementService.postAnnouncement(data, this.client);
     });
