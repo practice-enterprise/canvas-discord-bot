@@ -142,8 +142,8 @@ export function escape(val: string): string {
 /**Will cut content if too long to prevent the message to be too long for discord.
  * Consider using the .trim() method on string messages instead
  * @param content string or embed to trim if too long
- * @param maxLength Max length of string/embed description
- * @param append string to append trimmed content
+ * @param maxLength ? Max length of string/embed description
+ * @param append ? string to append trimmed content
  */
 export function preventExceed(content: string, maxLength?: number, append?: string): string;
 export function preventExceed(content: MessageEmbedOptions | MessageEmbed, maxLength?: number, append?: string): MessageEmbedOptions | MessageEmbed;

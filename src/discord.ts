@@ -5,7 +5,7 @@ import { commands } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
-import { Formatter } from './util/formatter';
+import { Formatter, preventExceed } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
@@ -128,10 +128,11 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
 
       if (typeof response === 'string') {
-        msg.channel.send(response);
+        // We might want preventExceed here instead
+        msg.channel.send(response, {split: true});
         return;
       } else if (typeof response !== 'undefined') {
-        msg.channel.send(new MessageEmbed(response));
+        msg.channel.send(new MessageEmbed(preventExceed(response)));
         return;
       }
     }

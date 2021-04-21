@@ -1,6 +1,7 @@
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
+import { preventExceed } from '../util/formatter';
 
 
 export class ReminderService {
@@ -25,7 +26,7 @@ export class ReminderService {
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
 
-      (client.channels.resolve(reminder.target.channel) as TextChannel)
+      (client.channels.resolve(preventExceed(reminder.target.channel)) as TextChannel)
         .send(reminder.content);
     } catch (err) {
       console.error(err);
@@ -36,7 +37,7 @@ export class ReminderService {
 
   static sendUserReminder(reminder: UserReminder, client: Client): void {
     try {
-      client.users.resolve(reminder.target.user)?.send(reminder.content);
+      client.users.resolve(reminder.target.user)?.send(preventExceed(reminder.content));
     } catch (err) {
       console.error(err);
     } finally {
@@ -48,9 +49,9 @@ export class ReminderService {
     // TODO: prettify
     const user = await client.users.fetch(data.userDiscordID);
     if (typeof (data.message) === 'string') {
-      user?.send(data.message);
+      user?.send(preventExceed(data.message));
     } else {
-      user?.send(new MessageEmbed(data.message));
+      user?.send(new MessageEmbed(preventExceed(data.message)));
     }
     await this.updateLastAssignment(data.id, data.assignmentID);
   }
