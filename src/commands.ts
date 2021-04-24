@@ -304,7 +304,7 @@ export const commands: Command[] = [
         } else {
           time = undefined;
         }
-        
+
         if (time && time.isValid) {
           if (guildConfig) {
             ReminderService.create({
@@ -371,19 +371,14 @@ export const commands: Command[] = [
   },
   { // courses menu command
     name: 'courses',
-    description: 'Lists your courses, modules and items with controls',
+    description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      if(!guildConfig)
+        return 'guild command only';
+      //TODO make user specific 
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(guildConfig, botmsg, msg).coursesMenu();
-      /*else {
-        const embed = new MessageEmbed({
-          'title': 'Undefined or incorrect token.',
-          'description': 'Are you sure you logged in?\nURL TO AUTH',
-          'color': 'EF4A25', //Canvas color pallete
-        });
-        return embed;
-      }*/
     }
   },
 ];
