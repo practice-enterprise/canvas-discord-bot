@@ -60,9 +60,12 @@ export const commands: Command[] = [
   },
   { // setup
     name: 'setup',
-    description: 'Quick setup and introduction for the bot',
+    description: 'Quick setup and introduction for the bot. server only',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      if(!guildConfig){
+        return 'Server command only';
+      }
       const time = 300000; //300000 = 5 minutes
       const ePrev = '◀';
       const eNext = '▶';
@@ -73,7 +76,7 @@ export const commands: Command[] = [
       };
 
       if (!(msg.member?.hasPermission('ADMINISTRATOR')))
-        msg.channel.send('You need to be an admin for this command.');
+        return 'You need to be an admin for this command.';
 
       let page = 0;
       const pages: MessageEmbedOptions[] = [
@@ -152,8 +155,12 @@ export const commands: Command[] = [
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-
+      let tokenizer: Tokenizer;
+      if(guildConfig){
+        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+      } else{
+        tokenizer = new Tokenizer(msg.content, defaultPrefix);
+      }
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
       if (match) {
         const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
