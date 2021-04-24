@@ -26,7 +26,7 @@ export class Tokenizer {
 
   constructor(
     private content: string,
-    private serverConfig: { prefix: string }
+    private prefix: string
   ) {
     this.tokens = [];
     this.parse();
@@ -38,8 +38,8 @@ export class Tokenizer {
         continue; // ignore double space situations
       }
 
-      if (content.startsWith(this.serverConfig.prefix)) {
-        this.tokens.push({ type: 'command', content: content.substr(this.serverConfig.prefix.length) });
+      if (content.startsWith(this.prefix)) {
+        this.tokens.push({ type: 'command', content: content.substr(this.prefix.length) });
       } else {
         const matcher = matchers.find(m => content.match(m.regex));
         if (matcher) {
