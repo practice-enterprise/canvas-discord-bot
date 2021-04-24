@@ -13,7 +13,8 @@ export class ReminderService {
     });
   }
 
-  static async create(reminder: Omit<GuildReminder, 'id'>): Promise<void> {
+  static async create(reminder: Omit<GuildReminder | UserReminder, 'id'>): Promise<void> {
+    console.log(reminder);
     await Axios.request<void>({
       method: 'POST',
       baseURL: process.env.API_URL,

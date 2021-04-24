@@ -26,7 +26,7 @@ export const commands: Command[] = [
           'color': '43B581',
         } as MessageEmbedOptions;
       }
-      
+
       return {
         'title': 'Help is on the way!',
         'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
@@ -38,8 +38,8 @@ export const commands: Command[] = [
     name: 'info',
     description: 'Displays more information. server only',
     aliases: ['informatie', 'information'],
-    async response(msg: Message, guildConfig: GuildConfig |undefined): Promise<Response | void> {
-      if(!guildConfig){
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
         return 'the info command is a server only command';
       }
 
@@ -55,7 +55,7 @@ export const commands: Command[] = [
         'description': guildConfig.info.map(i => `\`${i.name}\`: ${i.description}`).join('\n'),
         'color': '4FAFEF',
       } as MessageEmbedOptions;
-      
+
     }
   },
   { // setup
@@ -63,7 +63,7 @@ export const commands: Command[] = [
     description: 'Quick setup and introduction for the bot. server only',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      if(!guildConfig){
+      if (!guildConfig) {
         return 'Server command only';
       }
       const time = 300000; //300000 = 5 minutes
@@ -156,9 +156,9 @@ export const commands: Command[] = [
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       let tokenizer: Tokenizer;
-      if(guildConfig){
+      if (guildConfig) {
         tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      } else{
+      } else {
         tokenizer = new Tokenizer(msg.content, defaultPrefix);
       }
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
@@ -184,7 +184,12 @@ export const commands: Command[] = [
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+      let tokenizer;
+      if (guildConfig) {
+        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+      } else {
+        tokenizer = new Tokenizer(msg.content, defaultPrefix);
+      }
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
         .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
@@ -205,9 +210,12 @@ export const commands: Command[] = [
   },
   { // prefix
     name: 'prefix',
-    description: 'Set prefix for guild',
+    description: 'Set prefix for guild. server only',
     aliases: ['pf'],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      if (!guildConfig) {
+        return 'this is a guild only command';
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
@@ -223,7 +231,7 @@ export const commands: Command[] = [
       }
     }
   },
-  { // default
+  /*{ // default
     name: 'default',
     description: 'sets the default channel',
     aliases: [],
@@ -235,12 +243,15 @@ export const commands: Command[] = [
         return 'this is not a valid channel';
       }
     }
-  },
+  },*/
   { // notes
     name: 'notes',
-    description: 'set or get notes for channels',
+    description: 'set or get notes for channels. server only',
     aliases: ['note'],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      if (!guildConfig) {
+        return 'this is a server command only';
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && msg.guild?.id != undefined) {
@@ -278,7 +289,12 @@ export const commands: Command[] = [
     description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+      let tokenizer;
+      if (guildConfig) {
+        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+      } else {
+        tokenizer = new Tokenizer(msg.content, defaultPrefix);
+      }
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
@@ -288,20 +304,30 @@ export const commands: Command[] = [
         } else {
           time = undefined;
         }
-        if (time && time.isValid && msg.guild != null) {
-          ReminderService.create({
-            content: tokenizer.body(3),
-            date: time.toString(),
-            target: {
-              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
-              guild: msg.guild!.id
-            },
-          });
-
+        
+        if (time && time.isValid) {
+          if (guildConfig) {
+            ReminderService.create({
+              content: tokenizer.body(3),
+              date: time.toString(),
+              target: {
+                channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
+                guild: msg.guild!.id
+              },
+            });
+          } else {
+            ReminderService.create({
+              content: tokenizer.body(3),
+              date: time.toString(),
+              target: {
+                user: msg.author!.id
+              },
+            });
+          }
           return 'your reminder has been set as: ' + time.toString();
         }
       }
-
+      
       return 'this was not a valid date/time format';
     }
   },
