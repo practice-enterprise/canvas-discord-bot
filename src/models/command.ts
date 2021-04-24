@@ -6,5 +6,5 @@ export interface Command {
   name: string,
   aliases: string[],
   description: string;
-  response: Response | ((msg: Message, guildConfig: GuildConfig) => PromiseLike<Response | void>)
+  response: Response | ((msg: Message, guildConfig: GuildConfig |undefined) => PromiseLike<Response | void>)
 }

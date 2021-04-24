@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
 import { inspect } from 'util';
-import { commands } from './commands';
+import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
@@ -44,8 +44,30 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     }
 
     if (!msg.guild) {
-      return; // ignore messages not from a guild
-    }
+      const tokenizer = new Tokenizer(msg.content, defaultPrefix);
+      if (!tokenizer.command()) {
+        return; // not a valid command
+      }
+
+      for (const command of commands) {
+        if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
+          continue;
+        }
+  
+        Logger.debug(`received dm command '${tokenizer.command()}' from user ${msg.author.id}`);
+        // eslint-disable-next-line no-await-in-loop
+        const response = typeof command.response === 'function' ? await command.response(msg, undefined) : command.response;
+  
+        if (typeof response === 'string') {
+          msg.channel.send(response);
+          return;
+        } else if (typeof response !== 'undefined') {
+          msg.channel.send(new MessageEmbed(response));
+          return;
+        }
+      }
+      return; 
+    } // handle user DM commands
 
     const guildConfig = await GuildService.getForId(msg.guild.id);
     const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);

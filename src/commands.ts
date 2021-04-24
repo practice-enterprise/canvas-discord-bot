@@ -18,40 +18,44 @@ export const commands: Command[] = [
     name: 'help',
     description: 'that\'s this command.',
     aliases: ['how', 'wtf', 'man', 'get-help'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const help: MessageEmbedOptions = {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (guildConfig) {
+        return {
+          'title': 'Help is on the way!',
+          'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
+          'color': '43B581',
+        } as MessageEmbedOptions;
+      }
+      
+      return {
         'title': 'Help is on the way!',
-        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
+        'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
         'color': '43B581',
-      };
-
-      return help;
+      } as MessageEmbedOptions;
     }
   },
   { // Info
     name: 'info',
-    description: 'Displays more information.',
+    description: 'Displays more information. server only',
     aliases: ['informatie', 'information'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+    async response(msg: Message, guildConfig: GuildConfig |undefined): Promise<Response | void> {
+      if(!guildConfig){
+        return 'the info command is a server only command';
+      }
 
+      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       for (const reply of guildConfig.info) {
         if (tokenizer.tokens[1] !== undefined && reply.name === tokenizer.tokens[1].content) {
           const response = typeof reply.response === 'function' ? await reply.response(msg, guildConfig) : reply.response;
-          if (typeof response === 'string') {
-            msg.channel.send(response);
-          } else if (typeof response !== 'undefined') {
-            msg.channel.send(new MessageEmbed(response));
-          }
-          return;
+          return response;
         }
       }
-      const embed: MessageEmbedOptions = {
+      return {
         'title': 'Info commands',
         'description': guildConfig.info.map(i => `\`${i.name}\`: ${i.description}`).join('\n'),
         'color': '4FAFEF',
-      };
-      return embed;
+      } as MessageEmbedOptions;
+      
     }
   },
   { // setup
