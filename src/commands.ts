@@ -11,6 +11,7 @@ import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 import { CanvasService } from './services/canvas-service';
 
+
 export const defaultPrefix = '!';
 
 export const commands: Command[] = [
@@ -327,7 +328,6 @@ export const commands: Command[] = [
           return 'your reminder has been set as: ' + time.toString();
         }
       }
-      
       return 'this was not a valid date/time format';
     }
   },
@@ -335,10 +335,41 @@ export const commands: Command[] = [
     name: 'clock',
     description: 'Get your current time that the bot reads',
     aliases: ['time'],
-    async response(msg: Message): Promise<Response | void> {
-
-      new Tokenizer(msg.content, defaultPrefix);
-      return new Date().toISOString();
+    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+      let tokenizer: Tokenizer;
+      if (guildConfig) {
+        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+      } else {
+        tokenizer = new Tokenizer(msg.content, defaultPrefix);
+      }
+      if (tokenizer.tokens[1] == undefined)
+        return {
+          'title': 'clock',
+          'description': '`clock get`: gets you your time\n `clock set`: set your clock',
+          'color': '4FAFEF',
+        } as MessageEmbedOptions;
+      if (tokenizer.tokens[1].content == 'get') {
+        const offset = (await ReminderService.getOffset(msg.author.id)).offset;
+        console.log((Date.now() + offset));
+        console.log(Date.now());
+        return new Date(/*Date.now() +offset*/).toString();
+      }
+      if (tokenizer.tokens[1].content == 'set') {
+        let offset = parseInt(tokenizer.tokens[2].content) - new Date().getHours();
+        if (offset > 20) {
+          offset = offset - 24;
+        } else if (offset < -20) {
+          offset = offset + 24;
+        }
+        offset *= 3600000;
+        ReminderService.setOffset(msg.author.id, offset);
+        return new Date(Date.now() + offset).toString();
+      }
+      return {
+        'title': 'clock',
+        'description': 'clock get: gets you your time\n clock set: set your clock',
+        'color': '4FAFEF',
+      } as MessageEmbedOptions;
     }
   },
   { // wiki
@@ -374,7 +405,7 @@ export const commands: Command[] = [
     description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      if(!guildConfig)
+      if (!guildConfig)
         return 'guild command only';
       //TODO make user specific 
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));

@@ -63,4 +63,20 @@ export class ReminderService {
       url: `/reminders/${userID}/${lastAssignment}`,
     });
   }
+
+  static async getOffset(discordID: string):Promise<{offset: number}> {
+    return await Axios.request<{offset: number}>({
+      method: 'GET',
+      baseURL: process.env.API_URL,
+      url: `/reminders/offset/${discordID}`
+    }).then(res => res.data);
+  }
+  static async setOffset(discordID: string, offset:number) {
+    await Axios.request<void>({
+      method: 'PUT',
+      baseURL: process.env.API_URL,
+      url: `/reminders/offset/${discordID}`,
+      data: offset
+    }).then(res => res.data);
+  }
 }
