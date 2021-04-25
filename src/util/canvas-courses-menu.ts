@@ -1,10 +1,8 @@
 import { Client, Message, MessageEmbed } from 'discord.js';
 import { CanvasCourse, CanvasModule } from '../models/canvas';
-import { GuildConfig } from '../models/guild';
 import { CanvasService } from '../services/canvas-service';
 
 export class CoursesMenu {
-  guild: GuildConfig;
   botmsg: Message;
   msg: Message;
   stopMsg = ':grey_exclamation: `Loading or session has ended.`';
@@ -16,8 +14,7 @@ export class CoursesMenu {
     footer: { text: 'Error: invalid token' }
   });
 
-  constructor(guildConfig: GuildConfig, botmessage: Message, message: Message) {
-    this.guild = guildConfig;
+  constructor(botmessage: Message, message: Message) {
     this.botmsg = botmessage;
     this.msg = message;
   }
@@ -34,7 +31,7 @@ export class CoursesMenu {
     const perPage = 5;
     let courseNr;
 
-    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
+    const courses = await CanvasService.getCourses(this.msg.author.id);
     if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
 
     const time = 60000; //=1 minute
@@ -93,9 +90,9 @@ export class CoursesMenu {
 
     const moduleReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext).concat(this.eBack);
 
-    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
+    const courses = await CanvasService.getCourses(this.msg.author.id);
     if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
-    const modules = await CanvasService.getModules(this.guild.canvasInstanceID, this.msg.author.id, courses[courseNr - 1].id);
+    const modules = await CanvasService.getModules(this.msg.author.id, courses[courseNr - 1].id);
     if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
 
     const time = 60000; //=1 minute
@@ -105,7 +102,7 @@ export class CoursesMenu {
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
-    const modulePage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr);
+    const modulePage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr);
     if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
     this.botmsg.edit(modulePage);
     //quickAddReactions(botmsg, botmsg.client, moduleReactions);
@@ -142,7 +139,7 @@ export class CoursesMenu {
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
-        const modulePage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr);
+        const modulePage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr);
         if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
         this.botmsg.edit(modulePage);
       }
@@ -164,9 +161,9 @@ export class CoursesMenu {
 
     const itemReactions = [this.ePrev].concat(this.eNext).concat(this.eBack);
 
-    const courses = await CanvasService.getCourses(this.guild.canvasInstanceID, this.msg.author.id);
+    const courses = await CanvasService.getCourses(this.msg.author.id);
     if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
-    const modules = await CanvasService.getModules(this.guild.canvasInstanceID, this.msg.author.id, courses[courseNr - 1].id);
+    const modules = await CanvasService.getModules(this.msg.author.id, courses[courseNr - 1].id);
     if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
 
     const time = 60000; //=1 minute
@@ -176,7 +173,7 @@ export class CoursesMenu {
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
-    const itemPage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr);
+    const itemPage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr);
     if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
     this.botmsg.edit(itemPage);
     //quickAddReactions(botmsg, botmsg.client, itemReactions);
@@ -206,7 +203,7 @@ export class CoursesMenu {
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
-        const itemPage = await getModulesPage(this.guild.canvasInstanceID, this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr);
+        const itemPage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, moduleNr);
         if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
         this.botmsg.edit(itemPage);
       }
@@ -265,7 +262,7 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number): 
   return embed;
 }
 
-async function getModulesPage( canvasInstanceID: string, discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed | undefined> {
+async function getModulesPage(discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, moduleNr?: number): Promise<MessageEmbed | undefined> {
   const courseID = courses[courseNr - 1].id;
   const courseName = courses[courseNr - 1].name;
   let count = 0;
@@ -290,7 +287,7 @@ async function getModulesPage( canvasInstanceID: string, discordUserID: string, 
   }
   else {
     const moduleByID = modules[moduleNr - 1];
-    const items = await CanvasService.getModuleItems(canvasInstanceID, discordUserID, moduleByID.items_url);
+    const items = await CanvasService.getModuleItems(discordUserID, moduleByID.items_url);
     if (items === undefined) {
       return undefined;
     }
