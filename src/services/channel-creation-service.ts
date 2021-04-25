@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
-import { Client } from "discord.js";
-import { CreateChannelsData } from "../models/channel-creation-data";
-import { GuildService } from "./guild-service";
+import { Client } from 'discord.js';
+import { CreateChannelsData } from '../models/channel-creation-data';
+import { GuildService } from './guild-service';
 
 export class ChannelCreationService {
   static async createChannels(data: CreateChannelsData, client: Client): Promise<void> {
