@@ -1,7 +1,7 @@
 import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
-import { DateTime } from 'luxon';
+import { DateTime, Duration } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
@@ -301,13 +301,10 @@ export const commands: Command[] = [
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
-        let time;
+        let time =undefined;
         if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format);
-        } else {
-          time = undefined;
+          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, {zone: (await ReminderService.getTimeZone(msg.author.id))});
         }
-
         if (time && time.isValid) {
           if (guildConfig) {
             ReminderService.create({
@@ -333,7 +330,7 @@ export const commands: Command[] = [
       return 'this was not a valid date/time format';
     }
   },
-  { // timezone TODO prettyfy 
+  { // timezone TODO prettify 
     name: 'timezone',
     description: 'Get your current time that the bot reads',
     aliases: ['time', 'clock', 'tz'],
@@ -362,9 +359,10 @@ export const commands: Command[] = [
           if(!tz){
             tz = tokenizer.tokens[2].content;
           }
-          const time = DateTime.fromJSDate(new Date(), {zone: tz});
+          const time = DateTime.fromMillis(Date.now(), {zone: tz});
+
           if(time.isValid){
-            ReminderService.setTimeZone(msg.author.id, tz);
+            await ReminderService.setTimeZone(msg.author.id, tz);
             return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
           }
         }
