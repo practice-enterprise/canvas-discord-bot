@@ -14,6 +14,8 @@ import { CanvasService } from './services/canvas-service';
 
 export const defaultPrefix = '!';
 
+const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+
 export const commands: Command[] = [
   { // help
     name: 'help',
@@ -23,14 +25,14 @@ export const commands: Command[] = [
       if (guildConfig) {
         return {
           'title': 'Help is on the way!',
-          'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
+          'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
           'color': '43B581',
         } as MessageEmbedOptions;
       }
 
       return {
         'title': 'Help is on the way!',
-        'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
+        'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
         'color': '43B581',
       } as MessageEmbedOptions;
     }
@@ -331,10 +333,10 @@ export const commands: Command[] = [
       return 'this was not a valid date/time format';
     }
   },
-  { // clock
-    name: 'clock',
+  { // timezone TODO prettyfy 
+    name: 'timezone',
     description: 'Get your current time that the bot reads',
-    aliases: ['time'],
+    aliases: ['time', 'clock', 'tz'],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
       let tokenizer: Tokenizer;
       if (guildConfig) {
@@ -349,21 +351,30 @@ export const commands: Command[] = [
           'color': '4FAFEF',
         } as MessageEmbedOptions;
       if (tokenizer.tokens[1].content == 'get') {
-        const offset = (await ReminderService.getOffset(msg.author.id)).offset;
-        console.log((Date.now() + offset));
-        console.log(Date.now());
-        return new Date(/*Date.now() +offset*/).toString();
+        const tz = (await ReminderService.getTimeZone(msg.author.id));
+        console.log(tz);
+        const time = DateTime.fromJSDate(new Date(), { zone: tz });
+        return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
       }
       if (tokenizer.tokens[1].content == 'set') {
-        let offset = parseInt(tokenizer.tokens[2].content) - new Date().getHours();
-        if (offset > 20) {
-          offset = offset - 24;
-        } else if (offset < -20) {
-          offset = offset + 24;
+        if (tokenizer.tokens[2]) {
+          let tz = timeZones[parseInt(tokenizer.tokens[2].content)];
+          if(!tz){
+            tz = tokenizer.tokens[2].content;
+          }
+          const time = DateTime.fromJSDate(new Date(), {zone: tz});
+          if(time.isValid){
+            ReminderService.setTimeZone(msg.author.id, tz);
+            return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
+          }
         }
-        offset *= 3600000;
-        ReminderService.setOffset(msg.author.id, offset);
-        return new Date(Date.now() + offset).toString();
+        let i = 0;
+        return {
+          'title': 'time zones!',
+          'url':'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
+          'description': timeZones.map(tz => `\`${i++}:\`${tz}`).join('\n') + '\n',
+          'color': '43B581',
+        } as MessageEmbedOptions;
       }
       return {
         'title': 'clock',
