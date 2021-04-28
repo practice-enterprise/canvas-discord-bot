@@ -309,16 +309,17 @@ export const commands: Command[] = [
           if (guildConfig) {
             ReminderService.create({
               content: tokenizer.body(3),
-              date: time.toString(),
+              date: time.toUTC().toString(),
               target: {
                 channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
-                guild: msg.guild!.id
+                guild: msg.guild!.id,
+                user: msg.author.id
               },
             });
           } else {
             ReminderService.create({
               content: tokenizer.body(3),
-              date: time.toString(),
+              date: time.toUTC().toString(),
               target: {
                 user: msg.author!.id
               },

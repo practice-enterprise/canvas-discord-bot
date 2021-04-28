@@ -6,7 +6,8 @@ export interface GuildReminder {
   content: string;
   target: {
     guild: string,
-    channel: string
+    channel: string,
+    user: string
   };
 }
 
