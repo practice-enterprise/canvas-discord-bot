@@ -303,7 +303,7 @@ export const commands: Command[] = [
       for (const format of dateFormates) {
         let time =undefined;
         if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, {zone: (await ReminderService.getTimeZone(msg.author.id))});
+          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, {zone: 'UTC' });
         }
         if (time && time.isValid) {
           if (guildConfig) {
@@ -325,7 +325,8 @@ export const commands: Command[] = [
               },
             });
           }
-          return 'your reminder has been set as: ' + time.toString();
+          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id), {keepLocalTime: true});
+          return 'your reminder has been set as: ' + userTime.toString();
         }
       }
       return 'this was not a valid date/time format';

@@ -25,9 +25,8 @@ export class ReminderService {
 
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
-
       (client.channels.resolve(reminder.target.channel) as TextChannel)
-        .send(reminder.content);
+        .send(reminder.content || 'reminder');
     } catch (err) {
       console.error(err);
     } finally {
@@ -37,7 +36,7 @@ export class ReminderService {
 
   static sendUserReminder(reminder: UserReminder, client: Client): void {
     try {
-      client.users.resolve(reminder.target.user)?.send(reminder.content);
+      client.users.resolve(reminder.target.user)?.send(reminder.content || 'reminder');
     } catch (err) {
       console.error(err);
     } finally {
@@ -64,19 +63,19 @@ export class ReminderService {
     });
   }
 
-  static async getTimeZone(discordID: string):Promise<string> {
+  static async getTimeZone(discordID: string): Promise<string> {
     return await Axios.request<string>({
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/reminders/offset/${discordID}`
     }).then(res => res.data);
   }
-  static async setTimeZone(discordID: string, tz:string) {
+  static async setTimeZone(discordID: string, tz: string) {
     await Axios.request<void>({
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: `/reminders/offset/${discordID}`,
-      data: {tz: tz}
+      data: { tz: tz }
     });
   }
 }
