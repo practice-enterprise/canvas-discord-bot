@@ -9,7 +9,6 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
-import { CanvasService } from './services/canvas-service';
 
 
 export const defaultPrefix = '!';
@@ -301,9 +300,9 @@ export const commands: Command[] = [
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
-        let time =undefined;
+        let time = undefined;
         if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, {zone: 'UTC' });
+          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
         }
         if (time && time.isValid) {
           if (guildConfig) {
@@ -325,7 +324,7 @@ export const commands: Command[] = [
               },
             });
           }
-          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id), {keepLocalTime: true});
+          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id), { keepLocalTime: true });
           return 'your reminder has been set as: ' + userTime.toString();
         }
       }
@@ -358,12 +357,12 @@ export const commands: Command[] = [
       if (tokenizer.tokens[1].content == 'set') {
         if (tokenizer.tokens[2]) {
           let tz = timeZones[parseInt(tokenizer.tokens[2].content)];
-          if(!tz){
+          if (!tz) {
             tz = tokenizer.tokens[2].content;
           }
-          const time = DateTime.fromMillis(Date.now(), {zone: tz});
+          const time = DateTime.fromMillis(Date.now(), { zone: tz });
 
-          if(time.isValid){
+          if (time.isValid) {
             await ReminderService.setTimeZone(msg.author.id, tz);
             return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
           }
@@ -371,7 +370,7 @@ export const commands: Command[] = [
         let i = 0;
         return {
           'title': 'time zones!',
-          'url':'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
+          'url': 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
           'description': timeZones.map(tz => `\`${i++}:\`${tz}`).join('\n') + '\n',
           'color': '43B581',
         } as MessageEmbedOptions;
@@ -416,11 +415,8 @@ export const commands: Command[] = [
     description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      if (!guildConfig)
-        return 'guild command only';
-      //TODO make user specific 
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
-      new CoursesMenu(guildConfig, botmsg, msg).coursesMenu();
+      new CoursesMenu(botmsg, msg).coursesMenu();
     }
   },
 ];

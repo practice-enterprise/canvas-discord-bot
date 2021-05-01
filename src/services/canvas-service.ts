@@ -20,36 +20,36 @@ export class CanvasService {
     }).then((res) => res.data);
   }
 
-  static async getCourses(canvasInstanceID: string, discordUserID: string): Promise<CanvasCourse[] | undefined> {
+  static async getCourses(discordUserID: string): Promise<CanvasCourse[] | undefined> {
     return Axios.request<CanvasCourse[]>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses`,
+      url: `/canvas/${discordUserID}/courses`,
       validateStatus: () => true,
     }).then((res) => {
       return res.status === 200 ? res.data : undefined;
     });
   }
 
-  static async getModules(canvasInstanceID: string, discordUserID: string, courseID: number): Promise<CanvasModule[] | undefined> {
+  static async getModules(discordUserID: string, courseID: number): Promise<CanvasModule[] | undefined> {
     return Axios.request<CanvasModule[]>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/${discordUserID}/courses/${courseID}/modules`,
+      url: `/canvas/${discordUserID}/courses/${courseID}/modules`,
       validateStatus: () => true,
     }).then((res) => {
       return res.status === 200 ? res.data : undefined;
     });
   }
 
-  static async getModuleItems(canvasInstanceID: string, discordUserID: string, itemURL: string): Promise<CanvasModuleItem[] | undefined> {
+  static async getModuleItems(discordUserID: string, itemURL: string): Promise<CanvasModuleItem[] | undefined> {
     return Axios.request<CanvasModuleItem[]>({
       headers: {
         itemurl: itemURL
       },
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/canvas/${canvasInstanceID}/${discordUserID}/items/` + encodeURIComponent(itemURL),
+      url: `/canvas/${discordUserID}/items/` + encodeURIComponent(itemURL),
       validateStatus: () => true,
     }).then((res) => {
       return res.status === 200 ? res.data : undefined;
