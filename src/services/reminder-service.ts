@@ -67,14 +67,14 @@ export class ReminderService {
     return await Axios.request<string>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: `/reminders/offset/${discordID}`
+      url: `/reminders/timezone/${discordID}`
     }).then(res => res.data);
   }
   static async setTimeZone(discordID: string, tz: string) {
     await Axios.request<void>({
       method: 'PUT',
       baseURL: process.env.API_URL,
-      url: `/reminders/offset/${discordID}`,
+      url: `/reminders/timezone/${discordID}`,
       data: { tz: tz }
     });
   }
