@@ -2,7 +2,7 @@ import { MessageEmbedOptions } from 'discord.js';
 
 export interface GuildReminder {
   id: string;
-  date: Date | string,
+  date: string,
   content: string;
   target: {
     guild: string,
@@ -13,7 +13,7 @@ export interface GuildReminder {
 
 export interface UserReminder {
   id: string;
-  date: Date | string,
+  date: string,
   content: string;
   target: {
     user: string
