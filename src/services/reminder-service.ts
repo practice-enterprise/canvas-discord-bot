@@ -1,5 +1,6 @@
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
+import { DateTime } from 'luxon';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 
 
@@ -13,7 +14,8 @@ export class ReminderService {
     });
   }
 
-  static async create(reminder: Omit<GuildReminder, 'id'>): Promise<void> {
+  static async create(reminder: Omit<GuildReminder | UserReminder, 'id'>): Promise<void> {
+    console.log(reminder);
     await Axios.request<void>({
       method: 'POST',
       baseURL: process.env.API_URL,
@@ -24,7 +26,6 @@ export class ReminderService {
 
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
-
       (client.channels.resolve(reminder.target.channel) as TextChannel)
         .send(reminder.content);
     } catch (err) {
@@ -60,6 +61,22 @@ export class ReminderService {
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: `/reminders/${userID}/${lastAssignment}`,
+    });
+  }
+
+  static async getTimeZone(discordID: string): Promise<string> {
+    return await Axios.request<string>({
+      method: 'GET',
+      baseURL: process.env.API_URL,
+      url: `/reminders/timezone/${discordID}`
+    }).then(res => res.data);
+  }
+  static async setTimeZone(discordID: string, tz: string) {
+    await Axios.request<void>({
+      method: 'PUT',
+      baseURL: process.env.API_URL,
+      url: `/reminders/timezone/${discordID}`,
+      data: { tz: tz }
     });
   }
 }
