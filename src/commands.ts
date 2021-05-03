@@ -1,7 +1,7 @@
 import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
-import { DateTime, Duration } from 'luxon';
+import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
@@ -14,6 +14,11 @@ import { CoursesMenu } from './util/canvas-courses-menu';
 export const defaultPrefix = '!';
 
 const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+
+const guildOnly: MessageEmbed = new MessageEmbed({
+  title: 'Error!',
+  description: 'This is a server only command.'
+});
 
 export const commands: Command[] = [
   { // help
@@ -42,7 +47,7 @@ export const commands: Command[] = [
     aliases: ['informatie', 'information'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
-        return 'the info command is a server only command';
+        return guildOnly;
       }
 
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
@@ -62,11 +67,11 @@ export const commands: Command[] = [
   },
   { // setup
     name: 'setup',
-    description: 'Quick setup and introduction for the bot. server only',
+    description: 'Quick setup and introduction for the bot. Server only',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
-        return 'Server command only';
+        return guildOnly;
       }
       const time = 300000; //300000 = 5 minutes
       const ePrev = '◀';
@@ -142,7 +147,7 @@ export const commands: Command[] = [
     name: 'ping',
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       msg.channel.send('Pong!')
         .then(m =>
           m.edit('Pong! :ping_pong:')
@@ -156,13 +161,9 @@ export const commands: Command[] = [
     name: 'roll',
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      let tokenizer: Tokenizer;
-      if (guildConfig) {
-        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      } else {
-        tokenizer = new Tokenizer(msg.content, defaultPrefix);
-      }
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
+
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
       if (match) {
         const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
@@ -185,13 +186,10 @@ export const commands: Command[] = [
     name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      let tokenizer;
-      if (guildConfig) {
-        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      } else {
-        tokenizer = new Tokenizer(msg.content, defaultPrefix);
-      }
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
+
+
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
         .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
@@ -212,11 +210,11 @@ export const commands: Command[] = [
   },
   { // prefix
     name: 'prefix',
-    description: 'Set prefix for guild. server only',
+    description: 'Set prefix for guild. Server only',
     aliases: ['pf'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
-        return 'this is a guild only command';
+        return guildOnly;
       }
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
@@ -237,7 +235,7 @@ export const commands: Command[] = [
     name: 'default',
     description: 'sets the default channel',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       if (tokenizer.tokens[1]?.type === 'channel') {
         return tokenizer.tokens[1].content; //TODO stash in db of server
@@ -248,11 +246,11 @@ export const commands: Command[] = [
   },*/
   { // notes
     name: 'notes',
-    description: 'set or get notes for channels. server only',
+    description: 'Set or get notes for channels. Server only.',
     aliases: ['note'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
-        return 'this is a server command only';
+        return guildOnly;
       }
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       //!notes #channel adds this note
@@ -288,15 +286,10 @@ export const commands: Command[] = [
   },
   { // reminder
     name: 'reminder',
-    description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
+    description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      let tokenizer;
-      if (guildConfig) {
-        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      } else {
-        tokenizer = new Tokenizer(msg.content, defaultPrefix);
-      }
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
@@ -304,10 +297,13 @@ export const commands: Command[] = [
         if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
           time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
         }
+        tokenizer.body(3).length;
+
         if (time && time.isValid) {
+          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id) || timeZones[0], { keepLocalTime: true });
           if (guildConfig) {
             ReminderService.create({
-              content: tokenizer.body(3),
+              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
               date: time.toISO(),
               target: {
                 channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
@@ -317,37 +313,44 @@ export const commands: Command[] = [
             });
           } else {
             ReminderService.create({
-              content: tokenizer.body(3),
+              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
               date: time.toISO(),
               target: {
                 user: msg.author!.id
               },
             });
           }
-          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id), { keepLocalTime: true });
-          return 'your reminder has been set as: ' + userTime.toString();
+          return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
         }
       }
-      return 'this was not a valid date/time format';
+      return new MessageEmbed({
+        title: 'Reminder usage',
+        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)\n
+        **Examples:**
+        ${guildConfig?.prefix || defaultPrefix}${this.name} 1/5/2021 8:00
+        ${guildConfig?.prefix || defaultPrefix}${this.name} 17-04-21 14:00 buy some juice
+        ${guildConfig?.prefix || defaultPrefix}${this.name} 26.11.2021 16:00 movie night in 1 hour #info`,
+        color: '#F04747',
+        footer: {
+          text: `Supported formats: ${dateFormates.join(', ')}`
+        }
+      });
     }
   },
   { // timezone TODO prettify 
     name: 'timezone',
-    description: 'Get your current time that the bot reads',
+    description: 'Get/set your current time zone',
     aliases: ['time', 'clock', 'tz'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      let tokenizer: Tokenizer;
-      if (guildConfig) {
-        tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      } else {
-        tokenizer = new Tokenizer(msg.content, defaultPrefix);
-      }
-      if (tokenizer.tokens[1] == undefined)
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
+
+      if (tokenizer.tokens[1] == undefined) {
         return {
-          'title': 'clock',
-          'description': '`clock get`: gets you your time\n `clock set`: set your clock',
+          'title': 'Time zone',
+          'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
           'color': '4FAFEF',
         } as MessageEmbedOptions;
+      }
       if (tokenizer.tokens[1].content == 'get') {
         const tz = (await ReminderService.getTimeZone(msg.author.id));
         console.log(tz);
@@ -369,15 +372,16 @@ export const commands: Command[] = [
         }
         let i = 0;
         return {
-          'title': 'time zones!',
+          'title': 'Time zones!',
           'url': 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
           'description': timeZones.map(tz => `\`${i++}:\`${tz}`).join('\n') + '\n',
+          'footer': 'use a number or IANA formated time zone',
           'color': '43B581',
         } as MessageEmbedOptions;
       }
       return {
-        'title': 'clock',
-        'description': 'clock get: gets you your time\n clock set: set your clock',
+        'title': 'Time zone',
+        'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
         'color': '4FAFEF',
       } as MessageEmbedOptions;
     }
@@ -386,8 +390,8 @@ export const commands: Command[] = [
     name: 'wiki',
     description: 'Search on the Thomas More wiki',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const search = tokenizer.body();
       if (search.length == 0)
@@ -414,7 +418,7 @@ export const commands: Command[] = [
     name: 'courses',
     description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(botmsg, msg).coursesMenu();
     }

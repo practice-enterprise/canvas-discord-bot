@@ -54,7 +54,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
           continue;
         }
   
-        Logger.debug(`received dm command '${tokenizer.command()}' from user ${msg.author.id}`);
+        Logger.debug(`Received dm command '${tokenizer.command()}' from user ${msg.author.id}.`);
         // eslint-disable-next-line no-await-in-loop
         const response = typeof command.response === 'function' ? await command.response(msg, undefined) : command.response;
   

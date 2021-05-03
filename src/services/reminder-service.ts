@@ -1,5 +1,6 @@
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
+import { DateTime } from 'luxon';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 
 
@@ -26,7 +27,7 @@ export class ReminderService {
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
       (client.channels.resolve(reminder.target.channel) as TextChannel)
-        .send(reminder.content || 'reminder');
+        .send(reminder.content);
     } catch (err) {
       console.error(err);
     } finally {
@@ -36,7 +37,7 @@ export class ReminderService {
 
   static sendUserReminder(reminder: UserReminder, client: Client): void {
     try {
-      client.users.resolve(reminder.target.user)?.send(reminder.content || 'reminder');
+      client.users.resolve(reminder.target.user)?.send(reminder.content);
     } catch (err) {
       console.error(err);
     } finally {
