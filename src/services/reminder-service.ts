@@ -3,7 +3,6 @@ import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { DateTime } from 'luxon';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 
-
 export class ReminderService {
   static async delete(reminder: GuildReminder | UserReminder): Promise<void> {
     await Axios.request<GuildReminder | UserReminder>({
@@ -15,7 +14,6 @@ export class ReminderService {
   }
 
   static async create(reminder: Omit<GuildReminder | UserReminder, 'id'>): Promise<void> {
-    console.log(reminder);
     await Axios.request<void>({
       method: 'POST',
       baseURL: process.env.API_URL,
@@ -23,6 +21,15 @@ export class ReminderService {
       data: reminder
     });
   }
+
+  static async get(discordID: string): Promise<(UserReminder | GuildReminder)[] | undefined> {
+    return await Axios.request<(UserReminder | GuildReminder)[] | undefined>({
+      method: 'GET',
+      baseURL: process.env.API_URL,
+      url: `/reminders/${discordID}`
+    }).then(res => res.data);
+  }
+
 
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {

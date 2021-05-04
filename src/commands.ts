@@ -10,7 +10,6 @@ import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 
-
 export const defaultPrefix = '!';
 
 const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
@@ -284,48 +283,96 @@ export const commands: Command[] = [
         .build();
     }
   },
-  { // reminder
+  { // reminder TODO prettyfy/ refactor
     name: 'reminder',
     description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-      const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
-
-      for (const format of dateFormates) {
-        let time = undefined;
-        if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
-        }
-        tokenizer.body(3).length;
-
-        if (time && time.isValid) {
-          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id) || timeZones[0], { keepLocalTime: true });
-          if (guildConfig) {
-            ReminderService.create({
-              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
-              date: time.toISO(),
-              target: {
-                channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
-                guild: msg.guild!.id,
-                user: msg.author.id
-              },
-            });
-          } else {
-            ReminderService.create({
-              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
-              date: time.toISO(),
-              target: {
-                user: msg.author!.id
-              },
+      const dateFormates: string[] = ['d/M/y h:m', 'd-M-y h:m'];
+      if (tokenizer.tokens[1]) {
+        //get
+        if (tokenizer.tokens[1].content == 'get' || tokenizer.tokens[1].content == 'list') {
+          const reminders = await ReminderService.get(msg.author.id);
+          let index = 0;
+          if (reminders) {
+            return new MessageEmbed({
+              title: 'Reminders',
+              description: reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40)+'...'}`).join('\n')
             });
           }
-          return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
+          return new MessageEmbed({
+            title: 'Reminders',
+            description: 'there are no more reminders set for you'
+          });
+        }
+        //delete
+        if (tokenizer.tokens[1].content == 'delete' || tokenizer.tokens[1].content == 'remove') {
+          const reminders = await ReminderService.get(msg.author.id);
+          if (!reminders) {
+            return new MessageEmbed({
+              title: 'Reminders',
+              description: 'there are no more reminders set for you'
+            });
+          }
+          let index = 0;
+          if (!tokenizer.tokens[2]) {
+            return new MessageEmbed({
+              title: 'reminders',
+              description: reminders.map(r => `\`${index++}:\` ${r.content}`).join('\n')
+            });
+          }
+          index = parseInt(tokenizer.tokens[2].content);
+          if (reminders[index]) {
+            ReminderService.delete(reminders[parseInt(tokenizer.tokens[2].content)]);
+            return new MessageEmbed({
+              title: 'Success',
+              description: 'your reminder has been deleted'
+            });
+          } else {
+            return new MessageEmbed({
+              title: 'Error',
+              description: '**Please use one of the indexes below:**\n' + reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40)+'...'}`).join('\n')
+            });
+          }
+        }
+        //set reminder
+        if (tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
+          for (const format of dateFormates) {
+            const time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
+
+            if (time && time.isValid) {
+              const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id) || timeZones[0], { keepLocalTime: true });
+              if (guildConfig) {
+                ReminderService.create({
+                  content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+                  date: time.toISO(),
+                  target: {
+                    channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
+                    guild: msg.guild!.id,
+                    user: msg.author.id
+                  },
+                });
+              } else {
+                ReminderService.create({
+                  content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+                  date: time.toISO(),
+                  target: {
+                    user: msg.author!.id
+                  },
+                });
+              }
+              return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
+            }
+          }
         }
       }
       return new MessageEmbed({
         title: 'Reminder usage',
-        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)\n
+        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)
+        ${guildConfig?.prefix || defaultPrefix}${this.name} \`get\` or \`list\`
+        ${guildConfig?.prefix || defaultPrefix}${this.name} (\`delete\` or \`remove\`) \`index\`
+
         **Examples:**
         ${guildConfig?.prefix || defaultPrefix}${this.name} 1/5/2021 8:00
         ${guildConfig?.prefix || defaultPrefix}${this.name} 17-04-21 14:00 buy some juice
