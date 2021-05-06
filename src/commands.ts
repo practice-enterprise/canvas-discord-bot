@@ -10,52 +10,68 @@ import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 
+export const defaultPrefix = '!';
+
+const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+
+const guildOnly: MessageEmbed = new MessageEmbed({
+  title: 'Error!',
+  description: 'This is a server only command.'
+});
+
 export const commands: Command[] = [
   { // help
     name: 'help',
     description: 'that\'s this command.',
     aliases: ['how', 'wtf', 'man', 'get-help'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const help: MessageEmbedOptions = {
-        'title': 'Help is on the way!',
-        'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n`',
-        'color': '43B581',
-      };
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (guildConfig) {
+        return {
+          'title': 'Help is on the way!',
+          'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
+          'color': '43B581',
+        } as MessageEmbedOptions;
+      }
 
-      return help;
+      return {
+        'title': 'Help is on the way!',
+        'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
+        'color': '43B581',
+      } as MessageEmbedOptions;
     }
   },
   { // Info
     name: 'info',
-    description: 'Displays more information.',
+    description: 'Displays more information. server only',
     aliases: ['informatie', 'information'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
 
+      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       for (const reply of guildConfig.info) {
         if (tokenizer.tokens[1] !== undefined && reply.name === tokenizer.tokens[1].content) {
           const response = typeof reply.response === 'function' ? await reply.response(msg, guildConfig) : reply.response;
-          if (typeof response === 'string') {
-            msg.channel.send(response);
-          } else if (typeof response !== 'undefined') {
-            msg.channel.send(new MessageEmbed(response));
-          }
-          return;
+          return response;
         }
       }
-      const embed: MessageEmbedOptions = {
+      return {
         'title': 'Info commands',
         'description': guildConfig.info.map(i => `\`${i.name}\`: ${i.description}`).join('\n'),
         'color': '4FAFEF',
-      };
-      return embed;
+      } as MessageEmbedOptions;
+
     }
   },
   { // setup
     name: 'setup',
-    description: 'Quick setup and introduction for the bot',
+    description: 'Quick setup and introduction for the bot. Server only',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
       const time = 300000; //300000 = 5 minutes
       const ePrev = '◀';
       const eNext = '▶';
@@ -66,7 +82,7 @@ export const commands: Command[] = [
       };
 
       if (!(msg.member?.hasPermission('ADMINISTRATOR')))
-        msg.channel.send('You need to be an admin for this command.');
+        return 'You need to be an admin for this command.';
 
       let page = 0;
       const pages: MessageEmbedOptions[] = [
@@ -130,7 +146,7 @@ export const commands: Command[] = [
     name: 'ping',
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       msg.channel.send('Pong!')
         .then(m =>
           m.edit('Pong! :ping_pong:')
@@ -144,8 +160,8 @@ export const commands: Command[] = [
     name: 'roll',
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
       if (match) {
@@ -169,8 +185,10 @@ export const commands: Command[] = [
     name: 'coinflip',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
+
+
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
         .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
@@ -191,10 +209,13 @@ export const commands: Command[] = [
   },
   { // prefix
     name: 'prefix',
-    description: 'Set prefix for guild',
+    description: 'Set prefix for guild. Server only',
     aliases: ['pf'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
+      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
         return 'No admin permissions!';
@@ -209,40 +230,43 @@ export const commands: Command[] = [
       }
     }
   },
-  { // default
+  /*{ // default
     name: 'default',
     description: 'sets the default channel',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       if (tokenizer.tokens[1]?.type === 'channel') {
         return tokenizer.tokens[1].content; //TODO stash in db of server
       } else {
         return 'this is not a valid channel';
       }
     }
-  },
+  },*/
   { // notes
     name: 'notes',
-    description: 'set or get notes for channels',
+    description: 'Set or get notes for channels. Server only.',
     aliases: ['note'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
+      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && msg.guild?.id != undefined) {
         await NotesService.setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), guildConfig);
         return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
       }
       //!notes #channel - get notes for a channel
-      else if (tokenizer.tokens[1]?.type === 'channel') {
+      if (tokenizer.tokens[1]?.type === 'channel') {
         return NotesService.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig);
       }
       //!notes - get notes in channel
-      else if (tokenizer.tokens.length === 1) {
+      if (tokenizer.tokens.length === 1) {
         return NotesService.getByChannel(msg.channel.id.toString(), guildConfig);
       }
       //!notes remove <channel> <number>
-      else if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
         && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && msg.guild?.id != undefined
       ) {
         //TODO permissions
@@ -250,56 +274,123 @@ export const commands: Command[] = [
         return NotesService.delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig);
       }
       //When incorrectly used (includes !notes help)
-      else {
-        return new Formatter()
-          .bold('Help for ' + command(guildConfig.prefix + 'notes'), true)
-          .command(guildConfig.prefix + 'notes').text(': get notes from your current channel', true)
-          .command(guildConfig.prefix + 'notes #channel').text(': get notes from your favourite channel', true)
-          .command(guildConfig.prefix + 'notes #channel an amazing note').text(': Enter a note in a channel', true)
-          .command(guildConfig.prefix + 'notes remove #channel notenumber').text(': Remove a note in a channel', true)
-          .build();
-      }
+      return new Formatter()
+        .bold('Help for ' + command(guildConfig.prefix + 'notes'), true)
+        .command(guildConfig.prefix + 'notes').text(': get notes from your current channel', true)
+        .command(guildConfig.prefix + 'notes #channel').text(': get notes from your favourite channel', true)
+        .command(guildConfig.prefix + 'notes #channel an amazing note').text(': Enter a note in a channel', true)
+        .command(guildConfig.prefix + 'notes remove #channel notenumber').text(': Remove a note in a channel', true)
+        .build();
     }
   },
   { // reminder
     name: 'reminder',
-    description: 'set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
+    description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
       for (const format of dateFormates) {
-        let time;
+        let time = undefined;
         if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format);
-        } else {
-          time = undefined;
+          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
         }
-        if (time && time.isValid && msg.guild != null) {
-          ReminderService.create({
-            content: tokenizer.body(3),
-            date: time.toString(),
-            target: {
-              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
-              guild: msg.guild!.id
-            },
-          });
+        tokenizer.body(3).length;
 
-          return 'your reminder has been set as: ' + time.toString();
+        if (time && time.isValid) {
+          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id) || timeZones[0], { keepLocalTime: true });
+          if (guildConfig) {
+            ReminderService.create({
+              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+              date: time.toISO(),
+              target: {
+                channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
+                guild: msg.guild!.id,
+                user: msg.author.id
+              },
+            });
+          } else {
+            ReminderService.create({
+              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+              date: time.toISO(),
+              target: {
+                user: msg.author!.id
+              },
+            });
+          }
+          return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
         }
       }
+      return new MessageEmbed({
+        title: 'Reminder usage',
+        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)\n
+        **Examples:**
+        ${guildConfig?.prefix || defaultPrefix}${this.name} 1/5/2021 8:00
+        ${guildConfig?.prefix || defaultPrefix}${this.name} 17-04-21 14:00 buy some juice
+        ${guildConfig?.prefix || defaultPrefix}${this.name} 26.11.2021 16:00 movie night in 1 hour #info`,
+        color: '#F04747',
+        footer: {
+          text: `Supported formats: ${dateFormates.join(', ')}`
+        }
+      });
+    }
+  },
+  { // timezone TODO prettify 
+    name: 'timezone',
+    description: 'Get/set your current time zone',
+    aliases: ['time', 'clock', 'tz'],
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
-      return 'this was not a valid date/time format';
+      if (tokenizer.tokens[1] == undefined) {
+        return {
+          'title': 'Time zone',
+          'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
+          'color': '4FAFEF',
+        } as MessageEmbedOptions;
+      }
+      if (tokenizer.tokens[1].content == 'get') {
+        const tz = (await ReminderService.getTimeZone(msg.author.id));
+        console.log(tz);
+        const time = DateTime.fromJSDate(new Date(), { zone: tz });
+        return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
+      }
+      if (tokenizer.tokens[1].content == 'set') {
+        if (tokenizer.tokens[2]) {
+          let tz = timeZones[parseInt(tokenizer.tokens[2].content)];
+          if (!tz) {
+            tz = tokenizer.tokens[2].content;
+          }
+          const time = DateTime.fromMillis(Date.now(), { zone: tz });
+
+          if (time.isValid) {
+            await ReminderService.setTimeZone(msg.author.id, tz);
+            return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
+          }
+        }
+        let i = 0;
+        return {
+          'title': 'Time zones!',
+          'url': 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
+          'description': timeZones.map(tz => `\`${i++}:\`${tz}`).join('\n') + '\n',
+          'footer': 'use a number or IANA formated time zone',
+          'color': '43B581',
+        } as MessageEmbedOptions;
+      }
+      return {
+        'title': 'Time zone',
+        'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
+        'color': '4FAFEF',
+      } as MessageEmbedOptions;
     }
   },
   { // wiki
     name: 'wiki',
     description: 'Search on the Thomas More wiki',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig);
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const query = tokenizer.body();
       if (query.length == 0)
@@ -322,25 +413,11 @@ export const commands: Command[] = [
   },
   { // courses menu command
     name: 'courses',
-    description: 'Lists your courses, modules and items with controls',
+    description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig): Promise<Response | void> {
-
-      // TODO: replace with user tokens!
-      const token = process.env.CANVAS_TOKEN;
-
-      if (token != undefined && token.length > 1) {
-        const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
-        new CoursesMenu(guildConfig, botmsg, msg).coursesMenu();
-      }
-      else {
-        const embed = new MessageEmbed({
-          'title': 'Undefined or incorrect token.',
-          'description': 'Are you sure you logged in?\nURL TO AUTH',
-          'color': 'EF4A25', //Canvas color pallete
-        });
-        return embed;
-      }
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
+      new CoursesMenu(botmsg, msg).coursesMenu();
     }
   },
   {

@@ -2,17 +2,18 @@ import { MessageEmbedOptions } from 'discord.js';
 
 export interface GuildReminder {
   id: string;
-  date: Date | string,
+  date: string,
   content: string;
   target: {
     guild: string,
-    channel: string
+    channel: string,
+    user: string
   };
 }
 
 export interface UserReminder {
   id: string;
-  date: Date | string,
+  date: string,
   content: string;
   target: {
     user: string
