@@ -430,8 +430,8 @@ export const commands: Command[] = [
       const embed = new MessageEmbed({
         title: long,
         description: long,
-        author: {name: long},
-        footer: {text: long}
+        author: { name: long },
+        footer: { text: long }
       });
       msg.channel.send(preventExceed(long));
       if (typeof embed != 'string')
