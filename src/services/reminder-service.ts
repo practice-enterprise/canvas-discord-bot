@@ -29,7 +29,7 @@ export class ReminderService {
     try {
 
       (client.channels.resolve(preventExceed(reminder.target.channel)) as TextChannel)
-        .send(reminder.content);
+        .send(preventExceed(reminder.content));
     } catch (err) {
       console.error(err);
     } finally {
