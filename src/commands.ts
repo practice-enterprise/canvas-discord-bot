@@ -12,7 +12,9 @@ import { CoursesMenu } from './util/canvas-courses-menu';
 
 export const defaultPrefix = '!';
 
-const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+
+export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
 const guildOnly: MessageEmbed = new MessageEmbed({
   title: 'Error!',
@@ -58,7 +60,7 @@ export const commands: Command[] = [
       }
       return {
         'title': 'Info commands',
-        'description': guildConfig.info.map(i => `\`${i.name}\`: ${i.description}`).join('\n'),
+        'description': guildConfig.info.map(i => `\`${guildConfig?.prefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'),
         'color': '4FAFEF',
       } as MessageEmbedOptions;
 
@@ -289,84 +291,21 @@ export const commands: Command[] = [
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-      const dateFormates: string[] = ['d/M/y h:m', 'd-M-y h:m'];
       if (tokenizer.tokens[1]) {
-        //get
         if (tokenizer.tokens[1].content == 'get' || tokenizer.tokens[1].content == 'list') {
-          const reminders = await ReminderService.get(msg.author.id);
-          let index = 0;
-          if (reminders) {
-            return new MessageEmbed({
-              title: 'Reminders',
-              description: reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40)+'...'}`).join('\n')
-            });
-          }
-          return new MessageEmbed({
-            title: 'Reminders',
-            description: 'there are no more reminders set for you'
-          });
+          return ReminderService.getCommand(msg.author.id);
         }
-        //delete
         if (tokenizer.tokens[1].content == 'delete' || tokenizer.tokens[1].content == 'remove') {
-          const reminders = await ReminderService.get(msg.author.id);
-          if (!reminders) {
-            return new MessageEmbed({
-              title: 'Reminders',
-              description: 'there are no more reminders set for you'
-            });
-          }
-          let index = 0;
-          if (!tokenizer.tokens[2]) {
-            return new MessageEmbed({
-              title: 'reminders',
-              description: reminders.map(r => `\`${index++}:\` ${r.content}`).join('\n')
-            });
-          }
-          index = parseInt(tokenizer.tokens[2].content);
-          if (reminders[index]) {
-            ReminderService.delete(reminders[parseInt(tokenizer.tokens[2].content)]);
-            return new MessageEmbed({
-              title: 'Success',
-              description: 'your reminder has been deleted'
-            });
-          } else {
-            return new MessageEmbed({
-              title: 'Error',
-              description: '**Please use one of the indexes below:**\n' + reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40)+'...'}`).join('\n')
-            });
-          }
+          return ReminderService.deleteCommand(msg.author.id, tokenizer);
         }
-        //set reminder
         if (tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          for (const format of dateFormates) {
-            const time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
-
-            if (time && time.isValid) {
-              const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id) || timeZones[0], { keepLocalTime: true });
-              if (guildConfig) {
-                ReminderService.create({
-                  content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
-                  date: time.toISO(),
-                  target: {
-                    channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
-                    guild: msg.guild!.id,
-                    user: msg.author.id
-                  },
-                });
-              } else {
-                ReminderService.create({
-                  content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
-                  date: time.toISO(),
-                  target: {
-                    user: msg.author!.id
-                  },
-                });
-              }
-              return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
-            }
+          const response = ReminderService.setCommand(tokenizer, msg.author.id, msg.guild?.id, msg.channel.id);
+          if (response) {
+            return response;
           }
         }
       }
+      //TODO
       return new MessageEmbed({
         title: 'Reminder usage',
         description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)
