@@ -1,9 +1,21 @@
 import Axios from 'axios';
-import { MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Notes } from '../models/notes';
-import { Response } from '../models/command';
+import { Command, Response } from '../models/command';
+import { GuildConfig } from '../models/guild';
+import { Logger } from '../util/logger';
+import { Tokenizer } from '../util/tokenizer';
+import { Formatter } from '../util/formatter';
 
 export class NotesService {
+  private prefix: string;
+  private command: Command;
+
+  constructor(command: Command, prefix: string){
+    this.command = command;
+    this.prefix = prefix;
+  }
+
   static async get(id: string): Promise<Notes | undefined> {
     return Axios.request<Notes | undefined>({
       method: 'GET',
@@ -31,7 +43,94 @@ export class NotesService {
     }).then((res) => res.data);
   }
 
-  static async getByChannel(channelID: string, guildID: string): Promise<Response> {
+  async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    const tokenizer = new Tokenizer(msg.content, this.prefix);
+
+    //!notes - get notes in channel
+    if (tokenizer.tokens.length === 1) {
+      if(guildConfig) {
+        return this.getByChannel(msg.channel.id.toString(), guildConfig.id)
+          .catch((err) => {Logger.error(err); return;});
+      }
+      else {
+        return this.getByUser(msg.author.id)
+          .catch((err) => {Logger.error(err); return;});
+      }
+    }
+
+    if (guildConfig) {
+      //!notes #channel - get notes for a channel
+      if (tokenizer.tokens[1]?.type === 'channel') { 
+        return this.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig.id)
+          .catch((err) => {Logger.error(err); return;});
+      }
+      //!notes add #channel - adds this note
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
+        await this.setChannelNote(tokenizer.body(3), tokenizer.tokens[2].content.substr(2, 18), guildConfig.id)
+          .catch((err) => {Logger.error(err); return;});
+        return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
+      }
+      //!notes add
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'text') {
+        await this.setChannelNote(tokenizer.body(2), msg.channel.id, guildConfig.id)
+          .catch((err) => {Logger.error(err); return;});
+        return `Note '${tokenizer.body(2)}' got succesfully added to this channel.`;
+      }
+    }
+    else {
+      // DM/user
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'text') {
+        await this.setUserNote(tokenizer.body(2), msg.author.id)
+          .catch((err) => {Logger.error(err); return;});
+        return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
+      }
+    }
+    
+    //!notes remove <channel> <number>
+    if(guildConfig) {
+      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
+        return 'You have to be an admin to delete notes.';
+      }
+
+      console.log('start');
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
+        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
+        const noteNum: number = parseInt(tokenizer.tokens[3].content);
+        return this.delChannelNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig.id)
+          .catch((err) => {Logger.error(err); return;});
+      }
+      console.log('here');
+
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' &&
+        tokenizer.tokens[2]?.type === 'text') {
+        console.log('in');
+        const noteNum: number = parseInt(tokenizer.tokens[2].content);
+        return this.delChannelNote(noteNum, msg.channel.id, guildConfig.id)
+          .catch((err) => {Logger.error(err); return;});
+      }
+    }
+    else {
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' && tokenizer.tokens[2]?.type === 'text') {
+        const noteNum: number = parseInt(tokenizer.tokens[2].content);
+        return this.delUserNote(noteNum, msg.author.id)
+          .catch((err) => {Logger.error(err); return;});
+      }
+    }
+    // When incorrectly used (includes !notes help)
+    return new MessageEmbed({
+      title: 'Help for notes',
+      description: new Formatter()
+        .command(`${this.prefix}${this.command.name} #channel (optional)`).text(': get notes from your favourite channel', true)
+        .command(`${this.prefix}${this.command.name} add #channel (optional)`).text(': enter an epic note in a channel', true)
+        .command(`${this.prefix}${this.command.name} remove #channel (optional) notenumber`).text(': Remove a note in a channel', true)
+        .build(),
+      color: 'F04747',
+      footer: {text:'Also works in direct messages.'}
+    });
+  }
+  
+
+  async getByChannel(channelID: string, guildID: string): Promise<Response> {
     const notes = await NotesService.get(guildID);
     if (notes == null || Array.isArray(notes.notes) || notes.notes[channelID]?.length == null) {
       const embed: MessageEmbedOptions = {
@@ -53,7 +152,7 @@ export class NotesService {
     }
   }
 
-  static async setChannelNote(note: string, channelID: string, guildID: string): Promise<void> {
+  async setChannelNote(note: string, channelID: string, guildID: string): Promise<void> {
     const notes = await NotesService.get(guildID);
     
     // When a guild doesnt have notes at all yet
@@ -64,7 +163,6 @@ export class NotesService {
           [channelID]: [note],
         }
       };
-      console.log('new', newNotes);
       
       return await NotesService.update(newNotes);
     }
@@ -82,7 +180,7 @@ export class NotesService {
     return await NotesService.update(notes);
   }
 
-  static async delChannelNote(noteNum: number, channelID: string, guildID: string): Promise<Response> {
+  async delChannelNote(noteNum: number, channelID: string, guildID: string): Promise<Response> {
     const notes = await NotesService.get(guildID);
   
     if (notes == null) {
@@ -103,7 +201,7 @@ export class NotesService {
     }
   }
 
-  static async getByUser(userID: string): Promise<Response> {
+  async getByUser(userID: string): Promise<Response> {
     const notes = await NotesService.get(userID);
     console.log(notes?.notes, typeof notes?.notes, notes?.notes == null);
     if (notes == null || !Array.isArray(notes.notes) || notes.notes.length == 0) {
@@ -125,7 +223,7 @@ export class NotesService {
     }
   }
   
-  static async setUserNote(note: string, userID: string): Promise<void> {
+  async setUserNote(note: string, userID: string): Promise<void> {
     const notes = await NotesService.get(userID);
   
     // When a user doesnt have notes at all yet
@@ -145,7 +243,7 @@ export class NotesService {
     return await NotesService.update(notes);
   }
   
-  static async delUserNote(noteNum: number, userID: string): Promise<Response> {
+  async delUserNote(noteNum: number, userID: string): Promise<Response> {
     const notes = await NotesService.get(userID);
   
 
