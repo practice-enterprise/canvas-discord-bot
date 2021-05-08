@@ -9,6 +9,7 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
+import { EmbedMaker } from './util/embed-maker';
 
 
 export const defaultPrefix = '!';
@@ -423,4 +424,20 @@ export const commands: Command[] = [
       new CoursesMenu(botmsg, msg).coursesMenu();
     }
   },
+  {
+    name: 'embed',
+    description: '',
+    aliases: [],
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).buildHelp('info', {'paramss (optional)': 'een epische bescrhijving'}, ['ee', 'eeee']));
+      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).success('Good job partner'));
+      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).error('wasnt a good job partner', 'Oh no!'));
+      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).buildList('gray', 'My epic list', ['eggs', 'many eggs', 'milk', 'sugar to induce my diabetes']));
+      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).buildList('canvas', 'My epic list', {
+        'Cheggs': 'and eggs',
+        'His last order was cum': 'And so they came, even the dragons',
+        'Baby dont hurt me': 'no more!'
+      }, 'My epic grocery list :D', 'also a brain if u can find it.'));
+    }
+  }
 ];
