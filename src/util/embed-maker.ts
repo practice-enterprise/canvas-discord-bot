@@ -3,80 +3,76 @@ import { Command } from '../models/command';
 
 type Color = 'info' | 'success' | 'warning' | 'error' | 'gray' | 'discord' | 'canvas';
 
-export const colors = {
-  'info': '4FAFEF',
-  'success': '43B581',
-  'warning': 'FAA61A',
-  'error': 'F04747',
-  'gray': '747F8D',
-  'discord': '7289DA',
-  'canvas': 'E73D30'
-};
+export enum colors {
+  info = '4FAFEF',
+  success = '43B581',
+  warning = 'FAA61A',
+  error = 'F04747',
+  gray = '747F8D',
+  discord = '7289DA',
+  canvas = 'E73D30'
+}
 
 export class EmbedMaker {
-  private command: Command;
-  private prefix: string;
-
-  constructor(command: Command, prefix: string) {
-    this.command = command;
-    this.prefix = prefix;
-  }
-
-  success(description: string, title?: string): MessageEmbed {
+  success(description: string, title?: string, footer?: string): MessageEmbed {
     const Title = title == null ? ':white_check_mark: Succes!' : `:white_check_mark: ${title}`;
     return new MessageEmbed({
       color: colors.success,
       title: Title,
-      description: description
+      description: description,
+      footer: {text: footer}
     });
   }
 
-  info(description: string, title?: string): MessageEmbed {
+  info(description: string, title?: string, footer?: string): MessageEmbed {
     const Title = title == null ? ':information_source: Info' : `:information_source: ${title}`;
     return new MessageEmbed({
       color: colors.info,
       title: Title,
-      description: description
+      description: description,
+      footer: {text: footer}
     });
   }
 
-  warn(reason?: string, title?: string): MessageEmbed {
+  warn(reason?: string, title?: string, footer?: string): MessageEmbed {
     const Title = title == null ? ':warning: Warning' : `:warning: ${title}`;
     return new MessageEmbed({
       color: colors.warning,
       title: Title,
-      description: reason
+      description: reason,
+      footer: {text: footer}
     });
   }
 
-  error(reason?: string, title?: string): MessageEmbed {
+  error(reason?: string, title?: string, footer?: string): MessageEmbed {
     const Title = title == null ? ':octagonal_sign: Error!' : `:octagonal_sign: ${title}`;
     return new MessageEmbed({
       color: colors.error,
       title: Title,
-      description: reason
+      description: reason,
+      footer: {text: footer}
     });
   }
 
-  buildHelp(typeColor: Color, params: Record<string, string> | string[], examples: string[], footer?: string): MessageEmbed {
+  buildHelp(command: Command, prefix: string, typeColor: Color, params: Record<string, string> | string[], examples: string[], footer?: string): MessageEmbed {
     let paramVal = '';
 
     if (Array.isArray(params)) {
-      paramVal = params.map((par) => `\`${this.prefix}${this.command.name} ${par}`).join('\n');
+      paramVal = params.map((par) => `\`${prefix}${command.name} ${par}`).join('\n');
     }
     else {
       for (const key in params) {
-        paramVal += `\`${this.prefix}${this.command.name} ${key}:\` ${params[key]}`;
+        paramVal += `\`${prefix}${command.name} ${key}:\` ${params[key]}`;
       }
     }
 
     return new MessageEmbed({
       color: colors[typeColor],
-      title: `Help for ${this.prefix}${this.command.name}`,
-      description: this.command.description,
+      title: `Help for ${prefix}${command.name}`,
+      description: command.description,
       fields: [
         {name: '**Usage**', value: paramVal},
-        {name: '**Examples:**', value: examples.map((eg) => `${this.prefix}${this.command.name} ${eg}`).join('\n')},
+        {name: '**Examples:**', value: examples.map((eg) => `${prefix}${command.name} ${eg}`).join('\n')},
       ],
       footer: {text: footer }
     });
