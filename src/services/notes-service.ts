@@ -92,18 +92,15 @@ export class NotesService {
         return 'You have to be an admin to delete notes.';
       }
 
-      console.log('start');
       if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
         && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
         const noteNum: number = parseInt(tokenizer.tokens[3].content);
         return this.delChannelNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig.id)
           .catch((err) => {Logger.error(err); return;});
       }
-      console.log('here');
 
       if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' &&
         tokenizer.tokens[2]?.type === 'text') {
-        console.log('in');
         const noteNum: number = parseInt(tokenizer.tokens[2].content);
         return this.delChannelNote(noteNum, msg.channel.id, guildConfig.id)
           .catch((err) => {Logger.error(err); return;});
@@ -176,7 +173,6 @@ export class NotesService {
       notes.notes[channelID] = []; // create empty array if channel doesnt have notes yet
     }
     notes.notes[channelID].push(note);
-    console.log(notes);
     return await NotesService.update(notes);
   }
 
@@ -203,7 +199,6 @@ export class NotesService {
 
   async getByUser(userID: string): Promise<Response> {
     const notes = await NotesService.get(userID);
-    console.log(notes?.notes, typeof notes?.notes, notes?.notes == null);
     if (notes == null || !Array.isArray(notes.notes) || notes.notes.length == 0) {
       const embed: MessageEmbedOptions = {
         title: 'Notes',
