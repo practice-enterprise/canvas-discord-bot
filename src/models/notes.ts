@@ -1,4 +1,4 @@
 export interface Notes {
-  _id: string;
-  notes: Record<string, string[]>;
+  id: string;
+  notes:  string[] | Record<string, string[]>;
 }

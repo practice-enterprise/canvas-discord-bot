@@ -247,42 +247,10 @@ export const commands: Command[] = [
   },*/
   { // notes
     name: 'notes',
-    description: 'Set or get notes for channels. Server only.',
+    description: 'Set or get notes for channels and DM\'s.',
     aliases: ['note'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
-      }
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      //!notes #channel adds this note
-      if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && msg.guild?.id != undefined) {
-        await NotesService.setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), guildConfig);
-        return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
-      }
-      //!notes #channel - get notes for a channel
-      if (tokenizer.tokens[1]?.type === 'channel') {
-        return NotesService.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig);
-      }
-      //!notes - get notes in channel
-      if (tokenizer.tokens.length === 1) {
-        return NotesService.getByChannel(msg.channel.id.toString(), guildConfig);
-      }
-      //!notes remove <channel> <number>
-      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
-        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && msg.guild?.id != undefined
-      ) {
-        //TODO permissions
-        const noteNum: number = parseInt(tokenizer.tokens[3].content);
-        return NotesService.delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig);
-      }
-      //When incorrectly used (includes !notes help)
-      return new Formatter()
-        .bold('Help for ' + command(guildConfig.prefix + 'notes'), true)
-        .command(guildConfig.prefix + 'notes').text(': get notes from your current channel', true)
-        .command(guildConfig.prefix + 'notes #channel').text(': get notes from your favourite channel', true)
-        .command(guildConfig.prefix + 'notes #channel an amazing note').text(': Enter a note in a channel', true)
-        .command(guildConfig.prefix + 'notes remove #channel notenumber').text(': Remove a note in a channel', true)
-        .build();
+      return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
     }
   },
   { // reminder
@@ -429,11 +397,11 @@ export const commands: Command[] = [
     description: '',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).buildHelp('info', {'paramss (optional)': 'een epische bescrhijving'}, ['ee', 'eeee']));
-      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).success('Good job partner'));
-      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).error('wasnt a good job partner', 'Oh no!'));
-      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).buildList('gray', 'My epic list', ['eggs', 'many eggs', 'milk', 'sugar to induce my diabetes']));
-      msg.channel.send(new EmbedMaker(this, guildConfig?.prefix || defaultPrefix).buildList('canvas', 'My epic list', {
+      msg.channel.send(new EmbedMaker().buildHelp(this, guildConfig?.prefix || defaultPrefix, 'info', {'paramss (optional)': 'een epische bescrhijving'}, ['ee', 'eeee']));
+      msg.channel.send(new EmbedMaker().success('Good job partner'));
+      msg.channel.send(new EmbedMaker().error('wasnt a good job partner', 'Oh no!'));
+      msg.channel.send(new EmbedMaker().buildList('gray', 'My epic list', ['eggs', 'many eggs', 'milk', 'sugar to induce my diabetes']));
+      msg.channel.send(new EmbedMaker().buildList('canvas', 'My epic list', {
         'Cheggs': 'and eggs',
         'His last order was cum': 'And so they came, even the dragons',
         'Baby dont hurt me': 'no more!'
