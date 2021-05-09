@@ -13,8 +13,8 @@ export enum colors {
   canvas = 'E73D30'
 }
 
-export class EmbedMaker {
-  success(description: string, title?: string, footer?: string): MessageEmbed {
+export class EmbedBuilder {
+  success(description: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':white_check_mark: Succes!' : `:white_check_mark: ${title}`;
     return new MessageEmbed({
       color: colors.success,
@@ -24,7 +24,7 @@ export class EmbedMaker {
     });
   }
 
-  info(description: string, title?: string, footer?: string): MessageEmbed {
+  info(description: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':information_source: Info' : `:information_source: ${title}`;
     return new MessageEmbed({
       color: colors.info,
@@ -34,7 +34,7 @@ export class EmbedMaker {
     });
   }
 
-  warn(reason?: string, title?: string, footer?: string): MessageEmbed {
+  warn(reason?: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':warning: Warning' : `:warning: ${title}`;
     return new MessageEmbed({
       color: colors.warning,
@@ -44,7 +44,7 @@ export class EmbedMaker {
     });
   }
 
-  error(reason?: string, title?: string, footer?: string): MessageEmbed {
+  error(reason?: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':octagonal_sign: Error!' : `:octagonal_sign: ${title}`;
     return new MessageEmbed({
       color: colors.error,
@@ -62,7 +62,7 @@ export class EmbedMaker {
     }
     else {
       for (const key in params) {
-        paramVal += `\`${prefix}${command.name} ${key}:\` ${params[key]}`;
+        paramVal += `\`${prefix}${command.name} ${key}:\` ${params[key]}\n`;
       }
     }
 
@@ -85,11 +85,11 @@ export class EmbedMaker {
     }
 
     if (Array.isArray(items)) {
-      description += '\n\n' + items.map((item) => `\`${++i}\` • **${item}**`).join('\n');
+      description += '\n' + items.map((item) => `\`${++i}\` • **${item}**`).join('\n');
     }
     else {
       for (const key in items) {
-        description += `\n\n\`${++i}\` • **${key}**\n${items[key]}`;
+        description += `\n\`${++i}\` • **${key}**\n${items[key]}`;
       }
     }
 
@@ -100,5 +100,4 @@ export class EmbedMaker {
       footer: {text: footer }
     });
   }
-  
 }
