@@ -31,17 +31,27 @@ export class GuildService {
     return this.update(config);
   }
 
-  static async createDefault(data: { guildID: string, roles: Record<string, string> }): Promise<string> {
+  static async createDefault(guildID: string, roles: Record<string, string>): Promise<string> {
     return Axios.request<string>({
       method: 'PUT',
       baseURL: process.env.API_URL,
-      url: `/guilds/create/${data.guildID}`,
+      url: `/guilds/create/${guildID}`,
       data: {
         commands: [],
         canvasInstance: '',
         info: [],
         prefix: '!',
-        roles: data.roles
+        roles: roles,
+        modules: {
+          'announcements': false, //API
+          'courses': false, //bot
+          'customCommands': false,
+          'misc': false, //bot
+          'notes': false, //bot
+          'reminders': false, //bot
+          'roleSync': false, //API
+          'wiki': false, //bot
+        }
       }
     }).then((res) => res.data);
   }

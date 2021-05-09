@@ -151,7 +151,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       const role = await guild.roles.create({ data: { name: roleName } });
       roleIDs[roleName] = role.id;
     }
-    GuildService.createDefault({ guildID: guild.id, roles: roleIDs });
+    GuildService.createDefault( guild.id, roleIDs );
   });
 
   await client.login(process.env.DISCORD_TOKEN);

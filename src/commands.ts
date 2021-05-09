@@ -15,6 +15,12 @@ export const defaultPrefix = '!';
 
 const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
 
+const disabledCMD = {
+  title: 'error',
+  description: 'this command has been disabled',
+  footer: { text: 'enable it\'s module to use this command' }
+} as MessageEmbed;
+
 const guildOnly: MessageEmbed = new MessageEmbed({
   title: 'Error!',
   description: 'This is a server only command.'
@@ -162,6 +168,9 @@ export const commands: Command[] = [
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig?.modules['misc']) {
+        return disabledCMD;
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
@@ -187,6 +196,9 @@ export const commands: Command[] = [
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig?.modules['misc']) {
+        return disabledCMD;
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
 
@@ -252,6 +264,9 @@ export const commands: Command[] = [
       if (!guildConfig) {
         return guildOnly;
       }
+      if (!guildConfig.modules['notes']) {
+        return disabledCMD;
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       //!notes #channel adds this note
       if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && msg.guild?.id != undefined) {
@@ -289,6 +304,9 @@ export const commands: Command[] = [
     description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig?.modules['reminders']) {
+        return disabledCMD;
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
 
@@ -391,6 +409,9 @@ export const commands: Command[] = [
     description: 'Search on the Thomas More wiki',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig?.modules['wiki']) {
+        return disabledCMD;
+      }
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const search = tokenizer.body();
@@ -419,6 +440,9 @@ export const commands: Command[] = [
     description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig?.modules['courses']) {
+        return disabledCMD;
+      }
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(botmsg, msg).coursesMenu();
     }
