@@ -9,7 +9,7 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
-import { EmbedMaker } from './util/embed-maker';
+import { EmbedBuilder } from './util/embed-builder';
 
 
 export const defaultPrefix = '!';
@@ -394,14 +394,14 @@ export const commands: Command[] = [
   },
   {
     name: 'embed',
-    description: '',
+    description: 'Example for embed builder',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      msg.channel.send(new EmbedMaker().buildHelp(this, guildConfig?.prefix || defaultPrefix, 'info', {'paramss (optional)': 'een epische bescrhijving'}, ['ee', 'eeee']));
-      msg.channel.send(new EmbedMaker().success('Good job partner'));
-      msg.channel.send(new EmbedMaker().error('wasnt a good job partner', 'Oh no!'));
-      msg.channel.send(new EmbedMaker().buildList('gray', 'My epic list', ['eggs', 'many eggs', 'milk', 'sugar to induce my diabetes']));
-      msg.channel.send(new EmbedMaker().buildList('canvas', 'My epic list', {
+      msg.channel.send(new EmbedBuilder().buildHelp(this, guildConfig?.prefix || defaultPrefix, 'info', {'paramss (optional)': 'een epische beschrijving'}, ['param1', 'param2 en param3']));
+      msg.channel.send(new EmbedBuilder().success('Good job partner'));
+      msg.channel.send(new EmbedBuilder().error('wasnt a good job partner', 'Sorry man :c', 'Oh no!'));
+      msg.channel.send(new EmbedBuilder().buildList('gray', 'My epic list', ['eggs', 'many eggs', 'milk', 'sugar to induce my diabetes']));
+      msg.channel.send(new EmbedBuilder().buildList('canvas', 'My epic list', {
         'Cheggs': 'and eggs',
         'His last order was cum': 'And so they came, even the dragons',
         'Baby dont hurt me': 'no more!'
