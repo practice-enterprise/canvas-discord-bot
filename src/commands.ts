@@ -1,6 +1,6 @@
 import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
-import { command, Formatter } from './util/formatter';
+import { Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
@@ -9,6 +9,7 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
+import { Logger } from './util/logger';
 
 
 export const defaultPrefix = '!';
@@ -246,42 +247,10 @@ export const commands: Command[] = [
   },*/
   { // notes
     name: 'notes',
-    description: 'Set or get notes for channels. Server only.',
+    description: 'Set or get notes for channels and DM\'s.',
     aliases: ['note'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
-      }
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      //!notes #channel adds this note
-      if (tokenizer.tokens[1]?.type === 'channel' && tokenizer.tokens[2]?.type === 'text' && msg.guild?.id != undefined) {
-        await NotesService.setNote(tokenizer.body(2), tokenizer.tokens[1].content.substr(2, 18), guildConfig);
-        return `Note '${tokenizer.body(2)}' got succesfully added to the channel ` + tokenizer.tokens[1].content;
-      }
-      //!notes #channel - get notes for a channel
-      if (tokenizer.tokens[1]?.type === 'channel') {
-        return NotesService.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig);
-      }
-      //!notes - get notes in channel
-      if (tokenizer.tokens.length === 1) {
-        return NotesService.getByChannel(msg.channel.id.toString(), guildConfig);
-      }
-      //!notes remove <channel> <number>
-      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
-        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text' && msg.guild?.id != undefined
-      ) {
-        //TODO permissions
-        const noteNum: number = parseInt(tokenizer.tokens[3].content);
-        return NotesService.delNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig);
-      }
-      //When incorrectly used (includes !notes help)
-      return new Formatter()
-        .bold('Help for ' + command(guildConfig.prefix + 'notes'), true)
-        .command(guildConfig.prefix + 'notes').text(': get notes from your current channel', true)
-        .command(guildConfig.prefix + 'notes #channel').text(': get notes from your favourite channel', true)
-        .command(guildConfig.prefix + 'notes #channel an amazing note').text(': Enter a note in a channel', true)
-        .command(guildConfig.prefix + 'notes remove #channel notenumber').text(': Remove a note in a channel', true)
-        .build();
+      return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
     }
   },
   { // reminder
