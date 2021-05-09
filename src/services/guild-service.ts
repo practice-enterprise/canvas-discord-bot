@@ -35,23 +35,29 @@ export class GuildService {
     return Axios.request<string>({
       method: 'PUT',
       baseURL: process.env.API_URL,
-      url: `/guilds/create/${guildID}`,
+      url: '/guilds/create',
       data: {
+        id: guildID,
         commands: [],
-        canvasInstance: '',
+        canvasInstanceID: '',
         info: [],
         prefix: '!',
         roles: roles,
         modules: {
-          'announcements': false, //API
-          'courses': false, //bot
-          'customCommands': false,
-          'misc': false, //bot
-          'notes': false, //bot
-          'reminders': false, //bot
-          'roleSync': false, //API
-          'wiki': false, //bot
+          'announcements': false, //API d
+          'courses': false, //bot d
+          'customCommands': false, //bot d
+          'misc': false, //bot d
+          'notes': false, //bot d
+          'reminders': false, //bot d
+          'roleSync': false, //API  
+          'wiki': false, //bot d
+        },
+        courseChannels: {
+          categoryID: null,
+          channels: {},
         }
+
       }
     }).then((res) => res.data);
   }

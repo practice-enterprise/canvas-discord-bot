@@ -55,6 +55,9 @@ export const commands: Command[] = [
       if (!guildConfig) {
         return guildOnly;
       }
+      if(!guildConfig.modules['customCommands']){
+        return disabledCMD;
+      }
 
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
       for (const reply of guildConfig.info) {

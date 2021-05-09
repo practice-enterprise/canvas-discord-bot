@@ -53,11 +53,11 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
           continue;
         }
-  
+
         Logger.debug(`Received dm command '${tokenizer.command()}' from user ${msg.author.id}.`);
         // eslint-disable-next-line no-await-in-loop
         const response = typeof command.response === 'function' ? await command.response(msg, undefined) : command.response;
-  
+
         if (typeof response === 'string') {
           msg.channel.send(response);
           return;
@@ -66,7 +66,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
           return;
         }
       }
-      return; 
+      return;
     } // handle user DM commands
 
     const guildConfig = await GuildService.getForId(msg.guild.id);
@@ -123,7 +123,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       return;
     }
 
-    for (const command of commands.concat(guildConfig.commands)) {
+    for (const command of commands.concat(guildConfig.modules['customCMD'] ? guildConfig.commands : [])) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
       }
@@ -151,7 +151,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       const role = await guild.roles.create({ data: { name: roleName } });
       roleIDs[roleName] = role.id;
     }
-    GuildService.createDefault( guild.id, roleIDs );
+    GuildService.createDefault(guild.id, roleIDs);
   });
 
   await client.login(process.env.DISCORD_TOKEN);
