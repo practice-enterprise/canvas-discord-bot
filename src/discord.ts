@@ -127,6 +127,15 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
       }
+      if (guildConfig.modules[command.category] === false) {
+        msg.channel.send(new MessageEmbed({
+          title: 'error',
+          description: 'this command has been disabled',
+          color: 'fF4747',
+          footer: { text: 'enable it\'s module to use this command' }
+        }));
+        return;
+      }
 
       Logger.debug(`received command '${tokenizer.command()}' from guild ${msg.guild.id} in channel ${msg.channel.id}`);
       // eslint-disable-next-line no-await-in-loop
