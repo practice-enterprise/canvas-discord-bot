@@ -11,10 +11,11 @@ import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 import { Logger } from './util/logger';
 
-
 export const defaultPrefix = '!';
 
-const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+
+export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
 const guildOnly: MessageEmbed = new MessageEmbed({
   title: 'Error!',
@@ -60,7 +61,7 @@ export const commands: Command[] = [
       }
       return {
         'title': 'Info commands',
-        'description': guildConfig.info.map(i => `\`${i.name}\`: ${i.description}`).join('\n'),
+        'description': guildConfig.info.map(i => `\`${guildConfig?.prefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'),
         'color': '4FAFEF',
       } as MessageEmbedOptions;
 
@@ -253,48 +254,33 @@ export const commands: Command[] = [
       return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
     }
   },
-  { // reminder
+  { // reminder TODO prettyfy/ refactor
     name: 'reminder',
     description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-      const dateFormates: string[] = ['d/M/y h:m', 'd.M.y h:m', 'd-M-y h:m'];
-
-      for (const format of dateFormates) {
-        let time = undefined;
-        if (tokenizer.tokens[1] && tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
+      if (tokenizer.tokens[1]) {
+        if (tokenizer.tokens[1].content == 'get' || tokenizer.tokens[1].content == 'list') {
+          return ReminderService.getCommand(msg.author.id);
         }
-        tokenizer.body(3).length;
-
-        if (time && time.isValid) {
-          const userTime = time.setZone(await ReminderService.getTimeZone(msg.author.id) || timeZones[0], { keepLocalTime: true });
-          if (guildConfig) {
-            ReminderService.create({
-              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
-              date: time.toISO(),
-              target: {
-                channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || msg.channel.id,
-                guild: msg.guild!.id,
-                user: msg.author.id
-              },
-            });
-          } else {
-            ReminderService.create({
-              content: tokenizer.body(3) || `<@${msg.author.id}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
-              date: time.toISO(),
-              target: {
-                user: msg.author!.id
-              },
-            });
+        if (tokenizer.tokens[1].content == 'delete' || tokenizer.tokens[1].content == 'remove') {
+          return ReminderService.deleteCommand(msg.author.id, tokenizer);
+        }
+        if (tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
+          const response = ReminderService.setCommand(tokenizer, msg.author.id, msg.guild?.id, msg.channel.id);
+          if (response) {
+            return response;
           }
-          return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
         }
       }
+      //TODO
       return new MessageEmbed({
         title: 'Reminder usage',
-        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)\n
+        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)
+        ${guildConfig?.prefix || defaultPrefix}${this.name} \`get\` or \`list\`
+        ${guildConfig?.prefix || defaultPrefix}${this.name} (\`delete\` or \`remove\`) \`index\`
+
         **Examples:**
         ${guildConfig?.prefix || defaultPrefix}${this.name} 1/5/2021 8:00
         ${guildConfig?.prefix || defaultPrefix}${this.name} 17-04-21 14:00 buy some juice
