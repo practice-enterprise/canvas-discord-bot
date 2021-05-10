@@ -1,6 +1,6 @@
 import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
-import { Formatter } from './util/formatter';
+import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
@@ -9,7 +9,7 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
-import { Logger } from './util/logger';
+import { Colors, EmbedBuilder } from './util/embed-builder';
 
 export const defaultPrefix = '!';
 
@@ -377,5 +377,5 @@ export const commands: Command[] = [
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(botmsg, msg).coursesMenu();
     }
-  },
+  }
 ];
