@@ -33,9 +33,9 @@ export class NotesService {
 
   static async getByChannel(channelID: string, guildConfig: GuildConfig): Promise<Response> {
     const notes = await NotesService.get();
-    const guildNotes = notes.find(n => n._id === guildConfig._id);
+    const guildNotes = notes.find(n => n.id === guildConfig.id);
 
-    if (guildNotes?._id === undefined || guildNotes.notes[channelID] === undefined || guildNotes.notes[channelID].length === 0) {
+    if (guildNotes?.id === undefined || guildNotes.notes[channelID] === undefined || guildNotes.notes[channelID].length === 0) {
       const embed: MessageEmbedOptions = {
         title: 'Notes',
         description: 'No notes for this channel.',
@@ -57,12 +57,12 @@ export class NotesService {
 
   static async setNote(note: string, channelID: string, guildConfig: GuildConfig): Promise<void> {
     const notes = await NotesService.get();
-    const guildNotes = notes.find(n => n._id === guildConfig._id);
+    const guildNotes = notes.find(n => n.id === guildConfig.id);
   
     // When a server/guild doesnt have notes at all yet
     if (guildNotes === undefined) {
       const newNotes: Notes = {
-        _id: guildConfig._id,
+        id: guildConfig.id,
         notes: {
           channelID: [note]
         }
@@ -81,7 +81,7 @@ export class NotesService {
 
   static async delNote(noteNum: number, channelID: string, guildConfig: GuildConfig): Promise<Response> {
     const notes = await NotesService.get();
-    const guildNotes = notes.find(n => n._id === guildConfig._id);
+    const guildNotes = notes.find(n => n.id === guildConfig.id);
   
     // Checks if notes exist, checks if noteNum is in range
     if ( guildNotes !== undefined && !isNaN(noteNum) && noteNum > 0 && noteNum <= guildNotes.notes[channelID].length) {

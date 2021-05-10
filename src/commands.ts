@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Guild, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
@@ -435,4 +435,22 @@ export const commands: Command[] = [
       new CoursesMenu(botmsg, msg).coursesMenu();
     }
   },
+  {
+    name: 'modules',
+    category: 'modules',
+    description: 'gives you a list of the modules',
+    aliases: [],
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
+      if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+        return 'No admin permissions!';
+      }
+      let res = '';
+      for (const key in (await GuildService.updateModules(guildConfig.id)))
+        res = res + key + '\n';
+      return res;
+    }
+  }
 ];

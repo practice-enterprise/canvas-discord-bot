@@ -1,7 +1,7 @@
 import { Command } from './command';
 
 export interface GuildConfig {
-  _id: string,
+  id: string,
   prefix: string,
   canvasInstanceID: string,
   courseChannels: CourseChannels,

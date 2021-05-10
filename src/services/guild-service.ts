@@ -1,5 +1,9 @@
 import Axios from 'axios';
 import { CourseChannels, GuildConfig } from '../models/guild';
+import { commands } from '../commands';
+
+//default modules
+
 
 export class GuildService {
   static async getForId(id: string): Promise<GuildConfig> {
@@ -43,16 +47,7 @@ export class GuildService {
         info: [],
         prefix: '!',
         roles: roles,
-        modules: {
-          'announcements': false, //API d
-          'courses': false, //bot d
-          'customCommands': false, //bot d
-          'misc': false, //bot d
-          'notes': false, //bot d
-          'reminders': false, //bot d
-          'roleSync': false, //API  
-          'wiki': false, //bot d
-        },
+        modules: this.getModules(),
         courseChannels: {
           categoryID: null,
           channels: {},
@@ -61,4 +56,29 @@ export class GuildService {
       }
     }).then((res) => res.data);
   }
+
+  static async updateModules(guildID: string): Promise<Record<string, boolean>> {
+    const modules: Record<string, boolean> = this.getModules();
+    Axios.request<number>({
+      method: 'PUT',
+      baseURL: process.env.API_URL,
+      url: '/guilds/modules',
+      data: {
+        id: guildID,
+        modules: modules
+      }
+    });
+    return modules;
+  }
+
+  static getModules(): Record<string, boolean> {
+    const modules: Record<string, boolean> = {};
+    for (const c of commands) {
+      modules[c.category] = true;
+    }
+    modules['customCommands'] = true;
+    modules['announcements'] = true;
+    return modules;
+  }
 }
+
