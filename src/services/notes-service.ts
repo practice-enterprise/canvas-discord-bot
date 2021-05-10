@@ -1,12 +1,11 @@
 import Axios from 'axios';
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message } from 'discord.js';
 import { Notes } from '../models/notes';
 import { Command, Response } from '../models/command';
 import { GuildConfig } from '../models/guild';
 import { Logger } from '../util/logger';
 import { Tokenizer } from '../util/tokenizer';
-import { Formatter } from '../util/formatter';
-import { EmbedBuilder } from '../util/embed-builder';
+import { Colors, EmbedBuilder } from '../util/embed-builder';
 
 export class NotesService {
   private prefix: string;
@@ -103,7 +102,7 @@ export class NotesService {
       }
     }
     // When incorrectly used (includes !notes help)
-    return new EmbedBuilder().buildHelp(this.command, this.prefix, 'error', {
+    return new EmbedBuilder().buildHelp(this.command, this.prefix, Colors.error, {
       '#channel (optional)': 'get notes from a channel or DM.',
       'add #channel (optional)': 'enter a note in a channel or DM.',
       'remove #channel (optional) notenumber': 'remove a note in a channel or DM.'
@@ -117,7 +116,7 @@ export class NotesService {
       return new EmbedBuilder().info('No notes found for this channel.', 'For help: notes help', 'No notes');
     }
     else {
-      return new EmbedBuilder().buildList('success', 'Notes :memo:', notes.notes[channelID], `Notes for channel <#${channelID}>`);
+      return new EmbedBuilder().buildList(Colors.success, 'Notes :memo:', notes.notes[channelID], `Notes for channel <#${channelID}>`);
     }
   }
 
@@ -192,7 +191,7 @@ export class NotesService {
       return new EmbedBuilder().info('No notes personal notes found.', 'For help: notes help', 'No notes');
     }
     else {
-      return new EmbedBuilder().buildList('success', 'Your personal notes! :memo:', notes.notes);
+      return new EmbedBuilder().buildList(Colors.success, 'Your personal notes! :memo:', notes.notes);
     }
   }
   
