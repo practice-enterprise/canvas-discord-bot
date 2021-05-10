@@ -9,7 +9,7 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
-import { EmbedBuilder } from './util/embed-builder';
+import { Colors, EmbedBuilder } from './util/embed-builder';
 
 
 export const defaultPrefix = '!';
@@ -390,22 +390,6 @@ export const commands: Command[] = [
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(botmsg, msg).coursesMenu();
-    }
-  },
-  {
-    name: 'embed',
-    description: 'Example for embed builder',
-    aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      msg.channel.send(new EmbedBuilder().buildHelp(this, guildConfig?.prefix || defaultPrefix, 'info', {'paramss (optional)': 'een epische beschrijving'}, ['param1', 'param2 en param3']));
-      msg.channel.send(new EmbedBuilder().success('Good job partner'));
-      msg.channel.send(new EmbedBuilder().error('wasnt a good job partner', 'Sorry man :c', 'Oh no!'));
-      msg.channel.send(new EmbedBuilder().buildList('gray', 'My epic list', ['eggs', 'many eggs', 'milk', 'sugar to induce my diabetes']));
-      msg.channel.send(new EmbedBuilder().buildList('canvas', 'My epic list', {
-        'Cheggs': 'and eggs',
-        'His last order was cum': 'And so they came, even the dragons',
-        'Baby dont hurt me': 'no more!'
-      }, 'My epic grocery list :D', 'also a brain if u can find it.'));
     }
   }
 ];
