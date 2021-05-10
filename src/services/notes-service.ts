@@ -1,16 +1,28 @@
 import Axios from 'axios';
-import { MessageEmbedOptions } from 'discord.js';
-import { GuildConfig } from '../models/guild';
+import { Message } from 'discord.js';
 import { Notes } from '../models/notes';
-import { Response } from '../models/command';
+import { Command, Response } from '../models/command';
+import { GuildConfig } from '../models/guild';
+import { Logger } from '../util/logger';
+import { Tokenizer } from '../util/tokenizer';
+import { Colors, EmbedBuilder } from '../util/embed-builder';
 
 export class NotesService {
-  static async get(): Promise<Notes[]> {
-    return Axios.request<Notes[]>({
+  private prefix: string;
+  private command: Command;
+
+  constructor(command: Command, prefix: string){
+    this.command = command;
+    this.prefix = prefix;
+  }
+
+  static async get(id: string): Promise<Notes | undefined> {
+    return Axios.request<Notes | undefined>({
       method: 'GET',
       baseURL: process.env.API_URL,
-      url: '/notes'
-    }).then((res) => res.data);
+      url: `/notes/${id}`
+    }).then((res) => res.data)
+      .catch(() => undefined);
   }
 
   static async create(notes: Notes): Promise<void> {
@@ -31,65 +43,213 @@ export class NotesService {
     }).then((res) => res.data);
   }
 
-  static async getByChannel(channelID: string, guildConfig: GuildConfig): Promise<Response> {
-    const notes = await NotesService.get();
-    const guildNotes = notes.find(n => n.id === guildConfig.id);
+  async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response> {
+    const tokenizer = new Tokenizer(msg.content, this.prefix);
 
-    if (guildNotes?.id === undefined || guildNotes.notes[channelID] === undefined || guildNotes.notes[channelID].length === 0) {
-      const embed: MessageEmbedOptions = {
-        title: 'Notes',
-        description: 'No notes for this channel.',
-        footer: { text: `For help: ${guildConfig.prefix}notes help` }
-      };
-      return embed;
+    //!notes - get notes in channel
+    if (tokenizer.tokens.length === 1) {
+      if(guildConfig) {
+        return this.getByChannel(msg.channel.id.toString(), guildConfig.id);
+      }
+      else {
+        return this.getByUser(msg.author.id);
+      }
+    }
+
+    if (guildConfig) {
+      //!notes #channel - get notes for a channel
+      if (tokenizer.tokens[1]?.type === 'channel') { 
+        return this.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig.id);
+      }
+      //!notes add #channel - adds this note
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
+        return this.setChannelNote(tokenizer.body(3), tokenizer.tokens[2].content.substr(2, 18), guildConfig.id);
+      }
+      //!notes add
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'text') {
+        return this.setChannelNote(tokenizer.body(2), msg.channel.id, guildConfig.id);
+      }
     }
     else {
-      let i = 0;
-      const embed: MessageEmbedOptions = {
-        title: 'Notes',
-        description: `Notes for channel <#${channelID}>:\n`
-          + guildNotes?.notes[channelID].map((note: string) => ++i + ' • ' + note).join('\n'),
-        footer: { text: `For help: ${guildConfig.prefix}notes help` },
-      };
-      return embed;
+      // DM/user
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'text') {
+        return this.setUserNote(tokenizer.body(2), msg.author.id);
+      }
+    }
+    
+    //!notes remove <channel> <number>
+    if(guildConfig) {
+      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
+        return 'You have to be an admin to delete notes.';
+      }
+
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
+        && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
+        const noteNum: number = parseInt(tokenizer.tokens[3].content);
+        return this.delChannelNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig.id);
+      }
+
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' &&
+        tokenizer.tokens[2]?.type === 'text') {
+        const noteNum: number = parseInt(tokenizer.tokens[2].content);
+        return this.delChannelNote(noteNum, msg.channel.id, guildConfig.id);
+      }
+    }
+    else {
+      if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' && tokenizer.tokens[2]?.type === 'text') {
+        const noteNum: number = parseInt(tokenizer.tokens[2].content);
+        return this.delUserNote(noteNum, msg.author.id);
+      }
+    }
+    // When incorrectly used (includes !notes help)
+    return new EmbedBuilder().buildHelp(this.command, this.prefix, Colors.error, {
+      '#channel (optional)': 'get notes from a channel or DM.',
+      'add #channel (optional)': 'enter a note in a channel or DM.',
+      'remove #channel (optional) notenumber': 'remove a note in a channel or DM.'
+    }, ['add #cooking-stuff Eggs', 'add a note here', 'remove #cooking-stuff 1']);
+  }
+  
+
+  async getByChannel(channelID: string, guildID: string): Promise<Response> {
+    const notes = await NotesService.get(guildID);
+    if (notes == null || Array.isArray(notes.notes) || notes.notes[channelID]?.length == 0) {
+      return new EmbedBuilder().info('No notes found for this channel.', 'For help: notes help', 'No notes');
+    }
+    else {
+      return new EmbedBuilder().buildList(Colors.success, 'Notes :memo:', notes.notes[channelID], `Notes for channel <#${channelID}>`);
     }
   }
 
-  static async setNote(note: string, channelID: string, guildConfig: GuildConfig): Promise<void> {
-    const notes = await NotesService.get();
-    const guildNotes = notes.find(n => n.id === guildConfig.id);
-  
-    // When a server/guild doesnt have notes at all yet
-    if (guildNotes === undefined) {
+  async setChannelNote(note: string, channelID: string, guildID: string): Promise<Response> {
+    const notes = await NotesService.get(guildID);
+    
+    // When a guild doesnt have notes at all yet
+    if (notes == null || notes.notes == null) {
       const newNotes: Notes = {
-        id: guildConfig.id,
+        id: guildID,
         notes: {
-          channelID: [note]
+          [channelID]: [note],
         }
       };
-      return await NotesService.create(newNotes);
+      
+      return await NotesService.update(newNotes)
+        .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
+        .catch((err) => {
+          Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
+          return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+        });
     }
   
+    if (Array.isArray(notes.notes)) {
+      Logger.error('Notes is an array, not a Record (likely user notes instead of guildnotes).');
+      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+    }
+    
     // When a server has notes
-    if (guildNotes.notes[channelID] === undefined) {
-      guildNotes.notes[channelID] = []; // create empty array if channel doesnt have notes yet
+    if (notes.notes[channelID] == null) {
+      notes.notes[channelID] = []; // create empty array if channel doesnt have notes yet
     }
-  
-    guildNotes.notes[channelID].push(note);
-    return await NotesService.update(guildNotes);
+    notes.notes[channelID].push(note);
+    return await NotesService.update(notes)
+      .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
+      .catch((err) => {
+        Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
+        return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+      });
   }
 
-  static async delNote(noteNum: number, channelID: string, guildConfig: GuildConfig): Promise<Response> {
-    const notes = await NotesService.get();
-    const guildNotes = notes.find(n => n.id === guildConfig.id);
+  async delChannelNote(noteNum: number, channelID: string, guildID: string): Promise<Response> {
+    const notes = await NotesService.get(guildID);
+  
+    if (notes == null) {
+      return new EmbedBuilder().info('There are currently no notes in this channel.', 'No notes found');
+    }
+
+    if (Array.isArray(notes.notes)) {
+      Logger.error('Notes is an array, not a Record (likely user notes instead of guildnotes).');
+      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+    }
+
+    // Checks if notes exist, checks if noteNum is in range
+    if ( noteNum > 0 && noteNum <= notes.notes[channelID].length) {
+      notes.notes[channelID].splice(noteNum - 1, 1);
+      return NotesService.update(notes)
+        .then(() => new EmbedBuilder().success(`Removed note \`${noteNum}\`.`))
+        .catch((err) => {
+          Logger.error('Failed to remove note. Err: ' + err);
+          return new EmbedBuilder().error(`Failed to remove note. \`${noteNum}\`.`);
+        });
+    }
+    else {
+      return new EmbedBuilder().error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
+    }
+  }
+
+  async getByUser(userID: string): Promise<Response> {
+    const notes = await NotesService.get(userID);
+    if (notes == null || !Array.isArray(notes.notes) || notes.notes.length == 0) {
+      return new EmbedBuilder().info('No notes personal notes found.', 'For help: notes help', 'No notes');
+    }
+    else {
+      return new EmbedBuilder().buildList(Colors.success, 'Your personal notes! :memo:', notes.notes);
+    }
+  }
+  
+  async setUserNote(note: string, userID: string): Promise<Response> {
+    const notes = await NotesService.get(userID);
+  
+    // When a user doesnt have notes at all yet
+    if (notes == null || notes.notes == null) {
+      const newNotes: Notes = {
+        id: userID,
+        notes: [note]
+      };
+      return await NotesService.update(newNotes)
+        .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to your notes`))
+        .catch((err) => {
+          Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
+          return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+        });
+    }
+
+    if (!Array.isArray(notes.notes)) {
+      Logger.error('Notes is not an array, Record (likely guild notes instead of user notes).');
+      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+    }
+
+    notes.notes.push(note);
+    return await NotesService.update(notes)
+      .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to your notes`))
+      .catch((err) => {
+        Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
+        return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+      });
+  }
+  
+  async delUserNote(noteNum: number, userID: string): Promise<Response> {
+    const notes = await NotesService.get(userID);
+  
+    if (notes == null) {
+      return new EmbedBuilder().info('You currently don\'t have any notes.', 'No notes found');
+    }
+
+    if (!Array.isArray(notes.notes)) {
+      Logger.error('Notes is not an array, Record (likely guild notes instead of user notes).');
+      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+    }
   
     // Checks if notes exist, checks if noteNum is in range
-    if ( guildNotes !== undefined && !isNaN(noteNum) && noteNum > 0 && noteNum <= guildNotes.notes[channelID].length) {
-      guildNotes.notes[channelID].splice(noteNum - 1, 1);
-      await NotesService.update(guildNotes);
-      return `Removed note \`${noteNum}\``;
-    } else {
-      return 'Failed to remove note, validate command';
+    if (noteNum > 0 && noteNum <= notes.notes.length) {
+      notes.notes.splice(noteNum - 1, 1);
+      return NotesService.update(notes)
+        .then(() => new EmbedBuilder().success(`Removed note \`${noteNum}\`.`))
+        .catch((err) => {
+          Logger.error('Failed to remove note. Err: ' + err);
+          return new EmbedBuilder().error(`Failed to remove note. \`${noteNum}\`.`);
+        });
+    }
+    else {
+      return new EmbedBuilder().error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
     }
   }
 }
