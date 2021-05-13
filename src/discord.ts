@@ -123,8 +123,8 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       }
       return;
     }
-
-    for (const command of commands.concat(guildConfig.modules['customCommands'] === false ? [] : guildConfig.commands)) {
+    const commandList = commands.concat(guildConfig.modules['customCommands'] === false ? [] : guildConfig.commands);
+    for (const command of commandList) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
       }
