@@ -7,6 +7,7 @@ import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
+import { EmbedBuilder } from './util/embed-builder';
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
   const client = new Client({ shards: shard, shardCount });
@@ -128,12 +129,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         continue;
       }
       if (guildConfig.modules[command.category] === false) {
-        msg.channel.send(new MessageEmbed({
-          title: 'error',
-          description: 'this command has been disabled',
-          color: 'fF4747',
-          footer: { text: 'enable it\'s module to use this command' }
-        }));
+        msg.channel.send(new EmbedBuilder().error(`the ${command.name} command has been disabled` , `enable the ${command.category} module to enable this command`));
         return;
       }
 
