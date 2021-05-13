@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Guild, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
@@ -25,6 +25,7 @@ const guildOnly: MessageEmbed = new MessageEmbed({
 export const commands: Command[] = [
   { // help
     name: 'help',
+    category: 'help',
     description: 'that\'s this command.',
     aliases: ['how', 'wtf', 'man', 'get-help'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -45,6 +46,7 @@ export const commands: Command[] = [
   },
   { // Info
     name: 'info',
+    category: 'info',
     description: 'Displays more information. server only',
     aliases: ['informatie', 'information'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -69,6 +71,7 @@ export const commands: Command[] = [
   },
   { // setup
     name: 'setup',
+    category: 'setup',
     description: 'Quick setup and introduction for the bot. Server only',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -147,6 +150,7 @@ export const commands: Command[] = [
   },
   { // ping
     name: 'ping',
+    category: 'ping',
     description: 'play the most mundane ping pong ever with the bot.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -161,9 +165,11 @@ export const commands: Command[] = [
   },
   { // roll
     name: 'roll',
+    category: 'misc',
     description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
@@ -186,11 +192,11 @@ export const commands: Command[] = [
   },
   { // coinflip
     name: 'coinflip',
+    category: 'misc',
     description: 'heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
 
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed()
@@ -212,6 +218,7 @@ export const commands: Command[] = [
   },
   { // prefix
     name: 'prefix',
+    category: 'prefix',
     description: 'Set prefix for guild. Server only',
     aliases: ['pf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -248,6 +255,7 @@ export const commands: Command[] = [
   },*/
   { // notes
     name: 'notes',
+    category: 'notes',
     description: 'Set or get notes for channels and DM\'s.',
     aliases: ['note'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -256,6 +264,7 @@ export const commands: Command[] = [
   },
   { // reminder TODO prettyfy/ refactor
     name: 'reminder',
+    category: 'reminders',
     description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -294,6 +303,7 @@ export const commands: Command[] = [
   },
   { // timezone TODO prettify 
     name: 'timezone',
+    category: 'timezone',
     description: 'Get/set your current time zone',
     aliases: ['time', 'clock', 'tz'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -343,6 +353,7 @@ export const commands: Command[] = [
   },
   { // wiki
     name: 'wiki',
+    category: 'wiki',
     description: 'Search on the Thomas More wiki',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
@@ -371,11 +382,30 @@ export const commands: Command[] = [
   },
   { // courses menu command
     name: 'courses',
+    category: 'courses',
     description: 'Lists your courses, modules and items with controls. guild command',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(botmsg, msg).coursesMenu();
+    }
+  },
+  {
+    name: 'modules',
+    category: 'modules',
+    description: 'gives you a list of the modules',
+    aliases: [],
+    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
+      if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+        return 'No admin permissions!';
+      }
+      let res = '';
+      for (const key in (await GuildService.updateModules(guildConfig.id)))
+        res = res + key + '\n';
+      return res;
     }
   }
 ];
