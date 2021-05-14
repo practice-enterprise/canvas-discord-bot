@@ -3,6 +3,7 @@ import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { DateTime } from 'luxon';
 import { dateFormates, timeZones } from '../commands';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
+import { preventExceed } from '../util/formatter';
 import { Tokenizer } from '../util/tokenizer';
 
 export class ReminderService {
@@ -35,8 +36,9 @@ export class ReminderService {
 
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
-      (client.channels.resolve(reminder.target.channel) as TextChannel)
-        .send(reminder.content);
+
+      (client.channels.resolve(preventExceed(reminder.target.channel)) as TextChannel)
+        .send(preventExceed(reminder.content));
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,7 +48,7 @@ export class ReminderService {
 
   static sendUserReminder(reminder: UserReminder, client: Client): void {
     try {
-      client.users.resolve(reminder.target.user)?.send(reminder.content);
+      client.users.resolve(reminder.target.user)?.send(preventExceed(reminder.content));
     } catch (err) {
       console.error(err);
     } finally {
@@ -58,9 +60,9 @@ export class ReminderService {
     // TODO: prettify
     const user = await client.users.fetch(data.userDiscordID);
     if (typeof (data.message) === 'string') {
-      user?.send(data.message);
+      user?.send(preventExceed(data.message));
     } else {
-      user?.send(new MessageEmbed(data.message));
+      user?.send(new MessageEmbed(preventExceed(data.message)));
     }
     await this.updateLastAssignment(data.id, data.assignmentID);
   }

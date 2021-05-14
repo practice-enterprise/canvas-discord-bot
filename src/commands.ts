@@ -1,6 +1,5 @@
-import { Guild, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
-import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
@@ -9,7 +8,6 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
-import { Colors, EmbedBuilder } from './util/embed-builder';
 
 export const defaultPrefix = '!';
 
@@ -359,24 +357,22 @@ export const commands: Command[] = [
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
-      const search = tokenizer.body();
-      if (search.length == 0)
+      const query = tokenizer.body();
+      if (query.length == 0)
         return 'https://tmwiki.be';
 
-      const wikiContent = await WikiService.wiki(search);
+      const wikiContent = await WikiService.wiki(query);
       wikiContent.data.pages.search.results
         .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
 
       const embed = new MessageEmbed({
-        'title': `Wiki results for '${search}'`,
+        'title': `Wiki results for '${query}'`,
         'url': 'https://tmwiki.be',
         'description': wikiContent.data.pages.search.results
           .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path}) \`${p.path}\`
           Desc: ${p.description}`).join('\n\n')
       });
 
-      if (embed.length >= 2000)
-        return '`Message too long.`';
       return embed;
     }
   },
