@@ -1,9 +1,10 @@
 import Axios from 'axios';
 import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { DateTime } from 'luxon';
+import { dateFormates, timeZones } from '../commands';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 import { preventExceed } from '../util/formatter';
-
+import { Tokenizer } from '../util/tokenizer';
 
 export class ReminderService {
   static async delete(reminder: GuildReminder | UserReminder): Promise<void> {
@@ -16,7 +17,6 @@ export class ReminderService {
   }
 
   static async create(reminder: Omit<GuildReminder | UserReminder, 'id'>): Promise<void> {
-    console.log(reminder);
     await Axios.request<void>({
       method: 'POST',
       baseURL: process.env.API_URL,
@@ -24,6 +24,15 @@ export class ReminderService {
       data: reminder
     });
   }
+
+  static async get(discordID: string): Promise<(UserReminder | GuildReminder)[] | undefined> {
+    return await Axios.request<(UserReminder | GuildReminder)[] | undefined>({
+      method: 'GET',
+      baseURL: process.env.API_URL,
+      url: `/reminders/${discordID}`
+    }).then(res => res.data);
+  }
+
 
   static sendGuildReminder(reminder: GuildReminder, client: Client): void {
     try {
@@ -81,4 +90,80 @@ export class ReminderService {
       data: { tz: tz }
     });
   }
+
+  static async getCommand(discordID: string): Promise<MessageEmbed> {
+    const reminders = await ReminderService.get(discordID);
+    let index = 0;
+    if (reminders) {
+      return new MessageEmbed({
+        title: 'Reminders',
+        description: reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40) + '...'}`).join('\n')
+      });
+    }
+    return new MessageEmbed({
+      title: 'Reminders',
+      description: 'there are no more reminders set for you'
+    });
+  }
+
+  static async deleteCommand(authorID: string, tokenizer: Tokenizer) {
+    const reminders = await ReminderService.get(authorID);
+    if (!reminders) {
+      return new MessageEmbed({
+        title: 'Reminders',
+        description: 'there are no more reminders set for you'
+      });
+    }
+    let index = 0;
+    if (!tokenizer.tokens[2]) {
+      return new MessageEmbed({
+        title: 'reminders',
+        description: reminders.map(r => `\`${index++}:\` ${r.content}`).join('\n')
+      });
+    }
+    index = parseInt(tokenizer.tokens[2].content);
+    if (reminders[index]) {
+      ReminderService.delete(reminders[parseInt(tokenizer.tokens[2].content)]);
+      return new MessageEmbed({
+        title: 'Success',
+        description: 'your reminder has been deleted'
+      });
+    } else {
+      index = 0;
+      return new MessageEmbed({
+        title: 'Error',
+        description: '**Please use one of the indexes below:**\n' + reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm z')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40) + '...'}`).join('\n')
+      });
+    }
+  }
+  static async setCommand(tokenizer: Tokenizer, authorID: string, guildID:string |undefined, channelID:string|undefined): Promise<string | undefined> {
+    for (const format of dateFormates) {
+      const time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
+      if (time && time.isValid) {
+        const userTime = time.setZone(await ReminderService.getTimeZone(authorID) || timeZones[0], { keepLocalTime: true });
+        if (guildID && channelID) {
+          ReminderService.create({
+            content: tokenizer.body(3) || `<@${authorID}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+            date: time.toISO(),
+            target: {
+              channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || channelID,
+              guild: guildID,
+              user: authorID
+            },
+          });
+        } else {
+          ReminderService.create({
+            content: tokenizer.body(3) || `<@${authorID}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+            date: time.toISO(),
+            target: {
+              user: authorID
+            },
+          });
+        }
+        return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
+      }
+    }
+    return undefined;
+  }
 }
+

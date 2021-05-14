@@ -1,5 +1,9 @@
 import Axios from 'axios';
 import { CourseChannels, GuildConfig } from '../models/guild';
+import { commands } from '../commands';
+
+//default modules
+
 
 export class GuildService {
   static async getForId(id: string): Promise<GuildConfig> {
@@ -31,18 +35,50 @@ export class GuildService {
     return this.update(config);
   }
 
-  static async createDefault(data: { guildID: string, roles: Record<string, string> }): Promise<string> {
+  static async createDefault(guildID: string, roles: Record<string, string>): Promise<string> {
     return Axios.request<string>({
       method: 'PUT',
       baseURL: process.env.API_URL,
-      url: `/guilds/create/${data.guildID}`,
+      url: '/guilds/create',
       data: {
+        id: guildID,
         commands: [],
-        canvasInstance: '',
+        canvasInstanceID: '',
         info: [],
         prefix: '!',
-        roles: data.roles
+        roles: roles,
+        modules: this.getModules(),
+        courseChannels: {
+          categoryID: null,
+          channels: {},
+        }
+
       }
     }).then((res) => res.data);
   }
+
+  static async updateModules(guildID: string): Promise<Record<string, boolean>> {
+    const modules: Record<string, boolean> = this.getModules();
+    Axios.request<number>({
+      method: 'PUT',
+      baseURL: process.env.API_URL,
+      url: '/guilds/modules',
+      data: {
+        id: guildID,
+        modules: modules
+      }
+    });
+    return modules;
+  }
+
+  static getModules(): Record<string, boolean> {
+    const modules: Record<string, boolean> = {};
+    for (const c of commands) {
+      modules[c.category] = true;
+    }
+    modules['customCommands'] = true;
+    modules['announcements'] = true;
+    return modules;
+  }
 }
+
