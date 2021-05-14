@@ -17,10 +17,7 @@ export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Det
 
 export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
-const guildOnly: MessageEmbed = new MessageEmbed({
-  title: 'Error!',
-  description: 'This is a server only command.'
-});
+const guildOnly: MessageEmbed = new EmbedBuilder().error('This is a server only command.');
 
 export const commands: Command[] = [
   { // help
@@ -240,19 +237,6 @@ export const commands: Command[] = [
       }
     }
   },
-  /*{ // default
-    name: 'default',
-    description: 'sets the default channel',
-    aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      if (tokenizer.tokens[1]?.type === 'channel') {
-        return tokenizer.tokens[1].content; //TODO stash in db of server
-      } else {
-        return 'this is not a valid channel';
-      }
-    }
-  },*/
   { // notes
     name: 'notes',
     category: 'notes',
