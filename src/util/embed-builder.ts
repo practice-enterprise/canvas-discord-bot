@@ -58,7 +58,7 @@ export class EmbedBuilder {
     let paramVal = '';
 
     if (Array.isArray(params)) {
-      paramVal = params.map((par) => `\`${prefix}${command.name} ${par}`).join('\n');
+      paramVal = params.map((par) => `\`${prefix}${command.name} ${par}\``).join('\n');
     }
     else {
       for (const key in params) {

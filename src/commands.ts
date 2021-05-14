@@ -163,10 +163,9 @@ export const commands: Command[] = [
   { // roll
     name: 'roll',
     category: 'misc',
-    description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
+    description: 'Rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
@@ -178,26 +177,36 @@ export const commands: Command[] = [
         }
 
         if (times === 1) {
-          return `Rolled a ${dice[0]}`;
+          return new MessageEmbed({
+            title: `:game_die: ${tokenizer.tokens[1]?.content}`,
+            description: `You rolled a ${dice[0]}.`,
+            color: Colors.error
+          });
         } else {
-          return `Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`;
+          return new MessageEmbed({
+            title: `:game_die: ${tokenizer.tokens[1]?.content}`,
+            description: `You rolled: ${dice.join(' + ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`,
+            color: Colors.error
+          });
         }
       } else {
-        return 'no valid die found, e.g. \'3d6\'';
+        return new EmbedBuilder().buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
+          {'XdY': 'X: amount of times (defaults to 1). Y: amount of sides the die should have.'}, ['d6', 'd20', '2d8', '3d6']);
       }
     }
   },
   { // coinflip
     name: 'coinflip',
     category: 'misc',
-    description: 'heads or tails?',
+    description: 'Heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const flip = Math.round(Math.random());
-      const embed = new MessageEmbed()
-        .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
+      const embed = new MessageEmbed({
+        color: Colors.warning
+      }).setTitle(flip ? ':coin: Heads!' : ':coin: Tails!');
 
       if (tokenizer.tokens.length === 1) {
         return embed;
@@ -209,7 +218,8 @@ export const commands: Command[] = [
         return flip == 0 ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
       }
       else {
-        return 'Try with heads (h) or tails (t) instead!';
+        return new EmbedBuilder().buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
+          {'h/t (optional)': 'Place your bets on heads or tails'}, ['', 'heads', 't']);
       }
     }
   },
