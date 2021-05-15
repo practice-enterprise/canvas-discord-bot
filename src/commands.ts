@@ -58,12 +58,7 @@ export const commands: Command[] = [
           return response;
         }
       }
-      return {
-        'title': 'Info commands',
-        'description': guildConfig.info.map(i => `\`${guildConfig?.prefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'),
-        'color': '4FAFEF',
-      } as MessageEmbedOptions;
-
+      return new EmbedBuilder().info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
     }
   },
   { // setup
@@ -235,15 +230,15 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-        return 'No admin permissions!';
+        return new EmbedBuilder().error('No admin permissions!');
       }
 
       if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && msg.guild?.id != undefined) {
         GuildService.setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
-        return 'Prefix update with: ' + tokenizer.tokens[1].content;
+        return new EmbedBuilder().success('Prefix updated with: ' + tokenizer.tokens[1].content);
       }
       else {
-        return 'Use like `prefix <new prefix>`';
+        return new EmbedBuilder().buildHelp(this,  guildConfig?.prefix || defaultPrefix, Colors.error, {'prefix': 'the new prefix'}, ['!', '?']);
       }
     }
   },
@@ -349,7 +344,7 @@ export const commands: Command[] = [
     name: 'wiki',
     category: 'wiki',
     description: 'Search on the Thomas More wiki',
-    aliases: [],
+    aliases: ['wk'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
@@ -358,19 +353,16 @@ export const commands: Command[] = [
         return 'https://tmwiki.be';
 
       const wikiContent = await WikiService.wiki(search);
-      wikiContent.data.pages.search.results
-        .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
 
-      const embed = new MessageEmbed({
-        'title': `Wiki results for '${search}'`,
-        'url': 'https://tmwiki.be',
-        'description': wikiContent.data.pages.search.results
-          .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path}) \`${p.path}\`
-          Desc: ${p.description}`).join('\n\n')
-      });
+      const results: Record<string, string> = {};
+      for (const result of wikiContent.data.pages.search.results) {
+        results[`[${result.title}](https://tmwiki.be/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
+      }
 
-      if (embed.length >= 2000)
-        return '`Message too long.`';
+      const embed = new EmbedBuilder().buildList(Colors.info, 'Wiki', results, `Search results for \`${search}\`.`, '', 'https://tmwiki.be/');
+
+      // if (embed.length >= 2000)
+      //   return '`Message too long.`';
       return embed;
     }
   },

@@ -20,7 +20,7 @@ export class EmbedBuilder {
       color: Colors.success,
       title: Title,
       description: description,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
@@ -30,7 +30,7 @@ export class EmbedBuilder {
       color: Colors.info,
       title: Title,
       description: description,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
@@ -40,7 +40,7 @@ export class EmbedBuilder {
       color: Colors.warning,
       title: Title,
       description: reason,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
@@ -50,7 +50,7 @@ export class EmbedBuilder {
       color: Colors.error,
       title: Title,
       description: reason,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
@@ -71,14 +71,14 @@ export class EmbedBuilder {
       title: `Help for ${prefix}${command.name}`,
       description: command.description,
       fields: [
-        {name: '**Usage**', value: paramVal},
-        {name: '**Examples:**', value: examples.map((eg) => `${prefix}${command.name} ${eg}`).join('\n')},
+        { name: '**Usage**', value: paramVal },
+        { name: '**Examples:**', value: examples.map((eg) => `${prefix}${command.name} ${eg}`).join('\n') },
       ],
-      footer: {text: footer }
+      footer: { text: footer }
     });
   }
 
-  buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?:string, footer?: string): MessageEmbed {
+  buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
     let i = 0;
     if (description == null) {
       description = '';
@@ -89,7 +89,7 @@ export class EmbedBuilder {
     }
     else {
       for (const key in items) {
-        description += `\n\`${++i}\` • **${key}**\n${items[key]}`;
+        description += `\n\`${++i}\` • **${key}**${items[key].length == 0 ? '' : '\n' + items[key]}`;
       }
     }
 
@@ -97,7 +97,8 @@ export class EmbedBuilder {
       color: typeColor,
       title: title,
       description: description,
-      footer: {text: footer }
+      footer: {text: footer },
+      url: url
     });
   }
 }
