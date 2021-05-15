@@ -60,10 +60,10 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         const response = typeof command.response === 'function' ? await command.response(msg, undefined) : command.response;
 
         if (typeof response === 'string') {
-          msg.channel.send(response);
+          msg.channel.send(response, {split: true});
           return;
         } else if (typeof response !== 'undefined') {
-          msg.channel.send(new MessageEmbed(response));
+          msg.channel.send(preventExceed(response));
           return;
         }
       }
@@ -142,7 +142,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         msg.channel.send(response, {split: true});
         return;
       } else if (typeof response !== 'undefined') {
-        msg.channel.send(new MessageEmbed(preventExceed(response)));
+        msg.channel.send(preventExceed(response));
         return;
       }
     }

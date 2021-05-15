@@ -1,6 +1,5 @@
-import { Guild, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
-import { command, Formatter } from './util/formatter';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildConfig } from './models/guild';
@@ -348,21 +347,19 @@ export const commands: Command[] = [
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
-      const search = tokenizer.body();
-      if (search.length == 0)
+      const query = tokenizer.body();
+      if (query.length == 0)
         return 'https://tmwiki.be';
 
-      const wikiContent = await WikiService.wiki(search);
+      const wikiContent = await WikiService.wiki(query);
 
       const results: Record<string, string> = {};
       for (const result of wikiContent.data.pages.search.results) {
         results[`[${result.title}](https://tmwiki.be/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
       }
 
-      const embed = new EmbedBuilder().buildList(Colors.info, 'Wiki', results, `Search results for \`${search}\`.`, '', 'https://tmwiki.be/');
+      const embed = new EmbedBuilder().buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', 'https://tmwiki.be/');
 
-      // if (embed.length >= 2000)
-      //   return '`Message too long.`';
       return embed;
     }
   },
