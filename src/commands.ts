@@ -12,7 +12,7 @@ import { Colors, EmbedBuilder } from './util/embed-builder';
 
 export const defaultPrefix = '!';
 
-export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit'];
+export const timeZones = ['Europe/Brussels', 'Australia/Melbourne', 'America/Detroit'];
 
 export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
