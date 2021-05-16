@@ -102,7 +102,7 @@ export class NotesService {
       }
     }
     // When incorrectly used (includes !notes help)
-    return new EmbedBuilder().buildHelp(this.command, this.prefix, Colors.error, {
+    return EmbedBuilder.buildHelp(this.command, this.prefix, Colors.error, {
       '#channel (optional)': 'get notes from a channel or DM.',
       'add #channel (optional)': 'enter a note in a channel or DM.',
       'remove #channel (optional) notenumber': 'remove a note in a channel or DM.'
@@ -113,10 +113,10 @@ export class NotesService {
   async getByChannel(channelID: string, guildID: string): Promise<Response> {
     const notes = await NotesService.get(guildID);
     if (notes == null || Array.isArray(notes.notes) || notes.notes[channelID]?.length == 0) {
-      return new EmbedBuilder().info('No notes found for this channel.', 'For help: notes help', 'No notes');
+      return EmbedBuilder.info('No notes found for this channel.', 'For help: notes help', 'No notes');
     }
     else {
-      return new EmbedBuilder().buildList(Colors.success, 'Notes :memo:', notes.notes[channelID], `Notes for channel <#${channelID}>`);
+      return EmbedBuilder.buildList(Colors.success, 'Notes :memo:', notes.notes[channelID], `Notes for channel <#${channelID}>`);
     }
   }
 
@@ -133,16 +133,16 @@ export class NotesService {
       };
       
       return await NotesService.update(newNotes)
-        .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
+        .then(() => EmbedBuilder.success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
         .catch((err) => {
           Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
-          return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+          return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
         });
     }
   
     if (Array.isArray(notes.notes)) {
       Logger.error('Notes is an array, not a Record (likely user notes instead of guildnotes).');
-      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+      return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
     }
     
     // When a server has notes
@@ -151,10 +151,10 @@ export class NotesService {
     }
     notes.notes[channelID].push(note);
     return await NotesService.update(notes)
-      .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
+      .then(() => EmbedBuilder.success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
       .catch((err) => {
         Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
-        return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+        return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
       });
   }
 
@@ -162,36 +162,36 @@ export class NotesService {
     const notes = await NotesService.get(guildID);
   
     if (notes == null) {
-      return new EmbedBuilder().info('There are currently no notes in this channel.', 'No notes found');
+      return EmbedBuilder.info('There are currently no notes in this channel.', 'No notes found');
     }
 
     if (Array.isArray(notes.notes)) {
       Logger.error('Notes is an array, not a Record (likely user notes instead of guildnotes).');
-      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+      return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
     }
 
     // Checks if notes exist, checks if noteNum is in range
     if ( noteNum > 0 && noteNum <= notes.notes[channelID].length) {
       notes.notes[channelID].splice(noteNum - 1, 1);
       return NotesService.update(notes)
-        .then(() => new EmbedBuilder().success(`Removed note \`${noteNum}\`.`))
+        .then(() => EmbedBuilder.success(`Removed note \`${noteNum}\`.`))
         .catch((err) => {
           Logger.error('Failed to remove note. Err: ' + err);
-          return new EmbedBuilder().error(`Failed to remove note. \`${noteNum}\`.`);
+          return EmbedBuilder.error(`Failed to remove note. \`${noteNum}\`.`);
         });
     }
     else {
-      return new EmbedBuilder().error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
+      return EmbedBuilder.error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
     }
   }
 
   async getByUser(userID: string): Promise<Response> {
     const notes = await NotesService.get(userID);
     if (notes == null || !Array.isArray(notes.notes) || notes.notes.length == 0) {
-      return new EmbedBuilder().info('No notes personal notes found.', 'For help: notes help', 'No notes');
+      return EmbedBuilder.info('No notes personal notes found.', 'For help: notes help', 'No notes');
     }
     else {
-      return new EmbedBuilder().buildList(Colors.success, 'Your personal notes! :memo:', notes.notes);
+      return EmbedBuilder.buildList(Colors.success, 'Your personal notes! :memo:', notes.notes);
     }
   }
   
@@ -205,24 +205,24 @@ export class NotesService {
         notes: [note]
       };
       return await NotesService.update(newNotes)
-        .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to your notes`))
+        .then(() => EmbedBuilder.success(`Note '${note}' got succesfully added to your notes`))
         .catch((err) => {
           Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
-          return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+          return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
         });
     }
 
     if (!Array.isArray(notes.notes)) {
       Logger.error('Notes is not an array, Record (likely guild notes instead of user notes).');
-      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+      return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
     }
 
     notes.notes.push(note);
     return await NotesService.update(notes)
-      .then(() => new EmbedBuilder().success(`Note '${note}' got succesfully added to your notes`))
+      .then(() => EmbedBuilder.success(`Note '${note}' got succesfully added to your notes`))
       .catch((err) => {
         Logger.error('Something wen\'t wrong trying to set notes. Err: ' + err);
-        return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+        return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
       });
   }
   
@@ -230,26 +230,26 @@ export class NotesService {
     const notes = await NotesService.get(userID);
   
     if (notes == null) {
-      return new EmbedBuilder().info('You currently don\'t have any notes.', 'No notes found');
+      return EmbedBuilder.info('You currently don\'t have any notes.', 'No notes found');
     }
 
     if (!Array.isArray(notes.notes)) {
       Logger.error('Notes is not an array, Record (likely guild notes instead of user notes).');
-      return new EmbedBuilder().error('Something wen\'t wrong trying to set notes.');
+      return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
     }
   
     // Checks if notes exist, checks if noteNum is in range
     if (noteNum > 0 && noteNum <= notes.notes.length) {
       notes.notes.splice(noteNum - 1, 1);
       return NotesService.update(notes)
-        .then(() => new EmbedBuilder().success(`Removed note \`${noteNum}\`.`))
+        .then(() => EmbedBuilder.success(`Removed note \`${noteNum}\`.`))
         .catch((err) => {
           Logger.error('Failed to remove note. Err: ' + err);
-          return new EmbedBuilder().error(`Failed to remove note. \`${noteNum}\`.`);
+          return EmbedBuilder.error(`Failed to remove note. \`${noteNum}\`.`);
         });
     }
     else {
-      return new EmbedBuilder().error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
+      return EmbedBuilder.error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
     }
   }
 }

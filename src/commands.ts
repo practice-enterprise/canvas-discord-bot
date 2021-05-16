@@ -12,11 +12,11 @@ import { Colors, EmbedBuilder } from './util/embed-builder';
 
 export const defaultPrefix = '!';
 
-export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit'];
 
 export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
-const guildOnly: MessageEmbed = new EmbedBuilder().error('This is a server only command.');
+const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only command.');
 
 export const commands: Command[] = [
   { // help
@@ -26,18 +26,18 @@ export const commands: Command[] = [
     aliases: ['how', 'wtf', 'man', 'get-help'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (guildConfig) {
-        return {
+        return new MessageEmbed({
           'title': 'Help is on the way!',
           'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
           'color': '43B581',
-        } as MessageEmbedOptions;
+        });
       }
 
-      return {
+      return new MessageEmbed({
         'title': 'Help is on the way!',
         'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
         'color': '43B581',
-      } as MessageEmbedOptions;
+      });
     }
   },
   { // Info
@@ -57,7 +57,7 @@ export const commands: Command[] = [
           return response;
         }
       }
-      return new EmbedBuilder().info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
+      return EmbedBuilder.info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
     }
   },
   { // setup
@@ -79,7 +79,7 @@ export const commands: Command[] = [
       };
 
       if (!(msg.member?.hasPermission('ADMINISTRATOR')))
-        return 'You need to be an admin for this command.';
+        return EmbedBuilder.error('No admin permissions!');
 
       let page = 0;
       const pages: MessageEmbedOptions[] = [
@@ -117,14 +117,14 @@ export const commands: Command[] = [
         const oldPage = page;
 
         switch (reaction.emoji.name) {
-          case reactions[0]:
-            if (page > 0)
-              page--;
-            break;
-          case reactions[1]:
-            if (page < pages.length - 1)
-              page++;
-            break;
+        case reactions[0]:
+          if (page > 0)
+            page--;
+          break;
+        case reactions[1]:
+          if (page < pages.length - 1)
+            page++;
+          break;
         }
 
         if (oldPage !== page) { //Only edit if it's a different page.
@@ -184,8 +184,8 @@ export const commands: Command[] = [
           });
         }
       } else {
-        return new EmbedBuilder().buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
-          {'XdY': 'X: amount of times (defaults to 1). Y: amount of sides the die should have.'}, ['d6', 'd20', '2d8', '3d6']);
+        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
+          { 'XdY': 'X: amount of times (defaults to 1). Y: amount of sides the die should have.' }, ['d6', 'd20', '2d8', '3d6']);
       }
     }
   },
@@ -212,8 +212,8 @@ export const commands: Command[] = [
         return flip == 0 ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
       }
       else {
-        return new EmbedBuilder().buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
-          {'h/t (optional)': 'Place your bets on heads or tails'}, ['', 'heads', 't']);
+        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
+          { 'h/t (optional)': 'Place your bets on heads or tails' }, ['', 'heads', 't']);
       }
     }
   },
@@ -229,15 +229,15 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-        return new EmbedBuilder().error('No admin permissions!');
+        return EmbedBuilder.error('No admin permissions!');
       }
 
       if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && msg.guild?.id != undefined) {
         GuildService.setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
-        return new EmbedBuilder().success('Prefix updated with: ' + tokenizer.tokens[1].content);
+        return EmbedBuilder.success('Prefix updated with: ' + tokenizer.tokens[1].content);
       }
       else {
-        return new EmbedBuilder().buildHelp(this,  guildConfig?.prefix || defaultPrefix, Colors.error, {'prefix': 'the new prefix'}, ['!', '?']);
+        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.error, { 'prefix': 'the new prefix' }, ['!', '?']);
       }
     }
   },
@@ -250,10 +250,10 @@ export const commands: Command[] = [
       return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
     }
   },
-  { // reminder TODO prettyfy/ refactor
+  { // reminder
     name: 'reminder',
     category: 'reminders',
-    description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
+    description: 'Set reminders',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
@@ -271,72 +271,40 @@ export const commands: Command[] = [
           }
         }
       }
-      //TODO
-      return new MessageEmbed({
-        title: 'Reminder usage',
-        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)
-        ${guildConfig?.prefix || defaultPrefix}${this.name} \`get\` or \`list\`
-        ${guildConfig?.prefix || defaultPrefix}${this.name} (\`delete\` or \`remove\`) \`index\`
-
-        **Examples:**
-        ${guildConfig?.prefix || defaultPrefix}${this.name} 1/5/2021 8:00
-        ${guildConfig?.prefix || defaultPrefix}${this.name} 17-04-21 14:00 buy some juice
-        ${guildConfig?.prefix || defaultPrefix}${this.name} 26.11.2021 16:00 movie night in 1 hour #info`,
-        color: '#F04747',
-        footer: {
-          text: `Supported formats: ${dateFormates.join(', ')}`
-        }
-      });
+      return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
+        {'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time'}, ['1/5/2021 8:00','17-04-21 14:00 buy some juice','26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
     }
   },
-  { // timezone TODO prettify 
+  { //timezone
     name: 'timezone',
     category: 'timezone',
     description: 'Get/set your current time zone',
     aliases: ['time', 'clock', 'tz'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
-      if (tokenizer.tokens[1] == undefined) {
-        return {
-          'title': 'Time zone',
-          'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
-          'color': '4FAFEF',
-        } as MessageEmbedOptions;
-      }
-      if (tokenizer.tokens[1].content == 'get') {
-        const tz = (await ReminderService.getTimeZone(msg.author.id));
-        console.log(tz);
-        const time = DateTime.fromJSDate(new Date(), { zone: tz });
-        return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
-      }
-      if (tokenizer.tokens[1].content == 'set') {
-        if (tokenizer.tokens[2]) {
-          let tz = timeZones[parseInt(tokenizer.tokens[2].content)];
-          if (!tz) {
-            tz = tokenizer.tokens[2].content;
-          }
-          const time = DateTime.fromMillis(Date.now(), { zone: tz });
-
-          if (time.isValid) {
-            await ReminderService.setTimeZone(msg.author.id, tz);
-            return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
-          }
+      if (tokenizer.tokens[1] != undefined) {
+        if (tokenizer.tokens[1].content == 'get') {
+          const tz = (await ReminderService.getTimeZone(msg.author.id));
+          const time = DateTime.fromJSDate(new Date(), { zone: tz });
+          return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy hh:mm z')}`, undefined, 'Your current time zone!');
         }
-        let i = 0;
-        return {
-          'title': 'Time zones!',
-          'url': 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
-          'description': timeZones.map(tz => `\`${i++}:\`${tz}`).join('\n') + '\n',
-          'footer': 'use a number or IANA formated time zone',
-          'color': '43B581',
-        } as MessageEmbedOptions;
+        if (tokenizer.tokens[1].content == 'set') {
+          if (tokenizer.tokens[2]) {
+            let tz = timeZones[parseInt(tokenizer.tokens[2].content) - 1];
+            if (!tz) {
+              tz = tokenizer.tokens[2].content;
+            }
+            const time = DateTime.fromMillis(Date.now(), { zone: tz });
+
+            if (time.isValid) {
+              await ReminderService.setTimeZone(msg.author.id, tz);
+              return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy hh:mm z')}`, undefined, 'Your new time zone!');
+            }
+          }
+          return EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
+        }
       }
-      return {
-        'title': 'Time zone',
-        'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
-        'color': '4FAFEF',
-      } as MessageEmbedOptions;
+      return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
     }
   },
   { // wiki
@@ -358,7 +326,7 @@ export const commands: Command[] = [
         results[`[${result.title}](https://tmwiki.be/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
       }
 
-      const embed = new EmbedBuilder().buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', 'https://tmwiki.be/');
+      const embed = EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', 'https://tmwiki.be/');
 
       return embed;
     }
@@ -373,7 +341,7 @@ export const commands: Command[] = [
       new CoursesMenu(botmsg, msg).coursesMenu();
     }
   },
-  {
+  { // modules
     name: 'modules',
     category: 'modules',
     description: 'gives you a list of the modules',
@@ -383,12 +351,12 @@ export const commands: Command[] = [
         return guildOnly;
       }
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-        return 'No admin permissions!';
+        return EmbedBuilder.error('No admin permissions!');
       }
-      let res = '';
+      const res = [];
       for (const key in (await GuildService.updateModules(guildConfig.id)))
-        res = res + key + '\n';
-      return res;
+        res.push(key);
+      return EmbedBuilder.buildList(Colors.info, 'modules', res, 'Updates all modules to true. List of modules:');
     }
   }
 ];

@@ -14,7 +14,7 @@ export enum Colors {
 }
 
 export class EmbedBuilder {
-  success(description: string, footer?: string, title?: string): MessageEmbed {
+  static success(description: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':white_check_mark: Succes!' : `:white_check_mark: ${title}`;
     return new MessageEmbed({
       color: Colors.success,
@@ -24,7 +24,7 @@ export class EmbedBuilder {
     });
   }
 
-  info(description: string, footer?: string, title?: string): MessageEmbed {
+  static info(description: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':information_source: Info' : `:information_source: ${title}`;
     return new MessageEmbed({
       color: Colors.info,
@@ -34,7 +34,7 @@ export class EmbedBuilder {
     });
   }
 
-  warn(reason?: string, footer?: string, title?: string): MessageEmbed {
+  static warn(reason?: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':warning: Warning' : `:warning: ${title}`;
     return new MessageEmbed({
       color: Colors.warning,
@@ -44,7 +44,7 @@ export class EmbedBuilder {
     });
   }
 
-  error(reason?: string, footer?: string, title?: string): MessageEmbed {
+  static error(reason?: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':octagonal_sign: Error!' : `:octagonal_sign: ${title}`;
     return new MessageEmbed({
       color: Colors.error,
@@ -54,7 +54,7 @@ export class EmbedBuilder {
     });
   }
 
-  buildHelp(command: Command, prefix: string, typeColor: Colors, params: Record<string, string> | string[], examples: string[], footer?: string): MessageEmbed {
+  static buildHelp(command: Command, prefix: string, typeColor: Colors, params: Record<string, string> | string[], examples: string[], footer?: string): MessageEmbed {
     let paramVal = '';
 
     if (Array.isArray(params)) {
@@ -78,7 +78,7 @@ export class EmbedBuilder {
     });
   }
 
-  buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
+  static buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
     let i = 0;
     if (description == null) {
       description = '';

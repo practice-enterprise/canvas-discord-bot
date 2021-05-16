@@ -3,6 +3,7 @@ import { Client, MessageEmbed, TextChannel } from 'discord.js';
 import { DateTime } from 'luxon';
 import { dateFormates, timeZones } from '../commands';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
+import { Colors, EmbedBuilder } from '../util/embed-builder';
 import { preventExceed } from '../util/formatter';
 import { Tokenizer } from '../util/tokenizer';
 
@@ -93,50 +94,36 @@ export class ReminderService {
 
   static async getCommand(discordID: string): Promise<MessageEmbed> {
     const reminders = await ReminderService.get(discordID);
-    let index = 0;
     if (reminders) {
-      return new MessageEmbed({
-        title: 'Reminders',
-        description: reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40) + '...'}`).join('\n')
-      });
+      const results: Record<string, string> = {};
+      for (const r of reminders) {
+        results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
+      }
+      return EmbedBuilder.buildList(Colors.info, 'Reminders', results);
     }
-    return new MessageEmbed({
-      title: 'Reminders',
-      description: 'there are no more reminders set for you'
-    });
+    return EmbedBuilder.info('There are no more reminders set for you.', undefined, 'Reminders');
   }
 
   static async deleteCommand(authorID: string, tokenizer: Tokenizer) {
     const reminders = await ReminderService.get(authorID);
     if (!reminders) {
-      return new MessageEmbed({
-        title: 'Reminders',
-        description: 'there are no more reminders set for you'
-      });
+      return EmbedBuilder.info('There are no more reminders set for you.', undefined, 'Reminders');
     }
-    let index = 0;
-    if (!tokenizer.tokens[2]) {
-      return new MessageEmbed({
-        title: 'reminders',
-        description: reminders.map(r => `\`${index++}:\` ${r.content}`).join('\n')
-      });
+    if (tokenizer.tokens[2]) {
+      const index = parseInt(tokenizer.tokens[2].content) - 1;
+      if (reminders[index]) {
+        ReminderService.delete(reminders[parseInt(tokenizer.tokens[2].content)]);
+        return EmbedBuilder.success('your reminder has been deleted');
+      }
     }
-    index = parseInt(tokenizer.tokens[2].content);
-    if (reminders[index]) {
-      ReminderService.delete(reminders[parseInt(tokenizer.tokens[2].content)]);
-      return new MessageEmbed({
-        title: 'Success',
-        description: 'your reminder has been deleted'
-      });
-    } else {
-      index = 0;
-      return new MessageEmbed({
-        title: 'Error',
-        description: '**Please use one of the indexes below:**\n' + reminders.map(r => `\`${index++}:\` **${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm z')}** ${r.content.length < 40 ? r.content : r.content.substr(0, 40) + '...'}`).join('\n')
-      });
+    const results: Record<string, string> = {};
+    for (const r of reminders) {
+      results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
     }
+    return EmbedBuilder.buildList(Colors.info, 'Reminders', results);
   }
-  static async setCommand(tokenizer: Tokenizer, authorID: string, guildID:string |undefined, channelID:string|undefined): Promise<string | undefined> {
+
+  static async setCommand(tokenizer: Tokenizer, authorID: string, guildID: string | undefined, channelID: string | undefined): Promise<MessageEmbed | undefined> {
     for (const format of dateFormates) {
       const time = DateTime.fromFormat(tokenizer.tokens[1].content + ' ' + tokenizer.tokens[2].content, format, { zone: 'UTC' });
       if (time && time.isValid) {
@@ -160,7 +147,7 @@ export class ReminderService {
             },
           });
         }
-        return `your reminder has been set as: ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`;
+        return EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy hh:mm')}`);
       }
     }
     return undefined;
