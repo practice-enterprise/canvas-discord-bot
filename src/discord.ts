@@ -5,7 +5,7 @@ import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
-import { Formatter, preventExceed } from './util/formatter';
+import { command, Formatter, preventExceed } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 import { EmbedBuilder } from './util/embed-builder';
 
@@ -44,32 +44,6 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       return; // ignore messages by bots and as a result itself
     }
 
-    /*if (!msg.guild) {
-      const tokenizer = new Tokenizer(msg.content, defaultPrefix);
-      if (!tokenizer.command()) {
-        return; // not a valid command
-      }
-
-      for (const command of commands) {
-        if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
-          continue;
-        }
-
-        Logger.debug(`Received dm command '${tokenizer.command()}' from user ${msg.author.id}.`);
-        // eslint-disable-next-line no-await-in-loop
-        const response = typeof command.response === 'function' ? await command.response(msg, undefined) : command.response;
-
-        if (typeof response === 'string') {
-          msg.channel.send(response);
-          return;
-        } else if (typeof response !== 'undefined') {
-          msg.channel.send(new MessageEmbed(response));
-          return;
-        }
-      }
-      return;
-    }*/ // handle user DM commands
-    
     const guildConfig = msg.guild ? await GuildService.getForId(msg.guild.id) : undefined;
     const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
@@ -123,23 +97,24 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       }
       return;
     }
-    const commandList = commands.concat(!guildConfig?.modules['customCommands'] ? [] : guildConfig?.commands);
+    const commandList = commands.concat(guildConfig === undefined || guildConfig.modules['customCommands'] === false ? [] : guildConfig?.commands);
+
     for (const command of commandList) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
         continue;
       }
       if (guildConfig && guildConfig.modules[command.category] === false) {
-        msg.channel.send(new EmbedBuilder().error(`the ${command.name} command has been disabled` , `enable the ${command.category} module to enable this command`));
+        msg.channel.send(new EmbedBuilder().error(`the ${command.name} command has been disabled`, `enable the ${command.category} module to enable this command`));
         return;
       }
 
       Logger.debug(`received command '${tokenizer.command()}' from guild ${msg.guild?.id || msg.author.id} in channel ${msg.channel.id}`);
       // eslint-disable-next-line no-await-in-loop
-      const response = typeof command.response === 'function' ? await command.response(msg, guildConfig ) : command.response;
+      const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
 
       if (typeof response === 'string') {
         // We might want preventExceed here instead
-        msg.channel.send(response, {split: true});
+        msg.channel.send(response, { split: true });
         return;
       } else if (typeof response !== 'undefined') {
         msg.channel.send(new MessageEmbed(preventExceed(response)));
