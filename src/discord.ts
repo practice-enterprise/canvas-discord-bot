@@ -5,7 +5,7 @@ import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
-import { command, Formatter, preventExceed } from './util/formatter';
+import { Formatter, preventExceed } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 import { EmbedBuilder } from './util/embed-builder';
 
