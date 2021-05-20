@@ -8,6 +8,7 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
+import { ConfigService } from './services/config-service';
 
 export const defaultPrefix = '!';
 
@@ -316,7 +317,6 @@ export const commands: Command[] = [
       }
       if (tokenizer.tokens[1].content == 'get') {
         const tz = (await ReminderService.getTimeZone(msg.author.id));
-        console.log(tz);
         const time = DateTime.fromJSDate(new Date(), { zone: tz });
         return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
       }
@@ -356,10 +356,10 @@ export const commands: Command[] = [
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
+      const link = (await ConfigService.get()).wiki;
       const query = tokenizer.body();
       if (query.length == 0)
-        return 'https://tmwiki.be';
+        return link;
 
       const wikiContent = await WikiService.wiki(query);
       wikiContent.data.pages.search.results
@@ -367,9 +367,9 @@ export const commands: Command[] = [
 
       const embed = new MessageEmbed({
         'title': `Wiki results for '${query}'`,
-        'url': 'https://tmwiki.be',
+        'url': link,
         'description': wikiContent.data.pages.search.results
-          .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path}) \`${p.path}\`
+          .map(p => `[${p.title}](${link}/${p.locale}/${p.path}) \`${p.path}\`
           Desc: ${p.description}`).join('\n\n')
       });
 
