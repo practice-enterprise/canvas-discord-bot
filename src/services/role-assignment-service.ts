@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { Client } from 'discord.js';
 import { RoleUpdateData } from '../models/role-update-data';
+import { GuildService } from './guild-service';
 
 export class RoleAssignmentService {
   static async updateRoles(data: RoleUpdateData, client: Client): Promise<void> {
@@ -14,7 +15,12 @@ export class RoleAssignmentService {
 
       if (data.roleTypes.includes(roleType)) {
         if (!hasRole) {
-          member.roles.add(data.configRoles[roleType]);
+          member.roles.add(data.configRoles[roleType])
+            .catch(async () => {
+              const role = await guild.roles.create({ data: { name: roleType } });
+              member.roles.add(role);
+              GuildService.updateRole(guild.id, role.id, roleType);
+            });
         }
       } else {
         if (hasRole) {

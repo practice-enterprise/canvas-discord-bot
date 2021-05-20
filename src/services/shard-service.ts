@@ -1,5 +1,5 @@
 import { Client } from 'discord.js';
-import { connect, } from 'socket.io-client';
+import { connect } from 'socket.io-client';
 import { buildClient } from '../discord';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 import { CreateChannelsData } from '../models/channel-creation-data';
@@ -53,12 +53,12 @@ export class ShardService {
 
     this.socket.connect();
 
-    this.socket.on('updateRoles', (data: RoleUpdateData) =>{
+    this.socket.on('updateRoles', (data: RoleUpdateData) => {
       if (this.client !== undefined)
         RoleAssignmentService.updateRoles(data, this.client)
           .catch((err) => console.log(err));
     });
-    
+
     this.socket.on('announcement', (data: AnnouncementData) => {
       if (this.client !== undefined)
         AnnouncementService.postAnnouncement(data, this.client);
@@ -79,8 +79,8 @@ export class ShardService {
         ReminderService.sendAssignment(data, this.client);
     });
 
-    this.socket.on('createChannels', (data: CreateChannelsData) =>{
-      if (this.client !== undefined){
+    this.socket.on('createChannels', (data: CreateChannelsData) => {
+      if (this.client !== undefined) {
         ChannelCreationService.createChannels(data, this.client)
           .catch(err => console.log(err));
       }
