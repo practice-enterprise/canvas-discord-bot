@@ -356,10 +356,10 @@ export const commands: Command[] = [
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-      const link = (await ConfigService.get()).wiki;
+      const url = (await ConfigService.get()).wiki;
       const query = tokenizer.body();
       if (query.length == 0)
-        return link;
+        return url;
 
       const wikiContent = await WikiService.wiki(query);
       wikiContent.data.pages.search.results
@@ -367,9 +367,9 @@ export const commands: Command[] = [
 
       const embed = new MessageEmbed({
         'title': `Wiki results for '${query}'`,
-        'url': link,
+        'url': url,
         'description': wikiContent.data.pages.search.results
-          .map(p => `[${p.title}](${link}/${p.locale}/${p.path}) \`${p.path}\`
+          .map(p => `[${p.title}](${url}/${p.locale}/${p.path}) \`${p.path}\`
           Desc: ${p.description}`).join('\n\n')
       });
 
