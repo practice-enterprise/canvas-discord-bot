@@ -14,51 +14,51 @@ export enum Colors {
 }
 
 export class EmbedBuilder {
-  success(description: string, footer?: string, title?: string): MessageEmbed {
+  static success(description: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':white_check_mark: Succes!' : `:white_check_mark: ${title}`;
     return new MessageEmbed({
       color: Colors.success,
       title: Title,
       description: description,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
-  info(description: string, footer?: string, title?: string): MessageEmbed {
+  static info(description: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':information_source: Info' : `:information_source: ${title}`;
     return new MessageEmbed({
       color: Colors.info,
       title: Title,
       description: description,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
-  warn(reason?: string, footer?: string, title?: string): MessageEmbed {
+  static warn(reason?: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':warning: Warning' : `:warning: ${title}`;
     return new MessageEmbed({
       color: Colors.warning,
       title: Title,
       description: reason,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
-  error(reason?: string, footer?: string, title?: string): MessageEmbed {
+  static error(reason?: string, footer?: string, title?: string): MessageEmbed {
     const Title = title == null ? ':octagonal_sign: Error!' : `:octagonal_sign: ${title}`;
     return new MessageEmbed({
       color: Colors.error,
       title: Title,
       description: reason,
-      footer: {text: footer}
+      footer: { text: footer }
     });
   }
 
-  buildHelp(command: Command, prefix: string, typeColor: Colors, params: Record<string, string> | string[], examples: string[], footer?: string): MessageEmbed {
+  static buildHelp(command: Command, prefix: string, typeColor: Colors, params: Record<string, string> | string[], examples: string[], footer?: string): MessageEmbed {
     let paramVal = '';
 
     if (Array.isArray(params)) {
-      paramVal = params.map((par) => `\`${prefix}${command.name} ${par}`).join('\n');
+      paramVal = params.map((par) => `\`${prefix}${command.name} ${par}\``).join('\n');
     }
     else {
       for (const key in params) {
@@ -71,14 +71,14 @@ export class EmbedBuilder {
       title: `Help for ${prefix}${command.name}`,
       description: command.description,
       fields: [
-        {name: '**Usage**', value: paramVal},
-        {name: '**Examples:**', value: examples.map((eg) => `${prefix}${command.name} ${eg}`).join('\n')},
+        { name: '**Usage**', value: paramVal },
+        { name: '**Examples:**', value: examples.map((eg) => `${prefix}${command.name} ${eg}`).join('\n') },
       ],
-      footer: {text: footer }
+      footer: { text: footer }
     });
   }
 
-  buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?:string, footer?: string): MessageEmbed {
+  static buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
     let i = 0;
     if (description == null) {
       description = '';
@@ -89,7 +89,7 @@ export class EmbedBuilder {
     }
     else {
       for (const key in items) {
-        description += `\n\`${++i}\` • **${key}**\n${items[key]}`;
+        description += `\n\`${++i}\` • **${key}**${items[key].length == 0 ? '' : '\n' + items[key]}`;
       }
     }
 
@@ -97,7 +97,8 @@ export class EmbedBuilder {
       color: typeColor,
       title: title,
       description: description,
-      footer: {text: footer }
+      footer: {text: footer },
+      url: url
     });
   }
 }

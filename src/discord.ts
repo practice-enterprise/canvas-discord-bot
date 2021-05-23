@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { Client, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
+import { Client, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
@@ -97,7 +97,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         continue;
       }
       if (guildConfig && guildConfig.modules[command.category] === false) {
-        msg.channel.send(new EmbedBuilder().error(`the ${command.name} command has been disabled`, `enable the ${command.category} module to enable this command`));
+        msg.channel.send(EmbedBuilder.error(`The ${command.name} command has been disabled.`, `Enable the ${command.category} module to enable this command.`));
         return;
       }
 

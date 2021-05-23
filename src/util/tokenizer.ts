@@ -54,7 +54,7 @@ export class Tokenizer {
   /** get command name, will return undefined if it's an invalid command */
   command(): string | undefined {
     const token: Token | undefined = this.tokens[0];
-    return token?.type === 'command' ? token.content : undefined;
+    return token?.type === 'command' ? token.content.toLowerCase() : undefined;
   }
 
   /** return raw body after command or full if it's not a valid command

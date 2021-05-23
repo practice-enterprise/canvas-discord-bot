@@ -8,45 +8,43 @@ import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
+import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 
 export const defaultPrefix = '!';
 
-export const timeZones = ['Europe/brussels', 'Australia/Melbourne', 'America/Detroit', 'not a type'];
+export const timeZones = ['Europe/Brussels', 'Australia/Melbourne', 'America/Detroit'];
 
 export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
-const guildOnly: MessageEmbed = new MessageEmbed({
-  title: 'Error!',
-  description: 'This is a server only command.'
-});
+const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only command.');
 
 export const commands: Command[] = [
   { // help
     name: 'help',
     category: 'help',
-    description: 'that\'s this command.',
-    aliases: ['how', 'wtf', 'man', 'get-help'],
+    description: 'That\'s this command.',
+    aliases: ['how', 'man', 'get-help'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (guildConfig) {
-        return {
+        return new MessageEmbed({
           'title': 'Help is on the way!',
           'description': commands.concat(guildConfig.modules['customCommands'] === false ? [] : guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
           'color': '43B581',
-        } as MessageEmbedOptions;
+        });
       }
 
-      return {
+      return new MessageEmbed({
         'title': 'Help is on the way!',
         'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
         'color': '43B581',
-      } as MessageEmbedOptions;
+      });
     }
   },
   { // Info
     name: 'info',
     category: 'info',
-    description: 'Displays more information. server only',
+    description: 'Displays more information. Server only.',
     aliases: ['informatie', 'information'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -60,18 +58,13 @@ export const commands: Command[] = [
           return response;
         }
       }
-      return {
-        'title': 'Info commands',
-        'description': guildConfig.info.map(i => `\`${guildConfig?.prefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'),
-        'color': '4FAFEF',
-      } as MessageEmbedOptions;
-
+      return EmbedBuilder.info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
     }
   },
   { // setup
     name: 'setup',
     category: 'setup',
-    description: 'Quick setup and introduction for the bot. Server only',
+    description: 'Quick setup and introduction for the bot. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -87,7 +80,7 @@ export const commands: Command[] = [
       };
 
       if (!(msg.member?.hasPermission('ADMINISTRATOR')))
-        return 'You need to be an admin for this command.';
+        return EmbedBuilder.error('No admin permissions!');
 
       let page = 0;
       const pages: MessageEmbedOptions[] = [
@@ -150,7 +143,7 @@ export const commands: Command[] = [
   { // ping
     name: 'ping',
     category: 'ping',
-    description: 'play the most mundane ping pong ever with the bot.',
+    description: 'Play the most mundane ping pong ever with the bot.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       msg.channel.send('Pong!')
@@ -165,10 +158,9 @@ export const commands: Command[] = [
   { // roll
     name: 'roll',
     category: 'misc',
-    description: 'rolls a die or dice (eg d6, 2d10, d20 ...).',
+    description: 'Rolls a die or dice (eg d6, 2d10, d20 ...).',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
@@ -180,26 +172,36 @@ export const commands: Command[] = [
         }
 
         if (times === 1) {
-          return `Rolled a ${dice[0]}`;
+          return new MessageEmbed({
+            title: `:game_die: ${tokenizer.tokens[1]?.content}`,
+            description: `You rolled a ${dice[0]}.`,
+            color: Colors.error
+          });
         } else {
-          return `Dice: ${dice.join(', ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`;
+          return new MessageEmbed({
+            title: `:game_die: ${tokenizer.tokens[1]?.content}`,
+            description: `You rolled: ${dice.join(' + ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`,
+            color: Colors.error
+          });
         }
       } else {
-        return 'no valid die found, e.g. \'3d6\'';
+        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
+          { 'XdY': 'X: amount of times (defaults to 1). Y: amount of sides the die should have.' }, ['d6', 'd20', '2d8', '3d6']);
       }
     }
   },
   { // coinflip
     name: 'coinflip',
     category: 'misc',
-    description: 'heads or tails?',
+    description: 'Heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const flip = Math.round(Math.random());
-      const embed = new MessageEmbed()
-        .setTitle(flip ? 'Heads! :coin:' : 'Tails! :coin:');
+      const embed = new MessageEmbed({
+        color: Colors.warning
+      }).setTitle(flip ? ':coin: Heads!' : ':coin: Tails!');
 
       if (tokenizer.tokens.length === 1) {
         return embed;
@@ -211,14 +213,15 @@ export const commands: Command[] = [
         return flip == 0 ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
       }
       else {
-        return 'Try with heads (h) or tails (t) instead!';
+        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
+          { 'h/t (optional)': 'Place your bets on heads or tails' }, ['', 'heads', 't']);
       }
     }
   },
   { // prefix
     name: 'prefix',
     category: 'prefix',
-    description: 'Set prefix for guild. Server only',
+    description: 'Set prefix for guild. Server only.',
     aliases: ['pf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -227,31 +230,18 @@ export const commands: Command[] = [
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-        return 'No admin permissions!';
+        return EmbedBuilder.error('No admin permissions!');
       }
 
       if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && msg.guild?.id != undefined) {
         GuildService.setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
-        return 'Prefix update with: ' + tokenizer.tokens[1].content;
+        return EmbedBuilder.success('Prefix updated with: ' + tokenizer.tokens[1].content);
       }
       else {
-        return 'Use like `prefix <new prefix>`';
+        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.error, { 'prefix': 'the new prefix' }, ['!', '?']);
       }
     }
   },
-  /*{ // default
-    name: 'default',
-    description: 'sets the default channel',
-    aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      if (tokenizer.tokens[1]?.type === 'channel') {
-        return tokenizer.tokens[1].content; //TODO stash in db of server
-      } else {
-        return 'this is not a valid channel';
-      }
-    }
-  },*/
   { // notes
     name: 'notes',
     category: 'notes',
@@ -261,10 +251,10 @@ export const commands: Command[] = [
       return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
     }
   },
-  { // reminder TODO prettyfy/ refactor
+  { // reminder
     name: 'reminder',
     category: 'reminders',
-    description: 'Set reminders default channel = current, command format: date desc channel(optional) \n\'s. supported formats: d/m/y h:m, d.m.y h:m, d-m-y h:m',
+    description: 'Set reminders.',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
@@ -282,78 +272,47 @@ export const commands: Command[] = [
           }
         }
       }
-      //TODO
-      return new MessageEmbed({
-        title: 'Reminder usage',
-        description: `${guildConfig?.prefix || defaultPrefix}${this.name} \`date\` \`time\` \`content\` (optional) \`channel\` (optional)
-        ${guildConfig?.prefix || defaultPrefix}${this.name} \`get\` or \`list\`
-        ${guildConfig?.prefix || defaultPrefix}${this.name} (\`delete\` or \`remove\`) \`index\`
-
-        **Examples:**
-        ${guildConfig?.prefix || defaultPrefix}${this.name} 1/5/2021 8:00
-        ${guildConfig?.prefix || defaultPrefix}${this.name} 17-04-21 14:00 buy some juice
-        ${guildConfig?.prefix || defaultPrefix}${this.name} 26.11.2021 16:00 movie night in 1 hour #info`,
-        color: '#F04747',
-        footer: {
-          text: `Supported formats: ${dateFormates.join(', ')}`
-        }
-      });
+      return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
+        { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
     }
   },
-  { // timezone TODO prettify 
+  { //timezone
     name: 'timezone',
     category: 'timezone',
-    description: 'Get/set your current time zone',
+    description: 'Get/set your current time zone.',
     aliases: ['time', 'clock', 'tz'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
-      if (tokenizer.tokens[1] == undefined) {
-        return {
-          'title': 'Time zone',
-          'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
-          'color': '4FAFEF',
-        } as MessageEmbedOptions;
-      }
-      if (tokenizer.tokens[1].content == 'get') {
-        const tz = (await ReminderService.getTimeZone(msg.author.id));
-        const time = DateTime.fromJSDate(new Date(), { zone: tz });
-        return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
-      }
-      if (tokenizer.tokens[1].content == 'set') {
-        if (tokenizer.tokens[2]) {
-          let tz = timeZones[parseInt(tokenizer.tokens[2].content)];
-          if (!tz) {
-            tz = tokenizer.tokens[2].content;
-          }
-          const time = DateTime.fromMillis(Date.now(), { zone: tz });
-
-          if (time.isValid) {
-            await ReminderService.setTimeZone(msg.author.id, tz);
-            return `bot thinks it's ${time.toString()} for you with time zone ${time.zoneName}`;
-          }
+      if (tokenizer.tokens[1] != undefined) {
+        if (tokenizer.tokens[1].content == 'get') {
+          const tz = (await ReminderService.getTimeZone(msg.author.id));
+          const time = DateTime.fromJSDate(new Date(), { zone: tz });
+          return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy hh:mm z')}`, undefined, 'Your current time zone!');
         }
-        let i = 0;
-        return {
-          'title': 'Time zones!',
-          'url': 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
-          'description': timeZones.map(tz => `\`${i++}:\`${tz}`).join('\n') + '\n',
-          'footer': 'use a number or IANA formated time zone',
-          'color': '43B581',
-        } as MessageEmbedOptions;
+        if (tokenizer.tokens[1].content == 'set') {
+          if (tokenizer.tokens[2]) {
+            let tz = timeZones[parseInt(tokenizer.tokens[2].content) - 1];
+            if (!tz) {
+              tz = tokenizer.tokens[2].content;
+            }
+            const time = DateTime.fromMillis(Date.now(), { zone: tz });
+
+            if (time.isValid) {
+              await ReminderService.setTimeZone(msg.author.id, tz);
+              return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy hh:mm z')}`, undefined, 'Your new time zone!');
+            }
+          }
+          return EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
+        }
       }
-      return {
-        'title': 'Time zone',
-        'description': `\`${guildConfig?.prefix || defaultPrefix}tz get:\` gets you your time\n\`${guildConfig?.prefix || defaultPrefix}tz set:\` set your clock`,
-        'color': '4FAFEF',
-      } as MessageEmbedOptions;
+      return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
     }
   },
   { // wiki
     name: 'wiki',
     category: 'wiki',
-    description: 'Search on the Thomas More wiki',
-    aliases: [],
+    description: 'Search on the Thomas More wiki.',
+    aliases: ['wk'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       const url = (await ConfigService.get()).wiki;
@@ -362,46 +321,42 @@ export const commands: Command[] = [
         return url;
 
       const wikiContent = await WikiService.wiki(query);
-      wikiContent.data.pages.search.results
-        .map(p => `[${p.title}](https://tmwiki.be/${p.locale}/${p.path})`).join('\n\n');
 
-      const embed = new MessageEmbed({
-        'title': `Wiki results for '${query}'`,
-        'url': url,
-        'description': wikiContent.data.pages.search.results
-          .map(p => `[${p.title}](${url}/${p.locale}/${p.path}) \`${p.path}\`
-          Desc: ${p.description}`).join('\n\n')
-      });
+      const results: Record<string, string> = {};
+      for (const result of wikiContent.data.pages.search.results) {
+        results[`[${result.title}](${url}/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
+      }
 
-      return embed;
+      return EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', url);
     }
   },
   { // courses menu command
     name: 'courses',
     category: 'courses',
-    description: 'Lists your courses, modules and items with controls. guild command',
+    description: 'Lists your courses, modules and items with controls. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       new CoursesMenu(botmsg, msg).coursesMenu();
     }
   },
-  {
+  { // modules
     name: 'modules',
     category: 'modules',
-    description: 'gives you a list of the modules',
+    description: 'Gives you a list of the modules. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
         return guildOnly;
       }
       if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-        return 'No admin permissions!';
+        return EmbedBuilder.error('No admin permissions!');
       }
-      let res = '';
-      for (const key in (await GuildService.updateModules(guildConfig.id)))
-        res = res + key + '\n';
-      return res;
+      const res = [];
+      for (const key in (await GuildService.updateModules(guildConfig.id))) {
+        res.push(key);
+      }
+      return EmbedBuilder.buildList(Colors.info, 'modules', res, 'Updates all modules to true. List of modules:');
     }
   }
 ];
