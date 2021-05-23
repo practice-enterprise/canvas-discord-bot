@@ -129,7 +129,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         continue;
       }
       if (guildConfig.modules[command.category] === false) {
-        msg.channel.send(EmbedBuilder.error(`the ${command.name} command has been disabled` , `enable the ${command.category} module to enable this command`));
+        msg.channel.send(EmbedBuilder.error(`The ${command.name} command has been disabled.` , `Enable the ${command.category} module to enable this command.`));
         return;
       }
 
