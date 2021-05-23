@@ -22,8 +22,8 @@ export const commands: Command[] = [
   { // help
     name: 'help',
     category: 'help',
-    description: 'that\'s this command.',
-    aliases: ['how', 'wtf', 'man', 'get-help'],
+    description: 'That\'s this command.',
+    aliases: ['how', 'man', 'get-help'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (guildConfig) {
         return new MessageEmbed({
@@ -43,7 +43,7 @@ export const commands: Command[] = [
   { // Info
     name: 'info',
     category: 'info',
-    description: 'Displays more information. server only',
+    description: 'Displays more information. Server only.',
     aliases: ['informatie', 'information'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -63,7 +63,7 @@ export const commands: Command[] = [
   { // setup
     name: 'setup',
     category: 'setup',
-    description: 'Quick setup and introduction for the bot. Server only',
+    description: 'Quick setup and introduction for the bot. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -142,7 +142,7 @@ export const commands: Command[] = [
   { // ping
     name: 'ping',
     category: 'ping',
-    description: 'play the most mundane ping pong ever with the bot.',
+    description: 'Play the most mundane ping pong ever with the bot.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       msg.channel.send('Pong!')
@@ -220,7 +220,7 @@ export const commands: Command[] = [
   { // prefix
     name: 'prefix',
     category: 'prefix',
-    description: 'Set prefix for guild. Server only',
+    description: 'Set prefix for guild. Server only.',
     aliases: ['pf'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -253,7 +253,7 @@ export const commands: Command[] = [
   { // reminder
     name: 'reminder',
     category: 'reminders',
-    description: 'Set reminders',
+    description: 'Set reminders.',
     aliases: ['remindme', 'remind', 'setreminder'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
@@ -278,7 +278,7 @@ export const commands: Command[] = [
   { //timezone
     name: 'timezone',
     category: 'timezone',
-    description: 'Get/set your current time zone',
+    description: 'Get/set your current time zone.',
     aliases: ['time', 'clock', 'tz'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
@@ -310,7 +310,7 @@ export const commands: Command[] = [
   { // wiki
     name: 'wiki',
     category: 'wiki',
-    description: 'Search on the Thomas More wiki',
+    description: 'Search on the Thomas More wiki.',
     aliases: ['wk'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
@@ -334,7 +334,7 @@ export const commands: Command[] = [
   { // courses menu command
     name: 'courses',
     category: 'courses',
-    description: 'Lists your courses, modules and items with controls. guild command',
+    description: 'Lists your courses, modules and items with controls. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
@@ -344,7 +344,7 @@ export const commands: Command[] = [
   { // modules
     name: 'modules',
     category: 'modules',
-    description: 'gives you a list of the modules',
+    description: 'Gives you a list of the modules. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
@@ -354,8 +354,9 @@ export const commands: Command[] = [
         return EmbedBuilder.error('No admin permissions!');
       }
       const res = [];
-      for (const key in (await GuildService.updateModules(guildConfig.id)))
+      for (const key in (await GuildService.updateModules(guildConfig.id))) {
         res.push(key);
+      }
       return EmbedBuilder.buildList(Colors.info, 'modules', res, 'Updates all modules to true. List of modules:');
     }
   }
