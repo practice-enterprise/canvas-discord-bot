@@ -26,5 +26,3 @@ export class ChannelCreationService {
     await GuildService.updateCourseChannels(data.guildID, data.courseChannels);
   }
 }
-
-
