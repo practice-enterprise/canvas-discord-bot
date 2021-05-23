@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { Client, ClientPresenceStatus, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
+import { Client, MessageEmbed, MessageEmbedOptions, } from 'discord.js';
 import { inspect } from 'util';
 import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
@@ -25,14 +25,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     // cycles through rich presence messages
     let index = 0;
     setInterval(() => {
-      client.user?.setPresence({
-        status: <ClientPresenceStatus>config.discord.richpresence.states[index].status,
-        activity: {
-          name: config.discord.richpresence.states[index].activity.name,
-          type: config.discord.richpresence.states[index].activity.type,
-        }
-      });
-
+      client.user?.setPresence(config.discord.richpresence.states[index]);
       if (index++, index >= length) {
         index = 0;
       }
