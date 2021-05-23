@@ -28,7 +28,7 @@ export const commands: Command[] = [
       if (guildConfig) {
         return new MessageEmbed({
           'title': 'Help is on the way!',
-          'description': commands.concat(guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
+          'description': commands.concat(guildConfig.modules['customCommands'] === false ? [] : guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
           'color': '43B581',
         });
       }
