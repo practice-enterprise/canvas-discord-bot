@@ -9,6 +9,7 @@ import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
+import { ConfigService } from './services/config-service';
 
 export const defaultPrefix = '!';
 
@@ -117,14 +118,14 @@ export const commands: Command[] = [
         const oldPage = page;
 
         switch (reaction.emoji.name) {
-        case reactions[0]:
-          if (page > 0)
-            page--;
-          break;
-        case reactions[1]:
-          if (page < pages.length - 1)
-            page++;
-          break;
+          case reactions[0]:
+            if (page > 0)
+              page--;
+            break;
+          case reactions[1]:
+            if (page < pages.length - 1)
+              page++;
+            break;
         }
 
         if (oldPage !== page) { //Only edit if it's a different page.
@@ -272,7 +273,7 @@ export const commands: Command[] = [
         }
       }
       return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
-        {'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time'}, ['1/5/2021 8:00','17-04-21 14:00 buy some juice','26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
+        { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
     }
   },
   { //timezone
@@ -314,21 +315,26 @@ export const commands: Command[] = [
     aliases: ['wk'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
+      const url = (await ConfigService.get()).wiki;
       const query = tokenizer.body();
       if (query.length == 0)
-        return 'https://tmwiki.be';
+        return url;
 
       const wikiContent = await WikiService.wiki(query);
 
       const results: Record<string, string> = {};
       for (const result of wikiContent.data.pages.search.results) {
-        results[`[${result.title}](https://tmwiki.be/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
+        results[`[${result.title}](${url}/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
       }
 
-      const embed = EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', 'https://tmwiki.be/');
-
-      return embed;
+      return EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', url);
+      /*const embed = new MessageEmbed({
+        'title': `Wiki results for '${query}'`,
+        'url': url,
+        'description': wikiContent.data.pages.search.results
+          .map(p => `[${p.title}](${url}/${p.locale}/${p.path}) \`${p.path}\`
+          Desc: ${p.description}`).join('\n\n')
+      });*/
     }
   },
   { // courses menu command
