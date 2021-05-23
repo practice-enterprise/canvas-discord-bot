@@ -328,13 +328,6 @@ export const commands: Command[] = [
       }
 
       return EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', url);
-      /*const embed = new MessageEmbed({
-        'title': `Wiki results for '${query}'`,
-        'url': url,
-        'description': wikiContent.data.pages.search.results
-          .map(p => `[${p.title}](${url}/${p.locale}/${p.path}) \`${p.path}\`
-          Desc: ${p.description}`).join('\n\n')
-      });*/
     }
   },
   { // courses menu command
