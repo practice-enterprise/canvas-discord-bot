@@ -78,7 +78,14 @@ export class GuildService {
     }
     modules['customCommands'] = true;
     modules['announcements'] = true;
+    modules['roleSync'] = true;
     return modules;
+  }
+
+  static async updateRole(guildID: string, roleID: string, roleKey: string): Promise<string> {
+    const config = await this.getForId(guildID);
+    config.roles[roleKey] = roleID;
+    return this.update(config);
   }
 }
 
