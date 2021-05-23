@@ -142,7 +142,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         msg.channel.send(response, {split: true});
         return;
       } else if (typeof response !== 'undefined') {
-        msg.channel.send(preventExceed(response));
+        msg.channel.send(new MessageEmbed(preventExceed(response)));
         return;
       }
     }
