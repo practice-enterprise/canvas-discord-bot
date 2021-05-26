@@ -10,6 +10,7 @@ import { NotesService } from './services/notes-service';
 import { CoursesMenu } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
+import { CanvasService } from './services/canvas-service';
 
 export const defaultPrefix = '!';
 
@@ -337,7 +338,11 @@ export const commands: Command[] = [
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
-      new CoursesMenu(botmsg, msg).coursesMenu();
+      if (guildConfig == null || guildConfig.canvasInstanceID == null) {
+        return EmbedBuilder.error('No Canvas instance ID defined.', 'Contact your administator', 'Couldn\'t load courses!');
+      }
+      const canvasUrl = (await CanvasService.getInstanceForId(guildConfig.canvasInstanceID)).endpoint;
+      new CoursesMenu(botmsg, msg, canvasUrl).coursesMenu();
     }
   },
   { // modules
