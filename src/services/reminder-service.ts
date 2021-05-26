@@ -97,7 +97,7 @@ export class ReminderService {
     if (reminders) {
       const results: Record<string, string> = {};
       for (const r of reminders) {
-        results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
+        results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy HH:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
       }
       return EmbedBuilder.buildList(Colors.info, 'Reminders', results);
     }
@@ -118,7 +118,7 @@ export class ReminderService {
     }
     const results: Record<string, string> = {};
     for (const r of reminders) {
-      results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy hh:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
+      results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy HH:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
     }
     return EmbedBuilder.buildList(Colors.info, 'Reminders', results);
   }
@@ -130,7 +130,7 @@ export class ReminderService {
         const userTime = time.setZone(await ReminderService.getTimeZone(authorID) || timeZones[0], { keepLocalTime: true });
         if (guildID && channelID) {
           ReminderService.create({
-            content: tokenizer.body(3) || `<@${authorID}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+            content: tokenizer.body(3) || `<@${authorID}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy HH:mm')} ${userTime.zoneName}`,
             date: time.toISO(),
             target: {
               channel: tokenizer.tokens.find((t) => t.type === 'channel')?.content.substr(2, 18) || channelID,
@@ -140,14 +140,14 @@ export class ReminderService {
           });
         } else {
           ReminderService.create({
-            content: tokenizer.body(3) || `<@${authorID}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy hh:mm')} ${userTime.zoneName}`,
+            content: tokenizer.body(3) || `<@${authorID}> here's your reminder for ${userTime.toFormat('dd/MM/yyyy HH:mm')} ${userTime.zoneName}`,
             date: time.toISO(),
             target: {
               user: authorID
             },
           });
         }
-        return EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy hh:mm')}`);
+        return EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')}`);
       }
     }
     return undefined;

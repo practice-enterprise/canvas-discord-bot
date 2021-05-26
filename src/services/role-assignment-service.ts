@@ -7,7 +7,6 @@ export class RoleAssignmentService {
   static async updateRoles(data: RoleUpdateData, client: Client): Promise<void> {
     const guild = await client.guilds.fetch(data.guildID);
     const member = await guild.members.fetch({ 'user': data.userID, 'cache': true, 'force': true });
-
     const roleList = member.roles.cache.map((role) => role.id);
 
     for (const roleType in data.configRoles) {

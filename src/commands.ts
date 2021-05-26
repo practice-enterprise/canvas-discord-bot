@@ -87,18 +87,13 @@ export const commands: Command[] = [
       const pages: MessageEmbedOptions[] = [
         {
           'title': 'Setup',
-          'description': `Intro :)\nUse ${ePrev} and ${eNext} to switch pages.`,
-          'color': '7289DA',
-        },
-        {
-          'title': 'Setup',
-          'description': 'The first page!',
+          'description': 'Github repositories for Discan:\nhttps://github.com/practice-enterprise\nhttps://github.com/practice-enterprise/api\nhttps://github.com/practice-enterprise/canvas-discord-bot\nhttps://github.com/practice-enterprise/oauth',
           'color': '7289DA',
 
         },
         {
           'title': 'Setup',
-          'description': 'Another page',
+          'description': 'Users need to login with OAuth to start using the services.',
           'color': '7289DA',
         },
       ];
@@ -160,7 +155,7 @@ export const commands: Command[] = [
     name: 'roll',
     category: 'misc',
     description: 'Rolls a die or dice (eg d6, 2d10, d20 ...).',
-    aliases: [],
+    aliases: ['r', 'dice', 'die'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
@@ -288,7 +283,7 @@ export const commands: Command[] = [
         if (tokenizer.tokens[1].content == 'get') {
           const tz = (await ReminderService.getTimeZone(msg.author.id));
           const time = DateTime.fromJSDate(new Date(), { zone: tz });
-          return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy hh:mm z')}`, undefined, 'Your current time zone!');
+          return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your current time zone!');
         }
         if (tokenizer.tokens[1].content == 'set') {
           if (tokenizer.tokens[2]) {
@@ -300,7 +295,7 @@ export const commands: Command[] = [
 
             if (time.isValid) {
               await ReminderService.setTimeZone(msg.author.id, tz);
-              return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy hh:mm z')}`, undefined, 'Your new time zone!');
+              return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!');
             }
           }
           return EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
