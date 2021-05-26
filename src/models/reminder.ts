@@ -1,4 +1,4 @@
-import { MessageEmbedOptions } from 'discord.js';
+import { MessageEmbed, MessageEmbedOptions } from 'discord.js';
 
 export interface GuildReminder {
   id: string;
@@ -21,9 +21,9 @@ export interface UserReminder {
 }
 
 export interface AssignmentDM {
-  id: string
-  assignmentID: string
+  id: string,
+  assignmentID: string,
   userDiscordID: string,
-  message: MessageEmbedOptions | string
+  message: MessageEmbed | string
 }
 
