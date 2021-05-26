@@ -278,7 +278,7 @@ async function getModulesPage(discordUserID: string, courses: CanvasCourse[], mo
 
     for (let i = page * perPage; i < (page + 1) * perPage && i < modules.length; i++) {
       embed.setDescription(
-        embed.description + `\n\`${++count}.\` [${modules[i].name}](${canvasUrl}/courses/${courseID}/modules)`
+        embed.description + `\n\`${++count}.\` [${modules[i].name}](${canvasUrl}/courses/${courseID}/modules?#context_module_${modules[i].id})`
       );
     }
     embed.footer = { text: `Page ${page + 1}` };
