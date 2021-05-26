@@ -13,7 +13,7 @@ create `.env` file in root with content
 DISCORD_TOKEN="<Discord bot token>"
 API_URL="http://localhost:3000"
 ```
-Note: API_URL and CANVAS_URL may not end in '/'
+Note: API_URL may not end in '/'
 
 ## Running
 
