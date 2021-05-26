@@ -62,7 +62,7 @@ export class EmbedBuilder {
     }
     else {
       for (const key in params) {
-        paramVal += `\`${prefix}${command.name} ${key}:\` ${params[key]}\n`;
+        paramVal += `\`${prefix}${command.name} ${key}\`: ${params[key]}\n`;
       }
     }
 
@@ -97,7 +97,7 @@ export class EmbedBuilder {
       color: typeColor,
       title: title,
       description: description,
-      footer: {text: footer },
+      footer: { text: footer },
       url: url
     });
   }

@@ -11,7 +11,7 @@ export class NotesService {
   private prefix: string;
   private command: Command;
 
-  constructor(command: Command, prefix: string){
+  constructor(command: Command, prefix: string) {
     this.command = command;
     this.prefix = prefix;
   }
@@ -48,7 +48,7 @@ export class NotesService {
 
     //!notes - get notes in channel
     if (tokenizer.tokens.length === 1) {
-      if(guildConfig) {
+      if (guildConfig) {
         return this.getByChannel(msg.channel.id.toString(), guildConfig.id);
       }
       else {
@@ -58,7 +58,7 @@ export class NotesService {
 
     if (guildConfig) {
       //!notes #channel - get notes for a channel
-      if (tokenizer.tokens[1]?.type === 'channel') { 
+      if (tokenizer.tokens[1]?.type === 'channel') {
         return this.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig.id);
       }
       //!notes add #channel - adds this note
@@ -76,9 +76,9 @@ export class NotesService {
         return this.setUserNote(tokenizer.body(2), msg.author.id);
       }
     }
-    
+
     //!notes remove <channel> <number>
-    if(guildConfig) {
+    if (guildConfig) {
       if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
         return 'You have to be an admin to delete notes.';
       }
@@ -108,7 +108,7 @@ export class NotesService {
       'remove #channel (optional) notenumber': 'remove a note in a channel or DM.'
     }, ['add #cooking-stuff Eggs', 'add a note here', 'remove #cooking-stuff 1']);
   }
-  
+
 
   async getByChannel(channelID: string, guildID: string): Promise<Response> {
     const notes = await NotesService.get(guildID);
@@ -122,7 +122,7 @@ export class NotesService {
 
   async setChannelNote(note: string, channelID: string, guildID: string): Promise<Response> {
     const notes = await NotesService.get(guildID);
-    
+
     // When a guild doesnt have notes at all yet
     if (notes == null || notes.notes == null) {
       const newNotes: Notes = {
@@ -131,7 +131,7 @@ export class NotesService {
           [channelID]: [note],
         }
       };
-      
+
       return await NotesService.update(newNotes)
         .then(() => EmbedBuilder.success(`Note '${note}' got succesfully added to the channel <#${channelID}>`))
         .catch((err) => {
@@ -139,12 +139,12 @@ export class NotesService {
           return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
         });
     }
-  
+
     if (Array.isArray(notes.notes)) {
       Logger.error('Notes is an array, not a Record (likely user notes instead of guildnotes).');
       return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
     }
-    
+
     // When a server has notes
     if (notes.notes[channelID] == null) {
       notes.notes[channelID] = []; // create empty array if channel doesnt have notes yet
@@ -160,7 +160,7 @@ export class NotesService {
 
   async delChannelNote(noteNum: number, channelID: string, guildID: string): Promise<Response> {
     const notes = await NotesService.get(guildID);
-  
+
     if (notes == null) {
       return EmbedBuilder.info('There are currently no notes in this channel.', 'No notes found');
     }
@@ -171,7 +171,7 @@ export class NotesService {
     }
 
     // Checks if notes exist, checks if noteNum is in range
-    if ( noteNum > 0 && noteNum <= notes.notes[channelID].length) {
+    if (noteNum > 0 && noteNum <= notes.notes[channelID].length) {
       notes.notes[channelID].splice(noteNum - 1, 1);
       return NotesService.update(notes)
         .then(() => EmbedBuilder.success(`Removed note \`${noteNum}\`.`))
@@ -181,7 +181,7 @@ export class NotesService {
         });
     }
     else {
-      return EmbedBuilder.error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
+      return EmbedBuilder.error(`Failed to remove note \`${noteNum}\``, 'Check your note index number.');
     }
   }
 
@@ -194,10 +194,10 @@ export class NotesService {
       return EmbedBuilder.buildList(Colors.success, 'Your personal notes! :memo:', notes.notes);
     }
   }
-  
+
   async setUserNote(note: string, userID: string): Promise<Response> {
     const notes = await NotesService.get(userID);
-  
+
     // When a user doesnt have notes at all yet
     if (notes == null || notes.notes == null) {
       const newNotes: Notes = {
@@ -225,10 +225,10 @@ export class NotesService {
         return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
       });
   }
-  
+
   async delUserNote(noteNum: number, userID: string): Promise<Response> {
     const notes = await NotesService.get(userID);
-  
+
     if (notes == null) {
       return EmbedBuilder.info('You currently don\'t have any notes.', 'No notes found');
     }
@@ -237,7 +237,7 @@ export class NotesService {
       Logger.error('Notes is not an array, Record (likely guild notes instead of user notes).');
       return EmbedBuilder.error('Something wen\'t wrong trying to set notes.');
     }
-  
+
     // Checks if notes exist, checks if noteNum is in range
     if (noteNum > 0 && noteNum <= notes.notes.length) {
       notes.notes.splice(noteNum - 1, 1);
