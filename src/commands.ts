@@ -343,7 +343,7 @@ export const commands: Command[] = [
   { // modules
     name: 'modules',
     category: 'modules',
-    description: 'Gives you a list of the modules. Server only.',
+    description: 'Updates all modules to true. Server admin only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
