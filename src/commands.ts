@@ -154,7 +154,7 @@ export const commands: Command[] = [
     name: 'roll',
     category: 'misc',
     description: 'Rolls a die or dice (eg d6, 2d10, d20 ...).',
-    aliases: ['r', 'dice'],
+    aliases: ['r', 'dice', 'die'],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
