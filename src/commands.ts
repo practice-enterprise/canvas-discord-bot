@@ -332,6 +332,9 @@ export const commands: Command[] = [
     description: 'Lists your courses, modules and items with controls. Server only.',
     aliases: [],
     async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+      if (!guildConfig) {
+        return guildOnly;
+      }
       const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
       if (guildConfig == null || guildConfig.canvasInstanceID == null) {
         return EmbedBuilder.error('No Canvas instance ID defined.', 'Contact your administator', 'Couldn\'t load courses!');
