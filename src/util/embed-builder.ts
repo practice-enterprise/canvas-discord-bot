@@ -4,14 +4,16 @@ import { Command } from '../models/command';
 //type Color = 'info' | 'success' | 'warning' | 'error' | 'gray' | 'discord' | 'canvas';
 
 export enum Colors {
-  info = '4FAFEF',
-  success = '43B581',
-  warning = 'FAA61A',
-  error = 'F04747',
-  gray = '747F8D',
-  discord = '7289DA',
-  canvas = 'E73D30'
+  info = '#4FAFEF',
+  success = '#43B581',
+  warning = '#FAA61A',
+  error = '#F04747',
+  gray = '#747F8D',
+  discord = '#7289DA',
+  canvas = '#E73D30'
 }
+
+
 
 export class EmbedBuilder {
   static success(description: string, footer?: string, title?: string): MessageEmbed {

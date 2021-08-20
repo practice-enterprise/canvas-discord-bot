@@ -79,7 +79,7 @@ export class NotesService {
 
     //!notes remove <channel> <number>
     if (guildConfig) {
-      if (!(msg.member?.hasPermission('ADMINISTRATOR'))) {
+      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true))) {
         return 'You have to be an admin to delete notes.';
       }
 

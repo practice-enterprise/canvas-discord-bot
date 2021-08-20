@@ -80,7 +80,7 @@ export const commands: Command[] = [
         return reactions.includes(reaction.emoji.name) && user.id === msg.author.id;
       };
 
-      if (!(msg.member?.hasPermission('ADMINISTRATOR')))
+      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true)))
         return EmbedBuilder.error('No admin permissions!');
 
       let page = 0;
@@ -99,7 +99,7 @@ export const commands: Command[] = [
       ];
 
       pages[page].footer = { text: `Page ${page + 1}` };
-      const botmsg = await msg.channel.send(new MessageEmbed(pages[0]));
+      const botmsg = await msg.channel.send({embeds: [new MessageEmbed(pages[0])]});
       try {
         for (const e of reactions) {
           await botmsg.react(e);
@@ -107,8 +107,9 @@ export const commands: Command[] = [
       } catch (err) {
         console.error('One or more reactions failed.');
       }
-
-      const collector = botmsg.createReactionCollector(filter, { time });
+      
+      //TODO fix FILTER
+      const collector = botmsg.createReactionCollector({filter, time: time });
       collector.on('collect', (reaction, user) => {
         reaction.users.remove(user.id);
         const oldPage = page;
@@ -126,7 +127,7 @@ export const commands: Command[] = [
 
         if (oldPage !== page) { //Only edit if it's a different page.
           pages[page].footer = { text: `Page ${page + 1}` };
-          botmsg.edit(new MessageEmbed(pages[page]));
+          botmsg.edit({embeds: [new MessageEmbed(pages[page])]});
         }
       });
 
@@ -225,7 +226,7 @@ export const commands: Command[] = [
       }
       const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
 
-      if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true))) {
         return EmbedBuilder.error('No admin permissions!');
       }
 
@@ -335,7 +336,7 @@ export const commands: Command[] = [
       if (!guildConfig) {
         return guildOnly;
       }
-      const botmsg = await msg.channel.send(new MessageEmbed({ title: ':information_source: Loading courses...' }));
+      const botmsg = await msg.channel.send({embeds: [new MessageEmbed({ title: ':information_source: Loading courses...' })]});
       if (guildConfig == null || guildConfig.canvasInstanceID == null) {
         return EmbedBuilder.error('No Canvas instance ID defined.', 'Contact your administator', 'Couldn\'t load courses!');
       }
@@ -352,7 +353,7 @@ export const commands: Command[] = [
       if (!guildConfig) {
         return guildOnly;
       }
-      if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true))) {
         return EmbedBuilder.error('No admin permissions!');
       }
       const res = [];

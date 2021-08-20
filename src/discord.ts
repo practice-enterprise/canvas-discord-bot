@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { Client, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, Intents, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
@@ -10,7 +10,7 @@ import { Tokenizer } from './util/tokenizer';
 import { EmbedBuilder } from './util/embed-builder';
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
-  const client = new Client({ shards: shard, shardCount });
+  const client = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES,Intents.FLAGS.DIRECT_MESSAGES] , partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'] , shards: shard, shardCount: shardCount });
   const config = await ConfigService.get();
 
   client.on('ready', () => {
@@ -46,7 +46,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
 
     if (tokenizer.command() === 'eval') {
       // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can.
-      if (process.env.NODE_ENV != 'development' || !(msg.member?.hasPermission('ADMINISTRATOR')) || !(msg.member?.roles.cache.has('817824554616487946'))) {
+      if (process.env.NODE_ENV != 'development' || !(msg.member?.permissions.has(['ADMINISTRATOR'], true)) || !(msg.member?.roles.cache.has('817824554616487946'))) {
         return;
       }
 
@@ -70,9 +70,9 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         const embed: MessageEmbedOptions = {
           'title': 'Evaluation',
           'description': desc,
-          'color': '43B581',
+          'color': '#43B581',
         };
-        msg.channel.send(new MessageEmbed(embed));
+        msg.channel.send({embeds: [embed]});
       }
       catch (err) {
         console.error(err);
@@ -84,9 +84,9 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
             .bold('Result/output:', true)
             .codeblock('ts', err)
             .build(),
-          color: 'ff0000'
+          color: '#ff0000'
         };
-        msg.channel.send(new MessageEmbed(embed));
+        msg.channel.send({embeds: [new MessageEmbed(embed)]});
       }
       return;
     }
@@ -97,7 +97,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         continue;
       }
       if (guildConfig && guildConfig.modules[command.category] === false) {
-        msg.channel.send(EmbedBuilder.error(`The ${command.name} command has been disabled.`, `Enable the ${command.category} module to enable this command.`));
+        msg.channel.send({embeds: [EmbedBuilder.error(`The ${command.name} command has been disabled.`, `Enable the ${command.category} module to enable this command.`)]});
         return;
       }
 
@@ -107,10 +107,10 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
 
       if (typeof response === 'string') {
         // We might want preventExceed here instead
-        msg.channel.send(response, { split: true });
+        msg.channel.send(response);
         return;
       } else if (typeof response !== 'undefined') {
-        msg.channel.send(new MessageEmbed(preventExceed(response)));
+        msg.channel.send({embeds: [new MessageEmbed(preventExceed(response))]});
         return;
       }
     }
@@ -122,7 +122,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
 
     const roleIDs: Record<string, string> = {};
     for (const roleName of roleNames) {
-      const role = await guild.roles.create({ data: { name: roleName } });
+      const role = await guild.roles.create({ name: roleName });
       roleIDs[roleName] = role.id;
     }
     GuildService.createDefault(guild.id, roleIDs);
