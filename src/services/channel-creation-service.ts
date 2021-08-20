@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
 import { Client } from 'discord.js';
-import { ChannelTypes } from 'discord.js/typings/enums';
 import { CreateChannelsData } from '../models/channel-creation-data';
 import { GuildService } from './guild-service';
 
