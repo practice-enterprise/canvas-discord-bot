@@ -1,4 +1,4 @@
-import { Client, Message, MessageEmbed } from 'discord.js';
+import { Client, Message, MessageEmbed, MessageReaction } from 'discord.js';
 import { CanvasCourse, CanvasModule } from '../models/canvas';
 import { CanvasService } from '../services/canvas-service';
 
@@ -9,7 +9,7 @@ export class CoursesMenu {
   stopMsg = ':grey_exclamation: `Loading or session has ended.`';
 
   undefinedTokenEmbed: MessageEmbed = new MessageEmbed({
-    color: 'F04747',
+    color: '#F04747',
     title: ':warning: Can\'t fetch courses',
     description: 'If you\'re not logged in, please do so for this command to work.\nManual canvas tokens might not be valid anymore.',
     footer: { text: 'Error: invalid token' }
@@ -34,22 +34,26 @@ export class CoursesMenu {
     let courseNr;
 
     const courses = await CanvasService.getCourses(this.msg.author.id);
-    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({embeds: [this.undefinedTokenEmbed]}); return; }
 
     const time = 60000; //=1 minute
-    const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
+    const filter = (reaction: MessageReaction, user: { id: string; }) => {
+      if(!reaction.emoji.name)
+        return false;
       return this.eNumbers.concat(this.ePrev, this.eNext).includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
     this.botmsg.reactions.cache.get(this.eBack)?.remove().catch(err => console.error('Failed to remove emote: ', err));
-    this.botmsg.edit(getCoursePage(courses, page, perPage, this.canvasUrl));
+    this.botmsg.edit({embeds: [getCoursePage(courses, page, perPage, this.canvasUrl)]});
     quickAddReactions(this.botmsg, this.botmsg.client, this.courseReactions);
 
-    const collector = this.botmsg.createReactionCollector(filter, { time });
+    const collector = this.botmsg.createReactionCollector({filter: filter,  time: time });
 
     collector.on('collect', async (reaction, user) => {
+      if(!reaction.emoji.name)
+        return;
       collector.resetTimer(); //Reset timer everytime a reaction is used.
 
       reaction.users.remove(user.id);
@@ -75,7 +79,7 @@ export class CoursesMenu {
 
       if (oldPage !== page) { //Only edit if it's a different page.
 
-        this.botmsg.edit(getCoursePage(courses, page, perPage, this.canvasUrl));
+        this.botmsg.edit({ embeds: [getCoursePage(courses, page, perPage, this.canvasUrl)]});
       }
     });
 
@@ -93,26 +97,30 @@ export class CoursesMenu {
     const moduleReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext).concat(this.eBack);
 
     const courses = await CanvasService.getCourses(this.msg.author.id);
-    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
     const modules = await CanvasService.getModules(this.msg.author.id, courses[courseNr - 1].id);
-    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
 
     const time = 60000; //=1 minute
-    const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
+    const filter = (reaction: MessageReaction, user: { id: string; }) => {
+      if(!reaction.emoji.name)
+        return false;
       return moduleReactions.includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
     const modulePage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl);
-    if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
-    this.botmsg.edit(modulePage);
+    if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+    this.botmsg.edit({ embeds: [modulePage]});
     //quickAddReactions(botmsg, botmsg.client, moduleReactions);
     this.botmsg.react(this.eBack);
 
-    const collector = this.botmsg.createReactionCollector(filter, { time });
+    const collector = this.botmsg.createReactionCollector({filter: filter,  time: time });
 
     collector.on('collect', async (reaction, user) => {
+      if(!reaction.emoji.name)
+        return;
       collector.resetTimer(); //Reset timer everytime a reaction is used.
 
       reaction.users.remove(user.id);
@@ -142,8 +150,8 @@ export class CoursesMenu {
 
       if (oldPage !== page) { //Only edit if it's a different page.
         const modulePage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl);
-        if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
-        this.botmsg.edit(modulePage);
+        if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+        this.botmsg.edit({ embeds: [modulePage]});
       }
     });
 
@@ -164,24 +172,26 @@ export class CoursesMenu {
     const itemReactions = [this.ePrev].concat(this.eNext).concat(this.eBack);
 
     const courses = await CanvasService.getCourses(this.msg.author.id);
-    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
     const modules = await CanvasService.getModules(this.msg.author.id, courses[courseNr - 1].id);
-    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
+    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
 
     const time = 60000; //=1 minute
-    const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
+    const filter = (reaction: MessageReaction, user: { id: string; }) => {
+      if(!reaction.emoji.name)
+        return false;
       return itemReactions.includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
 
     // Logic
     this.botmsg.edit(''); // Clear collector end message
     const itemPage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl, moduleNr);
-    if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
-    this.botmsg.edit(itemPage);
+    if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+    this.botmsg.edit({ embeds: [itemPage]});
     //quickAddReactions(botmsg, botmsg.client, itemReactions);
     this.botmsg.react(this.eBack);
 
-    const collector = this.botmsg.createReactionCollector(filter, { time });
+    const collector = this.botmsg.createReactionCollector( {filter: filter, time: time });
 
     collector.on('collect', async (reaction, user) => {
       collector.resetTimer(); //Reset timer everytime a reaction is used.
@@ -206,8 +216,8 @@ export class CoursesMenu {
 
       if (oldPage !== page) { //Only edit if it's a different page.
         const itemPage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl, moduleNr);
-        if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit(this.undefinedTokenEmbed); return; }
-        this.botmsg.edit(itemPage);
+        if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+        this.botmsg.edit({ embeds: [itemPage]});
       }
     });
 
@@ -246,7 +256,7 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number, c
   const embed: MessageEmbed = new MessageEmbed({
     'title': 'All your courses!',
     'description': '`Nr` Course name',
-    'color': 'EF4A25', //Canvas color pallete
+    'color': '#EF4A25', //Canvas color pallete
     'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
     'footer': { text: `Page ${page + 1}` }
   });

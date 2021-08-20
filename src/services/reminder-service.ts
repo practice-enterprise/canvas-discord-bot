@@ -63,7 +63,7 @@ export class ReminderService {
     if (typeof (data.message) === 'string') {
       user?.send(preventExceed(data.message));
     } else {
-      user?.send(new MessageEmbed(preventExceed(data.message)));
+      user?.send({ embeds: [new MessageEmbed(preventExceed(data.message))]});
     }
     await this.updateLastAssignment(data.id, data.assignmentID);
   }

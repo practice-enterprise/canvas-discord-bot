@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Message, MessageEmbed, MessageEmbedOptions, MessageReaction } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
@@ -76,8 +76,8 @@ export const commands: Command[] = [
       const eNext = '▶';
       const reactions = [ePrev, eNext];
 
-      const filter = (reaction: { emoji: { name: string; }; }, user: { id: string; }) => {
-        return reactions.includes(reaction.emoji.name) && user.id === msg.author.id;
+      const filter = (reaction: any, user: { id: string; }) => {
+        return reactions.includes(reaction._emoji.name) && user.id === msg.author.id;
       };
 
       if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true)))
@@ -88,13 +88,13 @@ export const commands: Command[] = [
         {
           'title': 'Setup',
           'description': 'Github repositories for Discan:\nhttps://github.com/practice-enterprise\nhttps://github.com/practice-enterprise/api\nhttps://github.com/practice-enterprise/canvas-discord-bot\nhttps://github.com/practice-enterprise/oauth',
-          'color': '7289DA',
+          'color': '#7289DA',
 
         },
         {
           'title': 'Setup',
           'description': 'Users need to login with OAuth to start using the services.',
-          'color': '7289DA',
+          'color': '#7289DA',
         },
       ];
 
@@ -109,7 +109,7 @@ export const commands: Command[] = [
       }
       
       //TODO fix FILTER
-      const collector = botmsg.createReactionCollector({filter, time: time });
+      const collector = botmsg.createReactionCollector({filter: filter, time: time });
       collector.on('collect', (reaction, user) => {
         reaction.users.remove(user.id);
         const oldPage = page;
