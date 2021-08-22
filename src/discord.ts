@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { Client, Intents, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, Guild, Intents, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
@@ -8,13 +8,37 @@ import { Logger } from './util/logger';
 import { Formatter, preventExceed } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 import { EmbedBuilder } from './util/embed-builder';
+import { REST } from '@discordjs/rest';//' //@discordjs/rest/dist/lib/REST
+import { Routes } from 'discord-api-types';
+
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
-  const client = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES,Intents.FLAGS.DIRECT_MESSAGES] , partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'] , shards: shard, shardCount: shardCount });
+  const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES], partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'], shards: shard, shardCount: shardCount });
   const config = await ConfigService.get();
 
-  client.on('ready', () => {
+  client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isCommand()) {
+      return;
+    }
+    for (const command of commands) {
+      //console.log(interaction);
+      if (command.name == interaction.commandName) {
+        await command.response(interaction, interaction.guildId ? await GuildService.getForId(interaction.guildId) : undefined);
+      }
+    }
+  });
+  if (!process.env.DISCORD_TOKEN) throw new Error('discord token undefined');
+  const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
+
+
+  client.on('ready', async () => {
     Logger.info(`Logged in as ${client.user?.tag}`);
+
+    rest.put(
+      /*Routes.applicationGuildCommands(client.user!.id ,'780572565240414208')*/`/applications/${client.user!.id}/guilds/780572565240414208/commands`,
+      { body: commands });
+    //client.application?.commands.create()
+
     /*
       Presence updating.
       Value may not be below 15000 (rate-limit Discord API = 5/60s).
@@ -72,7 +96,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
           'description': desc,
           'color': '#43B581',
         };
-        msg.channel.send({embeds: [embed]});
+        msg.channel.send({ embeds: [embed] });
       }
       catch (err) {
         console.error(err);
@@ -86,7 +110,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
             .build(),
           color: '#ff0000'
         };
-        msg.channel.send({embeds: [new MessageEmbed(embed)]});
+        msg.channel.send({ embeds: [new MessageEmbed(embed)] });
       }
       return;
     }
@@ -97,22 +121,22 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
         continue;
       }
       if (guildConfig && guildConfig.modules[command.category] === false) {
-        msg.channel.send({embeds: [EmbedBuilder.error(`The ${command.name} command has been disabled.`, `Enable the ${command.category} module to enable this command.`)]});
+        msg.channel.send({ embeds: [EmbedBuilder.error(`The ${command.name} command has been disabled.`, `Enable the ${command.category} module to enable this command.`)] });
         return;
       }
 
       Logger.debug(`received command '${tokenizer.command()}' from guild ${msg.guild?.id || msg.author.id} in channel ${msg.channel.id}`);
       // eslint-disable-next-line no-await-in-loop
-      const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
+      //const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
 
-      if (typeof response === 'string') {
-        // We might want preventExceed here instead
-        msg.channel.send(response);
-        return;
-      } else if (typeof response !== 'undefined') {
-        msg.channel.send({embeds: [new MessageEmbed(preventExceed(response))]});
-        return;
-      }
+      /* if (typeof response === 'string') {
+         // We might want preventExceed here instead
+         msg.channel.send(response);
+         return;
+       } else if (typeof response !== 'undefined') {
+         msg.channel.send({ embeds: [new MessageEmbed(preventExceed(response))] });
+         return;
+       }/*/
     }
     return;
   });

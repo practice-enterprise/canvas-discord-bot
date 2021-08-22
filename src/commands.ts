@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, MessageEmbedOptions, MessageReaction } from 'discord.js';
+import { Interaction, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
@@ -11,6 +11,7 @@ import { CoursesMenu } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
+import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
 
 export const defaultPrefix = '!';
 
@@ -21,33 +22,33 @@ export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only command.');
 
 export const commands: Command[] = [
-  { // help
+  /*{ // help
     name: 'help',
     category: 'help',
     description: 'That\'s this command.',
     aliases: ['how', 'man', 'get-help'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (guildConfig) {
         return new MessageEmbed({
           'title': 'Help is on the way!',
           'description': commands.concat(guildConfig.modules['customCommands'] === false ? [] : guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
-          'color': '43B581',
+          'color': '#43B581',
         });
       }
 
       return new MessageEmbed({
         'title': 'Help is on the way!',
         'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
-        'color': '43B581',
+        'color': '#43B581',
       });
     }
-  },
-  { // Info
+  },*/
+  /*{ // Info
     name: 'info',
     category: 'info',
     description: 'Displays more information. Server only.',
     aliases: ['informatie', 'information'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
         return guildOnly;
       }
@@ -61,13 +62,14 @@ export const commands: Command[] = [
       }
       return EmbedBuilder.info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
     }
-  },
-  { // setup
+    return 'disabled';
+  },*/
+  /*{ // setup
     name: 'setup',
     category: 'setup',
     description: 'Quick setup and introduction for the bot. Server only.',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
         return guildOnly;
       }
@@ -136,29 +138,56 @@ export const commands: Command[] = [
         botmsg.reactions.removeAll().catch(err => console.error('Failed to remove all reactions: ', err));
       });
     }
-  },
+  },*/
   { // ping
     name: 'ping',
     category: 'ping',
     description: 'Play the most mundane ping pong ever with the bot.',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      msg.channel.send('Pong!')
-        .then(m =>
-          m.edit('Pong! :ping_pong:')
-            .then(m => {
-              if (m.editedTimestamp !== null)
-                m.edit(`Pong! :ping_pong: \`${m.editedTimestamp - msg.createdTimestamp} ms | API: ${msg.client.ws.ping} ms\``);
-            }));
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
+      if (!interaction.isCommand())
+        return;
+      interaction.reply(`Pong! :ping_pong: \`${Date.now() - interaction.createdTimestamp} ms | API: ${interaction.client.ws.ping} ms\``);
     }
   },
-  { // roll
+  { // roll TODO make up of embed
     name: 'roll',
     category: 'misc',
     description: 'Rolls a die or dice (eg d6, 2d10, d20 ...).',
+    options: [{ required: true, type: 4, name: 'faces', description: 'from 0 to 6 for example' },
+    { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
     aliases: ['r', 'dice', 'die'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
+      if (!interaction.isCommand() || !this.options)
+        return;
+      //console.log(interaction.options.getInteger(this.options[1].name));
+      let times = interaction.options.getInteger(this.options[1].name);
+      if(!times)
+        times = 1;
+      const dice = [];
+      for (let i = 0; i < times; i++) {
+        dice.push(Math.floor(Math.random() * interaction.options.getInteger(this.options[0].name, true) + 1));
+      }
+
+      if (times === 1) {
+        interaction.reply({
+          embeds: [new MessageEmbed({
+            title: `${interaction.options.getInteger(this.options[0].name)} faces :game_die:`,
+            description: `You rolled a ${dice[0]}.`,
+            color: Colors.error
+          })]
+        });
+      }
+      else {
+        interaction.reply({
+          embeds: [new MessageEmbed({
+            title: `${interaction.options.getInteger(this.options[0].name)} faces ${interaction.options.getInteger(this.options[1].name)} times :game_die:`,
+            description: `You rolled: ${dice.join(' + ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`,
+            color: Colors.error
+          })]
+        });
+      }
+      /*const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
       if (match) {
@@ -184,15 +213,15 @@ export const commands: Command[] = [
       } else {
         return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
           { 'XdY': 'X: amount of times (defaults to 1). Y: amount of sides the die should have.' }, ['d6', 'd20', '2d8', '3d6']);
-      }
+      }*/
     }
-  },
-  { // coinflip
+  }
+  /*{ // coinflip
     name: 'coinflip',
     category: 'misc',
     description: 'Heads or tails?',
     aliases: ['coin', 'flip', 'cf'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
 
       const flip = Math.round(Math.random());
@@ -214,13 +243,13 @@ export const commands: Command[] = [
           { 'h/t (optional)': 'Place your bets on heads or tails' }, ['', 'heads', 't']);
       }
     }
-  },
-  { // prefix
+  },*/
+  /*{ // prefix
     name: 'prefix',
     category: 'prefix',
     description: 'Set prefix for guild. Server only.',
     aliases: ['pf'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
         return guildOnly;
       }
@@ -238,22 +267,22 @@ export const commands: Command[] = [
         return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.error, { 'prefix': 'the new prefix' }, ['!', '?']);
       }
     }
-  },
-  { // notes
+  },*/
+  /*{ // notes
     name: 'notes',
     category: 'notes',
     description: 'Set or get notes for channels and DM\'s.',
     aliases: ['note'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
     }
-  },
-  { // reminder
+  },*/
+  /*{ // reminder
     name: 'reminder',
     category: 'reminders',
     description: 'Set reminders.',
     aliases: ['remindme', 'remind', 'setreminder'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       if (tokenizer.tokens[1]) {
         if (tokenizer.tokens[1].content == 'get' || tokenizer.tokens[1].content == 'list') {
@@ -272,13 +301,13 @@ export const commands: Command[] = [
       return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
         { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
     }
-  },
-  { //timezone
+  },*/
+  /*{ //timezone
     name: 'timezone',
     category: 'timezone',
     description: 'Get/set your current time zone.',
     aliases: ['time', 'clock', 'tz'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       if (tokenizer.tokens[1] != undefined) {
         if (tokenizer.tokens[1].content == 'get') {
@@ -304,13 +333,13 @@ export const commands: Command[] = [
       }
       return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
     }
-  },
-  { // wiki
+  },*/
+  /*{ // wiki
     name: 'wiki',
     category: 'wiki',
     description: 'Search on the Thomas More wiki.',
     aliases: ['wk'],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
       const url = (await ConfigService.get()).wiki;
       const query = tokenizer.body();
@@ -332,11 +361,12 @@ export const commands: Command[] = [
     category: 'courses',
     description: 'Lists your courses, modules and items with controls. Server only.',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
         return guildOnly;
       }
-      const botmsg = await msg.channel.send({embeds: [new MessageEmbed({ title: ':information_source: Loading courses...' })]});
+      if (!interaction.isCommand()) return 'not a command';
+      const botmsg = await interaction.reply({ embeds: [new MessageEmbed({ title: ':information_source: Loading courses...' })] });
       if (guildConfig == null || guildConfig.canvasInstanceID == null) {
         return EmbedBuilder.error('No Canvas instance ID defined.', 'Contact your administator', 'Couldn\'t load courses!');
       }
@@ -349,7 +379,7 @@ export const commands: Command[] = [
     category: 'modules',
     description: 'Updates all modules to true. Server admin only.',
     aliases: [],
-    async response(msg: Message, guildConfig: GuildConfig | undefined): Promise<Response | void> {
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
       if (!guildConfig) {
         return guildOnly;
       }
@@ -362,5 +392,5 @@ export const commands: Command[] = [
       }
       return EmbedBuilder.buildList(Colors.info, 'modules', res, 'Updates all modules to true. List of modules:');
     }
-  }
+  }*/
 ];

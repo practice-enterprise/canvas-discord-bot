@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { ApplicationCommandOption, ApplicationCommandOptionData, Interaction, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { GuildConfig } from './guild';
 
 export type Response = string | MessageEmbedOptions | MessageEmbed;
@@ -7,5 +7,6 @@ export interface Command {
   category: string,
   aliases: string[],
   description: string;
-  response: Response | ((msg: Message, guildConfig: GuildConfig | undefined) => PromiseLike<Response | void>)
+  options?: ApplicationCommandOptionData[];
+  response: /*Response |*/ ((interaction: Interaction, guildConfig: GuildConfig | undefined) => PromiseLike<void>)
 }
