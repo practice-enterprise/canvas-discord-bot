@@ -21,6 +21,7 @@ export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
 
 const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only command.');
 
+//TODO check content of respond messages
 export const commands: Command[] = [
   /*{ // help
     name: 'help',
@@ -143,7 +144,6 @@ export const commands: Command[] = [
     name: 'ping',
     category: 'ping',
     description: 'Play the most mundane ping pong ever with the bot.',
-    aliases: [],
     async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
       if (!interaction.isCommand())
         return;
@@ -153,16 +153,14 @@ export const commands: Command[] = [
   { // roll TODO make up of embed
     name: 'roll',
     category: 'misc',
-    description: 'Rolls a die or dice (eg d6, 2d10, d20 ...).',
-    options: [{ required: true, type: 4, name: 'faces', description: 'from 0 to 6 for example' },
+    description: 'Rolls a die or dice.',
+    options: [{ required: true, type: 4, name: 'faces', description: 'default dice have 6 faces (1-6)' },
     { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
-    aliases: ['r', 'dice', 'die'],
     async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
       if (!interaction.isCommand() || !this.options)
         return;
-      //console.log(interaction.options.getInteger(this.options[1].name));
       let times = interaction.options.getInteger(this.options[1].name);
-      if(!times)
+      if (!times)
         times = 1;
       const dice = [];
       for (let i = 0; i < times; i++) {
@@ -187,63 +185,25 @@ export const commands: Command[] = [
           })]
         });
       }
-      /*const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
-      const match = (/^(\d+)?d(\d+)$/gm).exec(tokenizer.tokens[1]?.content);
-      if (match) {
-        const times = Number(match[1]) > 0 ? Number(match[1]) : 1;
-        const dice = [];
-        for (let i = 0; i < times; i++) {
-          dice.push(Math.floor(Math.random() * Number(match[2]) + 1));
-        }
-
-        if (times === 1) {
-          return new MessageEmbed({
-            title: `:game_die: ${tokenizer.tokens[1]?.content}`,
-            description: `You rolled a ${dice[0]}.`,
-            color: Colors.error
-          });
-        } else {
-          return new MessageEmbed({
-            title: `:game_die: ${tokenizer.tokens[1]?.content}`,
-            description: `You rolled: ${dice.join(' + ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`,
-            color: Colors.error
-          });
-        }
-      } else {
-        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
-          { 'XdY': 'X: amount of times (defaults to 1). Y: amount of sides the die should have.' }, ['d6', 'd20', '2d8', '3d6']);
-      }*/
     }
-  }
-  /*{ // coinflip
+  },
+  { // coinflip
     name: 'coinflip',
     category: 'misc',
     description: 'Heads or tails?',
-    aliases: ['coin', 'flip', 'cf'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
+    options: [{ required: false, type: 4, name: 'pick', description: 'from 0 to 6 for example', choices: [{ name: 'heads', value: 1 }, { name: 'tails', value: 0 }] }],
+    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
+      if (!interaction.isCommand() || !this.options)
+        return;
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed({
         color: Colors.warning
       }).setTitle(flip ? ':coin: Heads!' : ':coin: Tails!');
-
-      if (tokenizer.tokens.length === 1) {
-        return embed;
-      }
-      else if (tokenizer.tokens[1]?.content == 'heads' || tokenizer.tokens[1]?.content == 'h') {
-        return flip == 1 ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
-      }
-      else if (tokenizer.tokens[1]?.content == 'tails' || tokenizer.tokens[1]?.content == 't') {
-        return flip == 0 ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
-      }
-      else {
-        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success,
-          { 'h/t (optional)': 'Place your bets on heads or tails' }, ['', 'heads', 't']);
-      }
+      if (interaction.options.getInteger(this.options[0].name) != null)
+        flip == interaction.options.getInteger(this.options[0].name) ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
+      interaction.reply({ embeds: [embed] });
     }
-  },*/
+  },
   /*{ // prefix
     name: 'prefix',
     category: 'prefix',

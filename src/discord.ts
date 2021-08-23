@@ -114,7 +114,8 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       }
       return;
     }
-    const commandList = commands.concat(guildConfig === undefined || guildConfig.modules['customCommands'] === false ? [] : guildConfig?.commands);
+    return;
+    /*const commandList = commands.concat(guildConfig === undefined || guildConfig.modules['customCommands'] === false ? [] : guildConfig?.commands);
 
     for (const command of commandList) {
       if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
@@ -136,9 +137,9 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
        } else if (typeof response !== 'undefined') {
          msg.channel.send({ embeds: [new MessageEmbed(preventExceed(response))] });
          return;
-       }/*/
+       }/
     }
-    return;
+    return;*/
   });
 
   client.on('guildCreate', async guild => {
