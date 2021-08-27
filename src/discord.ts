@@ -1,15 +1,16 @@
 /* eslint-disable no-await-in-loop */
-import { Client, Guild, Intents, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, Guild, Intents, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
-import { Formatter, preventExceed } from './util/formatter';
+import { command, Formatter, preventExceed } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
 import { EmbedBuilder } from './util/embed-builder';
 import { REST } from '@discordjs/rest';//' //@discordjs/rest/dist/lib/REST
 import { Routes } from 'discord-api-types';
+import { isApplicationCommandDMInteraction } from 'discord-api-types/utils/v9';
 
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
@@ -17,15 +18,18 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
   const config = await ConfigService.get();
 
   client.on('interactionCreate', async (interaction) => {
+
     if (!interaction.isCommand()) {
       return;
     }
+
     for (const command of commands) {
       //console.log(interaction);
       if (command.name == interaction.commandName) {
-        await command.response(interaction, interaction.guildId ? await GuildService.getForId(interaction.guildId) : undefined);
+        await command.response(interaction);
       }
     }
+
   });
   if (!process.env.DISCORD_TOKEN) throw new Error('discord token undefined');
   const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);

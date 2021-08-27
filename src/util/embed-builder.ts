@@ -1,4 +1,4 @@
-import { MessageEmbed } from 'discord.js';
+import { ColorResolvable, MessageEmbed } from 'discord.js';
 import { Command } from '../models/command';
 
 //type Color = 'info' | 'success' | 'warning' | 'error' | 'gray' | 'discord' | 'canvas';
@@ -80,7 +80,7 @@ export class EmbedBuilder {
     });
   }
 
-  static buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
+  static buildList(typeColor: Colors | ColorResolvable, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
     let i = 0;
     if (description == null) {
       description = '';

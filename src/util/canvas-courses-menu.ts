@@ -1,6 +1,179 @@
-import { Client, Message, MessageEmbed, MessageReaction } from 'discord.js';
+import { ButtonInteraction, Client, CommandInteraction, Interaction, InteractionButtonOptions, Message, MessageActionRow, MessageButton, MessageEmbed, MessageReaction } from 'discord.js';
 import { CanvasCourse, CanvasModule } from '../models/canvas';
 import { CanvasService } from '../services/canvas-service';
+import { EmbedBuilder } from './embed-builder';
+
+export class MenuCourses {
+  readonly buttonsNav: MessageButton[] = [
+    new MessageButton({ style: 'PRIMARY', label: 'prev', customId: 'prev' }),
+    new MessageButton({ style: 'PRIMARY', label: 'next', customId: 'next' }),
+    new MessageButton({ style: 'PRIMARY', label: 'back', customId: 'back' })
+  ];
+  readonly buttonsSelect: MessageButton[] = [
+    new MessageButton({ style: 'PRIMARY', label: '1', customId: '1' }),
+    new MessageButton({ style: 'PRIMARY', label: '2', customId: '2' }),
+    new MessageButton({ style: 'PRIMARY', label: '3', customId: '3' }),
+    new MessageButton({ style: 'PRIMARY', label: '4', customId: '4' }),
+    new MessageButton({ style: 'PRIMARY', label: '5', customId: '5' }),
+  ];
+
+  readonly actionRowNav = new MessageActionRow({ components: this.buttonsNav });
+  readonly actionRowSelect = new MessageActionRow({ components: this.buttonsSelect });
+  readonly newMenu = 'newMenu'; //easy access for the reason to stop a collector
+  interaction: CommandInteraction;
+  courses: CanvasCourse[];
+  perPage = this.buttonsSelect.length;
+  canvasUrl: string;
+  page = 0;
+  constructor(interaction: CommandInteraction, courses: CanvasCourse[], canvasUrl: string) {
+    this.interaction = interaction;
+    this.courses = courses;
+    this.canvasUrl = canvasUrl;
+    this.commandRes();
+    this.coursesCollect();
+    //await interaction.reply({ components: [this.actionRowNav, this.actionRowSelect], embeds: [getCoursePage(courses, page, perPage, canvasUrl)] });
+  }
+
+  async commandRes(): Promise<void> {
+    if (!this.interaction.replied)
+      await this.interaction.reply({ components: [this.actionRowNav, this.actionRowSelect], embeds: [this.getCoursePage(this.page)] });
+
+  }
+
+  getCoursePage(page: number): MessageEmbed {
+    const embed: MessageEmbed = new MessageEmbed({
+      'title': 'All your courses!',
+      'description': '`Nr` Course name',
+      'color': '#EF4A25', //Canvas color pallete
+      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
+      'footer': { text: `Page ${page + 1}` }
+    });
+
+    let count = 0;
+    for (let i = page * this.perPage; i < (page + 1) * this.perPage && i < this.courses.length; i++) {
+      embed.setDescription(
+        embed.description + `\n\`${++count}.\` [${this.courses[i].name}](${this.canvasUrl}/courses/${this.courses[i].id}) `
+      );
+    }
+    embed.footer = { text: `Page ${page + 1}` };
+
+    return embed;
+  }
+  coursesCollect(interactionButton?: ButtonInteraction): void {
+    if (interactionButton) {
+      interactionButton.update({ embeds: [this.getCoursePage(this.page)] });
+    }
+
+    const filter = (i: ButtonInteraction) => this.buttonsNav.concat(this.buttonsSelect).map(i => i.customId).includes(i.customId) && i.user.id == this.interaction.user.id && i.message.interaction!.id == this.interaction.id;
+    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: 15000 });
+    let courseNr;
+    if (!collector) return;
+    collector.on('collect', async i => {
+      const oldPage = this.page;
+      switch (i.customId) {
+      case this.buttonsNav[0].customId:
+        if (this.page > 0)
+          this.page--;
+        break;
+      case this.buttonsNav[1].customId:
+        if (this.page < (this.courses.length / this.perPage) - 1)
+          this.page++;
+        break;
+      default:
+        !Number.isNaN(Number.parseInt(i.customId)) ? courseNr = this.perPage * this.page + Number.parseInt(i.customId) - 1 : courseNr = -1;
+        console.log(courseNr);
+        if (courseNr <= this.courses.length && courseNr >= 0) {
+          collector.stop(this.newMenu);
+          this.modulesCollect(i, courseNr);
+          console.log('activate modules');
+          return;
+        }
+        break;
+      }
+      if (oldPage !== this.page) { //Only edit if it's a different page.
+        console.log('edit');
+        console.log(oldPage);
+        console.log(this.page);
+        i.update({ embeds: [getCoursePage(this.courses, this.page, this.perPage, this.canvasUrl)] });
+        console.log(i);
+      }
+    });
+
+    collector.on('end', (collected, reason) => {
+      if (reason != this.newMenu)
+        this.end();
+    });
+  }
+
+  async modulesCollect(interactionButton: ButtonInteraction, courseNr: number) {
+    const modules = await CanvasService.getModules(interactionButton.user.id, this.courses[courseNr].id);
+    if (modules === undefined) {
+      interactionButton.update({ embeds: [new MessageEmbed({ title: 'no modules' })] });
+      return;
+    }
+
+    const filter = (i: ButtonInteraction) => this.buttonsNav.concat(this.buttonsSelect).map(i => i.customId).includes(i.customId) && i.user.id == this.interaction.user.id && i.message.interaction!.id == this.interaction.id;
+    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: 15000 });
+
+    const modulesPage = (await getModulesPage(this.interaction.user.id,
+      this.courses, modules, this.page = 0, this.perPage, courseNr, this.canvasUrl));
+    if (!collector || !modulesPage) {
+      return;
+    }
+    interactionButton.update({ embeds: [modulesPage] });
+
+    collector.on('collect', async (interaction) => {
+      console.log(interaction.message.interaction!.id);
+      console.log();
+
+      const oldPage = this.page;
+      switch (interaction.customId) {
+      case this.buttonsNav[0].customId:
+        if (this.page > 0)
+          this.page--;
+        break;
+      case this.buttonsNav[1].customId:
+        // TODO length of items
+        if (this.page < (modules.length / this.perPage) - 1)
+          this.page++;
+        break;
+      case this.buttonsNav[2].customId:
+        this.coursesCollect(interaction);
+        collector.stop(this.newMenu);
+        return;
+
+        /*default:
+          (await getModulesPage(this.interaction.user.id, 
+            this.courses, modules, this.page, this.perPage, courseNr, this.canvasUrl));
+          if (!modulesPage) {
+            return;
+          }*/
+      }
+
+      if (oldPage !== this.page) { //Only edit if it's a different page.
+        const modulePage = (await getModulesPage(this.interaction.user.id,
+          this.courses, modules, this.page, this.perPage, courseNr, this.canvasUrl).catch(() => console.log('modules')));
+        if (modulePage === undefined) return;
+        interaction.update({ embeds: [modulePage] });
+      }
+    }
+    );
+
+    collector.on('end', (collected, reason) => {
+      console.log(reason);
+      if (reason != this.newMenu)
+        this.end();
+    });
+
+  }
+  async end() {
+    console.log(this.interaction.deferred);
+    const message = (await this.interaction.fetchReply()).embeds[0] as MessageEmbed;
+    message.setFooter(`${message.footer?.text}. Command has expired!`);
+    this.interaction.editReply({ components: [], embeds: [message] });
+  }
+
+}
 
 export class CoursesMenu {
   canvasUrl: string;
@@ -27,67 +200,6 @@ export class CoursesMenu {
   readonly eBack = '↩';
   readonly courseReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext);
 
-  async coursesMenu(): Promise<void> {
-    // Declarations
-    let page = 0;
-    const perPage = 5;
-    let courseNr;
-
-    const courses = await CanvasService.getCourses(this.msg.author.id);
-    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({embeds: [this.undefinedTokenEmbed]}); return; }
-
-    const time = 60000; //=1 minute
-    const filter = (reaction: MessageReaction, user: { id: string; }) => {
-      if(!reaction.emoji.name)
-        return false;
-      return this.eNumbers.concat(this.ePrev, this.eNext).includes(reaction.emoji.name) && user.id === this.msg.author.id;
-    };
-
-    // Logic
-    this.botmsg.edit(''); // Clear collector end message
-    this.botmsg.reactions.cache.get(this.eBack)?.remove().catch(err => console.error('Failed to remove emote: ', err));
-    this.botmsg.edit({embeds: [getCoursePage(courses, page, perPage, this.canvasUrl)]});
-    quickAddReactions(this.botmsg, this.botmsg.client, this.courseReactions);
-
-    const collector = this.botmsg.createReactionCollector({filter: filter,  time: time });
-
-    collector.on('collect', async (reaction, user) => {
-      if(!reaction.emoji.name)
-        return;
-      collector.resetTimer(); //Reset timer everytime a reaction is used.
-
-      reaction.users.remove(user.id);
-      const oldPage = page;
-      if (this.eNumbers.includes(reaction.emoji.name)) {
-        courseNr = perPage * page + (this.eNumbers.indexOf(reaction.emoji.name) + 1);
-        if (courseNr <= courses.length) {
-          collector.stop();
-          this.modulesMenu(courseNr);
-        }
-      }
-
-      switch (reaction.emoji.name) {
-      case this.ePrev:
-        if (page > 0)
-          page--;
-        break;
-      case this.eNext:
-        if (page < (courses.length / perPage) - 1)
-          page++;
-        break;
-      }
-
-      if (oldPage !== page) { //Only edit if it's a different page.
-
-        this.botmsg.edit({ embeds: [getCoursePage(courses, page, perPage, this.canvasUrl)]});
-      }
-    });
-
-    collector.on('end', (reaction, user) => {
-      this.botmsg.edit(this.stopMsg);
-    });
-  }
-
   async modulesMenu(courseNr: number): Promise<void> {
     // Declarations
     let page = 0;
@@ -97,13 +209,13 @@ export class CoursesMenu {
     const moduleReactions = [this.ePrev].concat(this.eNumbers).concat(this.eNext).concat(this.eBack);
 
     const courses = await CanvasService.getCourses(this.msg.author.id);
-    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
     const modules = await CanvasService.getModules(this.msg.author.id, courses[courseNr - 1].id);
-    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
 
     const time = 60000; //=1 minute
     const filter = (reaction: MessageReaction, user: { id: string; }) => {
-      if(!reaction.emoji.name)
+      if (!reaction.emoji.name)
         return false;
       return moduleReactions.includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
@@ -111,15 +223,15 @@ export class CoursesMenu {
     // Logic
     this.botmsg.edit(''); // Clear collector end message
     const modulePage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl);
-    if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
-    this.botmsg.edit({ embeds: [modulePage]});
+    if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
+    //this.botmsg.edit({ embeds: [z] });
     //quickAddReactions(botmsg, botmsg.client, moduleReactions);
     this.botmsg.react(this.eBack);
 
-    const collector = this.botmsg.createReactionCollector({filter: filter,  time: time });
+    const collector = this.botmsg.createReactionCollector({ filter: filter, time: time });
 
     collector.on('collect', async (reaction, user) => {
-      if(!reaction.emoji.name)
+      if (!reaction.emoji.name)
         return;
       collector.resetTimer(); //Reset timer everytime a reaction is used.
 
@@ -145,13 +257,13 @@ export class CoursesMenu {
         break;
       case this.eBack:
         collector.stop();
-        this.coursesMenu();
+        //this.coursesMenu();
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
         const modulePage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl);
-        if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
-        this.botmsg.edit({ embeds: [modulePage]});
+        if (modulePage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
+        this.botmsg.edit({ embeds: [modulePage] });
       }
     });
 
@@ -172,13 +284,13 @@ export class CoursesMenu {
     const itemReactions = [this.ePrev].concat(this.eNext).concat(this.eBack);
 
     const courses = await CanvasService.getCourses(this.msg.author.id);
-    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+    if (courses === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
     const modules = await CanvasService.getModules(this.msg.author.id, courses[courseNr - 1].id);
-    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
+    if (modules === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
 
     const time = 60000; //=1 minute
     const filter = (reaction: MessageReaction, user: { id: string; }) => {
-      if(!reaction.emoji.name)
+      if (!reaction.emoji.name)
         return false;
       return itemReactions.includes(reaction.emoji.name) && user.id === this.msg.author.id;
     };
@@ -186,12 +298,12 @@ export class CoursesMenu {
     // Logic
     this.botmsg.edit(''); // Clear collector end message
     const itemPage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl, moduleNr);
-    if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
-    this.botmsg.edit({ embeds: [itemPage]});
+    if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
+    this.botmsg.edit({ embeds: [itemPage] });
     //quickAddReactions(botmsg, botmsg.client, itemReactions);
     this.botmsg.react(this.eBack);
 
-    const collector = this.botmsg.createReactionCollector( {filter: filter, time: time });
+    const collector = this.botmsg.createReactionCollector({ filter: filter, time: time });
 
     collector.on('collect', async (reaction, user) => {
       collector.resetTimer(); //Reset timer everytime a reaction is used.
@@ -216,8 +328,8 @@ export class CoursesMenu {
 
       if (oldPage !== page) { //Only edit if it's a different page.
         const itemPage = await getModulesPage(this.msg.author.id, courses, modules, page, perPage, courseNr, this.canvasUrl, moduleNr);
-        if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed]}); return; }
-        this.botmsg.edit({ embeds: [itemPage]});
+        if (itemPage === undefined) { this.botmsg.edit(''); this.botmsg.edit({ embeds: [this.undefinedTokenEmbed] }); return; }
+        this.botmsg.edit({ embeds: [itemPage] });
       }
     });
 
@@ -252,7 +364,7 @@ async function quickAddReactions(msg: Message, client: Client, emotes: string[],
   }
 }
 
-function getCoursePage(courses: CanvasCourse[], page: number, perPage: number, canvasUrl: string): MessageEmbed {
+export function getCoursePage(courses: CanvasCourse[], page: number, perPage: number, canvasUrl: string): MessageEmbed {
   const embed: MessageEmbed = new MessageEmbed({
     'title': 'All your courses!',
     'description': '`Nr` Course name',
@@ -273,15 +385,15 @@ function getCoursePage(courses: CanvasCourse[], page: number, perPage: number, c
 }
 
 async function getModulesPage(discordUserID: string, courses: CanvasCourse[], modules: CanvasModule[], page: number, perPage: number, courseNr: number, canvasUrl: string, moduleNr?: number): Promise<MessageEmbed | undefined> {
-  const courseID = courses[courseNr - 1].id;
-  const courseName = courses[courseNr - 1].name;
+  const courseID = courses[courseNr].id;
+  const courseName = courses[courseNr].name;
   let count = 0;
 
   if (typeof moduleNr === 'undefined') { //All modules of course
     const embed: MessageEmbed = new MessageEmbed({
       'title': `Modules for ${courseName}`,
       'description': '`Nr` Module name',
-      'color': 'EF4A25', //Canvas color pallete
+      'color': '#EF4A25', //Canvas color pallete
       'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
       'footer': { text: 'Use !modules ' + courseNr.toString() + ' <Nr> for items in a module' }
     });
@@ -304,7 +416,7 @@ async function getModulesPage(discordUserID: string, courses: CanvasCourse[], mo
     const embed: MessageEmbed = new MessageEmbed({
       'title': 'Module ' + moduleByID.name,
       'description': items.map(i => `[${i.title}](${i.html_url})`).join('\n'),
-      'color': 'EF4A25',
+      'color': '#EF4A25',
       'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' }
     });
 

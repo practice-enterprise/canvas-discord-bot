@@ -1,4 +1,4 @@
-import { Interaction, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { ButtonInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
@@ -7,7 +7,7 @@ import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
-import { CoursesMenu } from './util/canvas-courses-menu';
+import { CoursesMenu, getCoursePage, MenuCourses } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
@@ -144,7 +144,7 @@ export const commands: Command[] = [
     name: 'ping',
     category: 'ping',
     description: 'Play the most mundane ping pong ever with the bot.',
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
+    async response(interaction: Interaction): Promise<void> {
       if (!interaction.isCommand())
         return;
       interaction.reply(`Pong! :ping_pong: \`${Date.now() - interaction.createdTimestamp} ms | API: ${interaction.client.ws.ping} ms\``);
@@ -156,7 +156,7 @@ export const commands: Command[] = [
     description: 'Rolls a die or dice.',
     options: [{ required: true, type: 4, name: 'faces', description: 'default dice have 6 faces (1-6)' },
     { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
+    async response(interaction: Interaction): Promise<void> {
       if (!interaction.isCommand() || !this.options)
         return;
       let times = interaction.options.getInteger(this.options[1].name);
@@ -191,8 +191,8 @@ export const commands: Command[] = [
     name: 'coinflip',
     category: 'misc',
     description: 'Heads or tails?',
-    options: [{ required: false, type: 4, name: 'pick', description: 'from 0 to 6 for example', choices: [{ name: 'heads', value: 1 }, { name: 'tails', value: 0 }] }],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<void> {
+    options: [{ required: false, type: 4, name: 'pick', description: 'which side of the coin, stupid', choices: [{ name: 'heads', value: 1 }, { name: 'tails', value: 0 }] }],
+    async response(interaction: Interaction): Promise<void> {
       if (!interaction.isCommand() || !this.options)
         return;
       const flip = Math.round(Math.random());
@@ -315,42 +315,32 @@ export const commands: Command[] = [
 
       return EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', url);
     }
-  },
-  { // courses menu command
+  },*/
+  { // courses menu command TODO fix variables
     name: 'courses',
     category: 'courses',
     description: 'Lists your courses, modules and items with controls. Server only.',
-    aliases: [],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
+    async response(interaction: Interaction): Promise<void> {
+      if (!interaction.isCommand()) {
+        return;
       }
-      if (!interaction.isCommand()) return 'not a command';
-      const botmsg = await interaction.reply({ embeds: [new MessageEmbed({ title: ':information_source: Loading courses...' })] });
-      if (guildConfig == null || guildConfig.canvasInstanceID == null) {
-        return EmbedBuilder.error('No Canvas instance ID defined.', 'Contact your administator', 'Couldn\'t load courses!');
+      const courses = await CanvasService.getCourses(interaction.user.id);
+      if (courses === undefined) {
+        interaction.reply({
+          embeds: [new MessageEmbed({
+            color: '#F04747',
+            title: ':warning: Can\'t fetch courses',
+            description: 'If you\'re not logged in, please do so for this command to work.\nManual canvas tokens might not be valid anymore.',
+            footer: { text: 'Error: invalid token' }
+          })]
+        }); return;
       }
-      const canvasUrl = (await CanvasService.getInstanceForId(guildConfig.canvasInstanceID)).endpoint;
-      new CoursesMenu(botmsg, msg, canvasUrl).coursesMenu();
+      const instanceId = await CanvasService.getInstanceId(interaction.user.id);
+      if (!instanceId)
+        return;
+      const endpoint = (await CanvasService.getInstanceForId(instanceId));
+      new MenuCourses(interaction, courses, endpoint.endpoint);
+
     }
-  },
-  { // modules
-    name: 'modules',
-    category: 'modules',
-    description: 'Updates all modules to true. Server admin only.',
-    aliases: [],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
-      }
-      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true))) {
-        return EmbedBuilder.error('No admin permissions!');
-      }
-      const res = [];
-      for (const key in (await GuildService.updateModules(guildConfig.id))) {
-        res.push(key);
-      }
-      return EmbedBuilder.buildList(Colors.info, 'modules', res, 'Updates all modules to true. List of modules:');
-    }
-  }*/
+  }
 ];

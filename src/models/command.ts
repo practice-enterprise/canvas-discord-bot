@@ -7,5 +7,5 @@ export interface Command {
   category: string,
   description: string;
   options?: ApplicationCommandOptionData[];
-  response: /*Response |*/ ((interaction: Interaction, guildConfig: GuildConfig | undefined) => PromiseLike<void>)
+  response: /*Response |*/ ((interaction: Interaction) => PromiseLike<void>)
 }
