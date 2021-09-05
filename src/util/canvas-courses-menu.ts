@@ -19,7 +19,7 @@ export class MenuCourses {
 
   readonly actionRowNav = new MessageActionRow({ components: this.buttonsNav });
   readonly actionRowSelect = new MessageActionRow({ components: this.buttonsSelect });
-  readonly newMenu = 'newMenu'; //easy access for the reason to stop a collector
+  readonly newMenu = 'newMenu'; //easy access for the reason to stop a collector reason when a new menu gets created from courses to modules
   interaction: CommandInteraction;
   courses: CanvasCourse[];
   perPage = this.buttonsSelect.length;
@@ -71,31 +71,25 @@ export class MenuCourses {
     collector.on('collect', async i => {
       const oldPage = this.page;
       switch (i.customId) {
-      case this.buttonsNav[0].customId:
-        if (this.page > 0)
-          this.page--;
-        break;
-      case this.buttonsNav[1].customId:
-        if (this.page < (this.courses.length / this.perPage) - 1)
-          this.page++;
-        break;
-      default:
-        !Number.isNaN(Number.parseInt(i.customId)) ? courseNr = this.perPage * this.page + Number.parseInt(i.customId) - 1 : courseNr = -1;
-        console.log(courseNr);
-        if (courseNr <= this.courses.length && courseNr >= 0) {
-          collector.stop(this.newMenu);
-          this.modulesCollect(i, courseNr);
-          console.log('activate modules');
-          return;
-        }
-        break;
+        case this.buttonsNav[0].customId:
+          if (this.page > 0)
+            this.page--;
+          break;
+        case this.buttonsNav[1].customId:
+          if (this.page < (this.courses.length / this.perPage) - 1)
+            this.page++;
+          break;
+        default:
+          !Number.isNaN(Number.parseInt(i.customId)) ? courseNr = this.perPage * this.page + Number.parseInt(i.customId) - 1 : courseNr = -1;
+          if (courseNr <= this.courses.length && courseNr >= 0) {
+            collector.stop(this.newMenu);
+            this.modulesCollect(i, courseNr);
+            return;
+          }
+          break;
       }
       if (oldPage !== this.page) { //Only edit if it's a different page.
-        console.log('edit');
-        console.log(oldPage);
-        console.log(this.page);
         i.update({ embeds: [getCoursePage(this.courses, this.page, this.perPage, this.canvasUrl)] });
-        console.log(i);
       }
     });
 
@@ -105,7 +99,7 @@ export class MenuCourses {
     });
   }
 
-  async modulesCollect(interactionButton: ButtonInteraction, courseNr: number) {
+  async modulesCollect(interactionButton: ButtonInteraction, courseNr: number): Promise<void> {
     const modules = await CanvasService.getModules(interactionButton.user.id, this.courses[courseNr].id);
     if (modules === undefined) {
       interactionButton.update({ embeds: [new MessageEmbed({ title: 'no modules' })] });
@@ -120,34 +114,36 @@ export class MenuCourses {
     if (!collector || !modulesPage) {
       return;
     }
-    interactionButton.update({ embeds: [modulesPage] });
-
+    if (modules.length == 0) {
+      interactionButton.update({ embeds: [new MessageEmbed({ title: 'no modules' })] });
+    } else {
+      interactionButton.update({ components: [this.actionRowNav, this.actionRowSelect], embeds: [modulesPage] });
+    }
     collector.on('collect', async (interaction) => {
-      console.log(interaction.message.interaction!.id);
-      console.log();
-
+      let moduleNr;
       const oldPage = this.page;
       switch (interaction.customId) {
-      case this.buttonsNav[0].customId:
-        if (this.page > 0)
-          this.page--;
-        break;
-      case this.buttonsNav[1].customId:
-        // TODO length of items
-        if (this.page < (modules.length / this.perPage) - 1)
-          this.page++;
-        break;
-      case this.buttonsNav[2].customId:
-        this.coursesCollect(interaction);
-        collector.stop(this.newMenu);
-        return;
+        case this.buttonsNav[0].customId:
+          if (this.page > 0)
+            this.page--;
+          break;
+        case this.buttonsNav[1].customId:
+          // TODO length of items
+          if (this.page < (modules.length / this.perPage) - 1)
+            this.page++;
+          break;
+        case this.buttonsNav[2].customId:
+          this.coursesCollect(interaction);
+          collector.stop(this.newMenu);
+          return;
 
-        /*default:
-          (await getModulesPage(this.interaction.user.id, 
-            this.courses, modules, this.page, this.perPage, courseNr, this.canvasUrl));
-          if (!modulesPage) {
+        default:
+          !Number.isNaN(Number.parseInt(interaction.customId)) ? moduleNr = this.perPage * this.page + Number.parseInt(interaction.customId) - 1 : moduleNr = -1;
+          if (courseNr <= this.courses.length && courseNr >= 0) {
+            collector.stop(this.newMenu);
+            this.itemsCollect(interaction, modules, moduleNr, courseNr);
             return;
-          }*/
+          }
       }
 
       if (oldPage !== this.page) { //Only edit if it's a different page.
@@ -160,7 +156,6 @@ export class MenuCourses {
     );
 
     collector.on('end', (collected, reason) => {
-      console.log(reason);
       if (reason != this.newMenu)
         this.end();
     });
@@ -172,6 +167,31 @@ export class MenuCourses {
     message.setFooter(`${message.footer?.text}. Command has expired!`);
     this.interaction.editReply({ components: [], embeds: [message] });
   }
+
+  async itemsCollect(interactionButton: ButtonInteraction, modules: CanvasModule[], moduleNr: number, courseNr: number) {
+    const itemPage = await getModulesPage(this.interaction.user.id, this.courses, modules, this.page, this.perPage, courseNr, this.canvasUrl, moduleNr);
+    if (!itemPage) {
+      return;
+    }
+    interactionButton.update({ components: [new MessageActionRow({ components: [this.buttonsNav[2]] })], embeds: [itemPage] });
+    const filter = (i: ButtonInteraction) => this.buttonsNav.concat(this.buttonsSelect).map(i => i.customId).includes(i.customId) && i.user.id == this.interaction.user.id && i.message.interaction!.id == this.interaction.id;
+    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: 15000 });
+    if(!collector){
+      return;
+    }
+    collector.on('collect', interaction => {
+      switch (interaction.customId) {
+        case this.buttonsNav[2].customId:
+          this.modulesCollect(interaction, courseNr);
+          collector.stop(this.newMenu);
+      }
+    });
+    collector.on('end', (collected, reason) => {
+      if (reason != this.newMenu)
+        this.end();
+    });
+  }
+
 
 }
 
@@ -247,16 +267,16 @@ export class CoursesMenu {
       }
 
       switch (reaction.emoji.name) {
-      case this.ePrev:
-        if (page > 0)
-          page--;
-        break;
-      case this.eNext:
-        if (page < (modules.length / perPage) - 1)
-          page++;
-        break;
-      case this.eBack:
-        collector.stop();
+        case this.ePrev:
+          if (page > 0)
+            page--;
+          break;
+        case this.eNext:
+          if (page < (modules.length / perPage) - 1)
+            page++;
+          break;
+        case this.eBack:
+          collector.stop();
         //this.coursesMenu();
       }
 
@@ -312,18 +332,18 @@ export class CoursesMenu {
       const oldPage = page;
 
       switch (reaction.emoji.name) {
-      case this.ePrev:
-        if (page > 0)
-          page--;
-        break;
-      case this.eNext:
-        // TODO length of items
-        if (page < (modules[moduleNr].items_count / perPage) - 1)
-          page++;
-        break;
-      case this.eBack:
-        collector.stop();
-        this.modulesMenu(courseNr);
+        case this.ePrev:
+          if (page > 0)
+            page--;
+          break;
+        case this.eNext:
+          // TODO length of items
+          if (page < (modules[moduleNr].items_count / perPage) - 1)
+            page++;
+          break;
+        case this.eBack:
+          collector.stop();
+          this.modulesMenu(courseNr);
       }
 
       if (oldPage !== page) { //Only edit if it's a different page.
@@ -408,7 +428,7 @@ async function getModulesPage(discordUserID: string, courses: CanvasCourse[], mo
     return embed;
   }
   else {
-    const moduleByID = modules[moduleNr - 1];
+    const moduleByID = modules[moduleNr];
     const items = await CanvasService.getModuleItems(discordUserID, moduleByID.items_url);
     if (items === undefined) {
       return undefined;
