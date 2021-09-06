@@ -7,7 +7,7 @@ import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
 import { NotesService } from './services/notes-service';
-import { CoursesMenu, getCoursePage, MenuCourses } from './util/canvas-courses-menu';
+import { MenuCourses } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
