@@ -1,4 +1,4 @@
-import { ButtonInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
@@ -144,7 +144,7 @@ export const commands: Command[] = [
     name: 'ping',
     category: 'ping',
     description: 'Play the most mundane ping pong ever with the bot.',
-    async response(interaction: Interaction): Promise<void> {
+    async response(interaction: CommandInteraction): Promise<void> {
       if (!interaction.isCommand())
         return;
       interaction.reply(`Pong! :ping_pong: \`${Date.now() - interaction.createdTimestamp} ms | API: ${interaction.client.ws.ping} ms\``);
@@ -156,8 +156,8 @@ export const commands: Command[] = [
     description: 'Rolls a die or dice.',
     options: [{ required: true, type: 4, name: 'faces', description: 'default dice have 6 faces (1-6)' },
     { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
-    async response(interaction: Interaction): Promise<void> {
-      if (!interaction.isCommand() || !this.options)
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options)
         return;
       let times = interaction.options.getInteger(this.options[1].name);
       if (!times)
@@ -192,8 +192,8 @@ export const commands: Command[] = [
     category: 'misc',
     description: 'Heads or tails?',
     options: [{ required: false, type: 4, name: 'pick', description: 'which side of the coin, stupid', choices: [{ name: 'heads', value: 1 }, { name: 'tails', value: 0 }] }],
-    async response(interaction: Interaction): Promise<void> {
-      if (!interaction.isCommand() || !this.options)
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options)
         return;
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed({
@@ -262,68 +262,77 @@ export const commands: Command[] = [
         { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
     }
   },*/
-  /*{ //timezone
-    name: 'timezone',
-    category: 'timezone',
-    description: 'Get/set your current time zone.',
-    aliases: ['time', 'clock', 'tz'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-      if (tokenizer.tokens[1] != undefined) {
-        if (tokenizer.tokens[1].content == 'get') {
-          const tz = (await ReminderService.getTimeZone(msg.author.id));
-          const time = DateTime.fromJSDate(new Date(), { zone: tz });
-          return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your current time zone!');
-        }
-        if (tokenizer.tokens[1].content == 'set') {
-          if (tokenizer.tokens[2]) {
-            let tz = timeZones[parseInt(tokenizer.tokens[2].content) - 1];
-            if (!tz) {
-              tz = tokenizer.tokens[2].content;
-            }
-            const time = DateTime.fromMillis(Date.now(), { zone: tz });
+  // { //timezone
+  //   name: 'timezone',
+  //   category: 'timezone',
+  //   description: 'Get/set your current time zone.',
+  //   options: [{ required: true, type: 3, name: 'timezone', description: 'write down an IANA time zone' }],
+  //   async response(interaction: Interaction): Promise<void> {
+  //     if (!interaction.isCommand() || !this.options)
+  //       return;
+  //     const zone = interaction.options.getString(this.options[0].name, true);
+  //     if (zone) {
+  //       /*if (tokenizer.tokens[1].content == 'get') {
+  //         const tz = (await ReminderService.getTimeZone(msg.author.id));
+  //         const time = DateTime.fromJSDate(new Date(), { zone: tz });
+  //         return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your current time zone!');
+  //       }*/
+  //       //if (tokenizer.tokens[1].content == 'set') {
+  //       //if (tokenizer.tokens[2]) {
+  //       /*let tz = timeZones[parseInt(tokenizer.tokens[2].content) - 1];
+  //       if (!tz) {
+  //         tz = tokenizer.tokens[2].content;
+  //       }
+  //       */
+  //       const time = DateTime.fromMillis(Date.now(), { zone: zone });
+  //       if (time.isValid) {
+  //         console.log('valid zone');
 
-            if (time.isValid) {
-              await ReminderService.setTimeZone(msg.author.id, tz);
-              return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!');
-            }
-          }
-          return EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
-        }
-      }
-      return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
-    }
-  },*/
-  /*{ // wiki
+  //         await ReminderService.setTimeZone(interaction.user.id, zone);
+  //         interaction.reply({embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')]});
+  //         return;
+  //       }
+  //       //}
+  //       //EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
+  //       //}
+  //     }
+  //     //return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
+  //     interaction.reply({embeds: [EmbedBuilder.error('Setting timezone failed!', undefined, 'Timezone error')]});
+  //   }
+  // },
+  { // wiki TODO test
     name: 'wiki',
     category: 'wiki',
     description: 'Search on the Thomas More wiki.',
-    aliases: ['wk'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
+    options: [{ required: false, type: 3, name: 'search', description: 'What are you looking for?' }],
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options)
+        return;
       const url = (await ConfigService.get()).wiki;
-      const query = tokenizer.body();
-      if (query.length == 0)
-        return url;
+      const query = interaction.options.getString(this.options[0].name);
+      if (!query) {
+        interaction.reply(url);
+        return;
+      }
 
-      const wikiContent = await WikiService.wiki(query);
-
+      const wikiContent = await WikiService.wiki(query).catch(() => console.log('wiki down?'));
+      if (!wikiContent) {
+        interaction.reply({ embeds: [EmbedBuilder.error('Wiki might be down', undefined, 'WIKI')] });
+        return;
+      }
       const results: Record<string, string> = {};
       for (const result of wikiContent.data.pages.search.results) {
         results[`[${result.title}](${url}/${result.locale}/${result.path}) \`${result.path}\``] = result.description;
       }
 
-      return EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', url);
+      interaction.reply({ embeds: [EmbedBuilder.buildList(Colors.info, 'Wiki', results, `Search results for \`${query}\`.`, '', url)] });
     }
-  },*/
+  },
   { // courses menu command TODO fix variables
     name: 'courses',
     category: 'courses',
     description: 'Lists your courses, modules and items with controls. Server only.',
-    async response(interaction: Interaction): Promise<void> {
-      if (!interaction.isCommand()) {
-        return;
-      }
+    async response(interaction: CommandInteraction): Promise<void> {
       const courses = await CanvasService.getCourses(interaction.user.id);
       if (courses === undefined) {
         interaction.reply({
