@@ -5,9 +5,9 @@ import { EmbedBuilder } from './embed-builder';
 
 export class MenuCourses {
   readonly buttonsNav: MessageButton[] = [
-    new MessageButton({ style: 'PRIMARY', label: 'prev', customId: 'prev' }),
-    new MessageButton({ style: 'PRIMARY', label: 'next', customId: 'next' }),
-    new MessageButton({ style: 'PRIMARY', label: 'stop', customId: 'back' })
+    new MessageButton({ style: 'SUCCESS', label: '< Prev', customId: 'prev' }),
+    new MessageButton({ style: 'SUCCESS', label: 'Next >', customId: 'next' }),
+    new MessageButton({ style: 'DANGER', label: 'Back', customId: 'back' })
   ];
   readonly buttonsSelect: MessageButton[] = [
     new MessageButton({ style: 'PRIMARY', label: '1', customId: '1' }),
@@ -20,6 +20,8 @@ export class MenuCourses {
   readonly actionRowNav = new MessageActionRow({ components: this.buttonsNav });
   readonly actionRowSelect = new MessageActionRow({ components: this.buttonsSelect });
   readonly newMenu = 'newMenu'; //easy access for the reason to stop a collector reason when a new menu gets created from courses to modules
+  readonly expireTime = 30000
+
   interaction: CommandInteraction;
   courses: CanvasCourse[];
   perPage = this.buttonsSelect.length;
@@ -65,7 +67,7 @@ export class MenuCourses {
   }
   coursesCollect(interactionButton?: ButtonInteraction): void {
     if (this.actionRowNav.components[2].type == 'BUTTON')
-      this.actionRowNav.components[2].setLabel('stop');
+      this.actionRowNav.components[2].setLabel('Stop');
     if (interactionButton) {
       this.actionRowNav.components[0].disabled = true;
       if (this.courses.length / this.perPage > 1)
@@ -76,7 +78,7 @@ export class MenuCourses {
     }
 
     const filter = (i: ButtonInteraction) => this.buttonsNav.concat(this.buttonsSelect).map(i => i.customId).includes(i.customId) && i.user.id == this.interaction.user.id && i.message.interaction!.id == this.interaction.id;
-    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: 60000 });
+    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: this.expireTime });
     let courseNr;
     if (!collector) return;
     collector.on('collect', async i => {
@@ -110,7 +112,7 @@ export class MenuCourses {
         !Number.isNaN(Number.parseInt(i.customId)) ? courseNr = this.perPage * this.page + Number.parseInt(i.customId) - 1 : courseNr = -1;
         if (courseNr <= this.courses.length && courseNr >= 0) {
           if (this.actionRowNav.components[2].type == 'BUTTON')
-            this.actionRowNav.components[2].setLabel('back');
+            this.actionRowNav.components[2].setLabel('Back');
           collector.stop(this.newMenu);
           this.modulesCollect(i, courseNr);
           return;
@@ -140,7 +142,7 @@ export class MenuCourses {
     }
 
     const filter = (i: ButtonInteraction) => this.buttonsNav.concat(this.buttonsSelect).map(i => i.customId).includes(i.customId) && i.user.id == this.interaction.user.id && i.message.interaction!.id == this.interaction.id;
-    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: 60000 });
+    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: this.expireTime });
 
     const modulesPage = (await getModulesPage(this.interaction.user.id,
       this.courses, modules, this.page = 0, this.perPage, courseNr, this.canvasUrl));
@@ -220,7 +222,7 @@ export class MenuCourses {
   }
   async end() {
     const message = (await this.interaction.fetchReply()).embeds[0] as MessageEmbed;
-    message.setFooter(`${message.footer?.text}. Command has expired!`);
+    message.setFooter('Command has expired');
     this.interaction.editReply({ components: [], embeds: [message] });
   }
 
@@ -231,7 +233,7 @@ export class MenuCourses {
     }
     interactionButton.update({ components: [new MessageActionRow({ components: [this.buttonsNav[2]] })], embeds: [itemPage] });
     const filter = (i: ButtonInteraction) => this.buttonsNav.concat(this.buttonsSelect).map(i => i.customId).includes(i.customId) && i.user.id == this.interaction.user.id && i.message.interaction!.id == this.interaction.id;
-    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: 15000 });
+    const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: this.expireTime });
     if (!collector) {
       return;
     }
