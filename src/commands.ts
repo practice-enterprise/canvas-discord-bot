@@ -6,7 +6,7 @@ import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
-import { NotesService } from './services/notes-service';
+import { NotesService } from './services/slash-notes-service';
 import { MenuCourses } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
@@ -155,7 +155,7 @@ export const commands: Command[] = [
     category: 'misc',
     description: 'Rolls a die or dice.',
     options: [{ required: true, type: 4, name: 'faces', description: 'default dice have 6 faces (1-6)' },
-    { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
+      { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
         return;
@@ -191,10 +191,11 @@ export const commands: Command[] = [
     name: 'coinflip',
     category: 'misc',
     description: 'Heads or tails?',
-    options: [{ required: false, type: 4, name: 'pick', description: 'which side of the coin, stupid', choices: [{ name: 'heads', value: 1 }, { name: 'tails', value: 0 }] }],
+    options: [{ required: false, type: 4, name: 'coinside', description: 'Which side of the coin you wanna bet for?', choices: [{ name: 'Heads', value: 1 }, { name: 'Tails', value: 0 }] }],
     async response(interaction: CommandInteraction): Promise<void> {
-      if (!this.options)
+      if (!this.options) {
         return;
+      }
       const flip = Math.round(Math.random());
       const embed = new MessageEmbed({
         color: Colors.warning
@@ -228,15 +229,30 @@ export const commands: Command[] = [
       }
     }
   },*/
-  /*{ // notes
+  { // notes
     name: 'notes',
     category: 'notes',
     description: 'Set or get notes for channels and DM\'s.',
-    aliases: ['note'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
+    options: [
+      { required: false, type: 1, name: 'view', description: 'View notes of a channel', options: [
+        { required: false, name: 'channel',  type: 7,  description: 'Choose which channel to get notes from'}
+      ] },
+      { required: false, type: 1, name: 'add', description: 'Add a note to a channel', options: [
+        {required: true, type: 3, name: 'note', description: 'Content of note'},
+        {required: false, type: 7, name: 'channel', description: 'Choose which channel to add a note to'}
+      ] },
+      { required: false, type: 1, name: 'remove', description: 'Remove a note from a channel', options: [
+        {required: true, type: 4, name: 'note', description: 'Index of note to remove'},
+        {required: false, type: 7, name: 'channel', description: 'Choose which channel to remove a note from'}
+      ] }
+    ],
+    async response(interaction: CommandInteraction): Promise<void> {
+      // return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
+      console.log(interaction.options);
+      await new NotesService(interaction).response();
+      // interaction.reply('beep');
     }
-  },*/
+  },
   /*{ // reminder
     name: 'reminder',
     category: 'reminders',
