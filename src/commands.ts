@@ -6,7 +6,7 @@ import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
-import { NotesService } from './services/slash-notes-service';
+import { NotesService } from './services/notes-service';
 import { MenuCourses } from './util/canvas-courses-menu';
 import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
@@ -248,7 +248,6 @@ export const commands: Command[] = [
     ],
     async response(interaction: CommandInteraction): Promise<void> {
       // return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
-      console.log(interaction.options);
       await new NotesService(interaction).response();
       // interaction.reply('beep');
     }
