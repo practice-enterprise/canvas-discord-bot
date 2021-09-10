@@ -89,35 +89,35 @@ export class MenuCourses {
       const oldPage = this.page;
       let disabled;
       switch (i.customId) {
-      case this.buttonsNav[0].customId:
-        if (this.page == 1) {
-          this.actionRowNav.components[0].disabled = true;
+        case this.buttonsNav[0].customId:
+          if (this.page == 1) {
+            this.actionRowNav.components[0].disabled = true;
 
-        }
-        this.page--;
-        break;
-      case this.buttonsNav[1].customId:
-        this.page++;
-        if (this.page > (this.courses.length / this.perPage) - 1) {
-          this.actionRowNav.components[1].disabled = true;
-          disabled = ((this.courses.length / this.perPage) % 1) * this.perPage - .5;
-          for (let i = this.perPage - 1; i > disabled; i--)
-            this.actionRowSelect.components[i].disabled = true;
-        }
-        break;
-      case this.buttonsNav[2].customId:
-        collector.stop();
-        break;
-      default:
-        !Number.isNaN(Number.parseInt(i.customId)) ? courseNr = this.perPage * this.page + Number.parseInt(i.customId) - 1 : courseNr = -1;
-        if (courseNr <= this.courses.length && courseNr >= 0) {
-          if (this.actionRowNav.components[2].type == 'BUTTON')
-            this.actionRowNav.components[2].setLabel('Back');
-          collector.stop(this.newMenu);
-          this.modulesCollect(i, courseNr);
-          return;
-        }
-        break;
+          }
+          this.page--;
+          break;
+        case this.buttonsNav[1].customId:
+          this.page++;
+          if (this.page > (this.courses.length / this.perPage) - 1) {
+            this.actionRowNav.components[1].disabled = true;
+            disabled = ((this.courses.length / this.perPage) % 1) * this.perPage - .5;
+            for (let i = this.perPage - 1; i > disabled; i--)
+              this.actionRowSelect.components[i].disabled = true;
+          }
+          break;
+        case this.buttonsNav[2].customId:
+          collector.stop();
+          break;
+        default:
+          !Number.isNaN(Number.parseInt(i.customId)) ? courseNr = this.perPage * this.page + Number.parseInt(i.customId) - 1 : courseNr = -1;
+          if (courseNr <= this.courses.length && courseNr >= 0) {
+            if (this.actionRowNav.components[2].type == 'BUTTON')
+              this.actionRowNav.components[2].setLabel('Back');
+            collector.stop(this.newMenu);
+            this.modulesCollect(i, courseNr);
+            return;
+          }
+          break;
       }
       if (oldPage !== this.page) { //Only edit if it's a different page.
         i.update({ components: [this.actionRowNav, this.actionRowSelect], embeds: [getCoursePage(this.courses, this.page, this.perPage, this.canvasUrl)] });
@@ -169,35 +169,35 @@ export class MenuCourses {
       let disabled;
       const oldPage = this.page;
       switch (interaction.customId) {
-      case this.buttonsNav[0].customId:
-        if (this.page == 1) {
-          this.actionRowNav.components[0].disabled = true;
-        }
-        this.page--;
-        break;
-      case this.buttonsNav[1].customId:
-        this.page++;
-        if (this.page > (modules.length / this.perPage) - 1) {
-          this.actionRowNav.components[1].disabled = true;
-          disabled = ((modules.length / this.perPage) % 1) * this.perPage - .5;
-          for (let i = this.perPage - 1; i > disabled; i--)
-            this.actionRowSelect.components[i].disabled = true;        
-        }
-        break;
-      case this.buttonsNav[2].customId:
-        this.page = 0;
-        this.coursesCollect(interaction);
-        collector.stop(this.newMenu);
-        return;
-
-      default:
-        !Number.isNaN(Number.parseInt(interaction.customId)) ? moduleNr = this.perPage * this.page + Number.parseInt(interaction.customId) - 1 : moduleNr = -1;
-        if (courseNr <= this.courses.length && courseNr >= 0) {
-          collector.stop(this.newMenu);
+        case this.buttonsNav[0].customId:
+          if (this.page == 1) {
+            this.actionRowNav.components[0].disabled = true;
+          }
+          this.page--;
+          break;
+        case this.buttonsNav[1].customId:
+          this.page++;
+          if (this.page > (modules.length / this.perPage) - 1) {
+            this.actionRowNav.components[1].disabled = true;
+            disabled = ((modules.length / this.perPage) % 1) * this.perPage - .5;
+            for (let i = this.perPage - 1; i > disabled; i--)
+              this.actionRowSelect.components[i].disabled = true;        
+          }
+          break;
+        case this.buttonsNav[2].customId:
           this.page = 0;
-          this.itemsCollect(interaction, modules, moduleNr, courseNr);
+          this.coursesCollect(interaction);
+          collector.stop(this.newMenu);
           return;
-        }
+
+        default:
+          !Number.isNaN(Number.parseInt(interaction.customId)) ? moduleNr = this.perPage * this.page + Number.parseInt(interaction.customId) - 1 : moduleNr = -1;
+          if (courseNr <= this.courses.length && courseNr >= 0) {
+            collector.stop(this.newMenu);
+            this.page = 0;
+            this.itemsCollect(interaction, modules, moduleNr, courseNr);
+            return;
+          }
       }
 
       if (oldPage !== this.page) { //Only edit if it's a different page.
@@ -238,8 +238,7 @@ export class MenuCourses {
       return;
     }
     collector.on('collect', interaction => {
-      switch (interaction.customId) {
-      case this.buttonsNav[2].customId:
+      if (interaction.customId == this.buttonsNav[2].customId) {
         this.modulesCollect(interaction, courseNr);
         collector.stop(this.newMenu);
       }
