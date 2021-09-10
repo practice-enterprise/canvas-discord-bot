@@ -12,6 +12,7 @@ import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
 import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
+import { Coinflip, DiceRoll } from './games';
 
 export const defaultPrefix = '!';
 
@@ -154,37 +155,19 @@ export const commands: Command[] = [
     name: 'roll',
     category: 'misc',
     description: 'Rolls a die or dice.',
-    options: [{ required: true, type: 4, name: 'faces', description: 'default dice have 6 faces (1-6)' },
-      { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
+    options: [{ required: false, type: 4, name: 'faces', description: 'Amount of faces for your dice/die (default 6)' },
+      { required: false, type: 4, name: 'amount', description: 'Amount of dice/die (default 1)' }],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
         return;
       let times = interaction.options.getInteger(this.options[1].name);
+      let faces = interaction.options.getInteger(this.options[0].name);
       if (!times)
         times = 1;
-      const dice = [];
-      for (let i = 0; i < times; i++) {
-        dice.push(Math.floor(Math.random() * interaction.options.getInteger(this.options[0].name, true) + 1));
-      }
+      if (!faces)
+        faces = 6;
 
-      if (times === 1) {
-        interaction.reply({
-          embeds: [new MessageEmbed({
-            title: `${interaction.options.getInteger(this.options[0].name)} faces :game_die:`,
-            description: `You rolled a ${dice[0]}.`,
-            color: Colors.error
-          })]
-        });
-      }
-      else {
-        interaction.reply({
-          embeds: [new MessageEmbed({
-            title: `${interaction.options.getInteger(this.options[0].name)} faces ${interaction.options.getInteger(this.options[1].name)} times :game_die:`,
-            description: `You rolled: ${dice.join(' + ')}\nTotal: ${dice.reduce((p, c) => p + c, 0)}`,
-            color: Colors.error
-          })]
-        });
-      }
+      interaction.reply({embeds: [new DiceRoll().roll(times, faces)]});
     }
   },
   { // coinflip
@@ -196,13 +179,19 @@ export const commands: Command[] = [
       if (!this.options) {
         return;
       }
-      const flip = Math.round(Math.random());
-      const embed = new MessageEmbed({
-        color: Colors.warning
-      }).setTitle(flip ? ':coin: Heads!' : ':coin: Tails!');
-      if (interaction.options.getInteger(this.options[0].name) != null)
-        flip == interaction.options.getInteger(this.options[0].name) ? (embed.setDescription('You\'ve won! :tada:')) : (embed.setDescription('You\'ve lost...'));
-      interaction.reply({ embeds: [embed] });
+      interaction.reply({ embeds: [new Coinflip().flip(interaction.options.getInteger(this.options[0].name))] });
+    }
+  },
+  { // rps
+    name: 'rps',
+    category: 'misc',
+    description: 'Rock paper scissors',
+    options: [{ required: true, type: 6, name: 'player', description: 'Player you want to challenge'}],
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options) {
+        return;
+      }
+      interaction.reply({ embeds: [new Coinflip().flip(interaction.options.getInteger(this.options[0].name))] });
     }
   },
   /*{ // prefix
