@@ -12,7 +12,7 @@ import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
 import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
-import { Coinflip, DiceRoll } from './games';
+import { Challenge, Coinflip, DiceRoll, RockPaperScissors } from './games';
 
 export const defaultPrefix = '!';
 
@@ -191,7 +191,7 @@ export const commands: Command[] = [
       if (!this.options) {
         return;
       }
-      interaction.reply({ embeds: [new Coinflip().flip(interaction.options.getInteger(this.options[0].name))] });
+      new RockPaperScissors(interaction);
     }
   },
   /*{ // prefix
