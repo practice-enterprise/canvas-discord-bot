@@ -155,7 +155,7 @@ export const commands: Command[] = [
     category: 'misc',
     description: 'Rolls a die or dice.',
     options: [{ required: true, type: 4, name: 'faces', description: 'default dice have 6 faces (1-6)' },
-      { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
+    { required: false, type: 4, name: 'amount', description: 'amount of these dice default: 1' }],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
         return;
@@ -234,17 +234,23 @@ export const commands: Command[] = [
     category: 'notes',
     description: 'Set or get notes for channels and DM\'s.',
     options: [
-      { required: false, type: 1, name: 'view', description: 'View notes of a channel', options: [
-        { required: false, name: 'channel',  type: 7,  description: 'Choose which channel to get notes from'}
-      ] },
-      { required: false, type: 1, name: 'add', description: 'Add a note to a channel', options: [
-        {required: true, type: 3, name: 'note', description: 'Content of note'},
-        {required: false, type: 7, name: 'channel', description: 'Choose which channel to add a note to'}
-      ] },
-      { required: false, type: 1, name: 'remove', description: 'Remove a note from a channel', options: [
-        {required: true, type: 4, name: 'note', description: 'Index of note to remove'},
-        {required: false, type: 7, name: 'channel', description: 'Choose which channel to remove a note from'}
-      ] }
+      {
+        required: false, type: 1, name: 'view', description: 'View notes of a channel', options: [
+          { required: false, name: 'channel', type: 7, description: 'Choose which channel to get notes from' }
+        ]
+      },
+      {
+        required: false, type: 1, name: 'add', description: 'Add a note to a channel', options: [
+          { required: true, type: 3, name: 'note', description: 'Content of note' },
+          { required: false, type: 7, name: 'channel', description: 'Choose which channel to add a note to' }
+        ]
+      },
+      {
+        required: false, type: 1, name: 'remove', description: 'Remove a note from a channel', options: [
+          { required: true, type: 4, name: 'note', description: 'Index of note to remove' },
+          { required: false, type: 7, name: 'channel', description: 'Choose which channel to remove a note from' }
+        ]
+      }
     ],
     async response(interaction: CommandInteraction): Promise<void> {
       // return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
@@ -252,38 +258,159 @@ export const commands: Command[] = [
       // interaction.reply('beep');
     }
   },
-  /*{ // reminder
+  { // reminder TODO test properly
     name: 'reminder',
     category: 'reminders',
     description: 'Set reminders.',
-    aliases: ['remindme', 'remind', 'setreminder'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-      if (tokenizer.tokens[1]) {
-        if (tokenizer.tokens[1].content == 'get' || tokenizer.tokens[1].content == 'list') {
-          return ReminderService.getCommand(msg.author.id);
+    options: [
+      { type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'get', description: 'get your current reminders' },
+      {
+        type: ApplicationCommandOptionTypes.SUB_COMMAND_GROUP, name: 'set', description: 'Set a reminder. not specified = current', options: [
+          {
+            type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'absolute', description: 'pick the time and date absolute', options: [
+              { type: ApplicationCommandOptionTypes.STRING, name: 'message', description: 'the message for the reminder' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'day', description: 'day of the month' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'month', description: 'the month in numbers' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'year', description: 'the year of the reminder' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'hour', description: 'the hour of the reminder' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'minute', description: 'the minute of the reminder' }
+            ]
+          }, {
+            type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'relative', description: 'pick the time and date a certain time from now', options: [
+              { type: ApplicationCommandOptionTypes.STRING, name: 'message', description: 'the message for the reminder' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'minute', description: 'minute(s) from now' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'hour', description: 'hour(s) from now' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'day', description: 'days from now' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'month', description: 'months from now' },
+              { type: ApplicationCommandOptionTypes.INTEGER, name: 'year', description: 'year(s) from now' }
+            ]
+          }
+        ]
+      },
+      { type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'delete', description: 'delete a current reminder, just use to see nrs', options: [
+        { type: ApplicationCommandOptionTypes.INTEGER, name: 'number', description: 'the number of the reminder you want to delete' }] }],
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options)
+        return;
+      //console.log(interaction.options);
+
+      const subCommand = interaction.options.getSubcommand(true);
+      //get
+      if (subCommand == this.options[0].name) {
+        interaction.reply({ embeds: [await ReminderService.getCommand(interaction.user.id)] });
+        return;
+      }
+      //set
+      if (this.options[1].type == ApplicationCommandOptionTypes.SUB_COMMAND_GROUP && this.options[1].options) {
+
+        //const response = ReminderService.setCommand(tokenizer, msg.author.id, msg.guild?.id, msg.channel.id);
+        //absolute
+        if (subCommand == this.options[1].options[0].name && this.options[1].options[0].options) {
+          const options = this.options[1].options[0].options;
+          interaction.options.getInteger(options[1].name);
+          const now = DateTime.now();
+          let time = DateTime.fromObject({
+            day: interaction.options.getInteger(options[1].name) || now.day,
+            month: interaction.options.getInteger(options[2].name) || now.month,
+            year: interaction.options.getInteger(options[3].name) || now.year,
+            hour: interaction.options.getInteger(options[4].name) || now.hour,
+            minute: interaction.options.getInteger(options[5].name) || now.minute,
+            zone: 'UTC'
+          });
+          time = time.setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: true });
+
+          if (time.isValid) {
+            //DM reminder VS guild reminder -> TODO DM reminder
+            ReminderService.create({
+              content: interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`,
+              date: time.toISO(),
+              target: {
+                channel: interaction.channel?.id,
+                guild: interaction.guild!.id,
+                user: interaction.user.id
+              },
+            });
+            interaction.reply({ embeds: [EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`, 'changing your time zone won\'t change your reminders time')] });
+          } else {
+            interaction.reply('not valid');
+          }
+          return;
         }
-        if (tokenizer.tokens[1].content == 'delete' || tokenizer.tokens[1].content == 'remove') {
-          return ReminderService.deleteCommand(msg.author.id, tokenizer);
+        //relative
+        if (subCommand == this.options[1].options[1].name && this.options[1].options[1].options) {
+          const options = this.options[1].options[1].options;
+          let time = DateTime.now();
+
+          time = time.plus({
+            minute: interaction.options.getInteger(options[1].name) || undefined,
+            hour: interaction.options.getInteger(options[2].name) || undefined,
+            day: interaction.options.getInteger(options[3].name) || undefined,
+            month: interaction.options.getInteger(options[4].name) || undefined,
+            year: interaction.options.getInteger(options[5].name) || undefined,
+          });
+          console.log(time);
+
+          time = time.setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: true });
+          if (time.isValid) {
+            ReminderService.create({
+              content: interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`,
+              date: time.toISO(),
+              target: {
+                channel: interaction.channel?.id,
+                guild: interaction.guild!.id,
+                user: interaction.user.id
+              },
+            });
+            interaction.reply({ embeds: [EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`, 'changing your time zone won\'t change your reminders time')] });
+          } else {
+            interaction.reply('not valid');
+          }
+          return;
         }
-        if (tokenizer.tokens[2] && tokenizer.tokens[1].type == 'date' && tokenizer.tokens[2].type == 'time') {
-          const response = ReminderService.setCommand(tokenizer, msg.author.id, msg.guild?.id, msg.channel.id);
-          if (response) {
-            return response;
+        //return response;
+
+      }
+      //delete
+      if (subCommand == this.options[2].name && this.options[2].type == ApplicationCommandOptionTypes.SUB_COMMAND && this.options[2] && this.options[2].options) {
+
+        //ReminderService.deleteCommand(msg.author.id, tokenizer);
+
+        const reminders = await ReminderService.get(interaction.user.id);
+        if (!reminders) {
+          interaction.reply({ embeds: [EmbedBuilder.info('There are no more reminders set for you.', undefined, 'Reminders')] });
+          return;
+        }
+        let index = interaction.options.getInteger(this.options[2].options[0].name);
+        if (index) {
+          index--;
+          if (reminders[index]) {
+            ReminderService.delete(reminders[index]);
+            interaction.reply({ embeds: [EmbedBuilder.success('your reminder has been deleted')] });
+            return;
           }
         }
+        const results: Record<string, string> = {};
+        for (const r of reminders) {
+          results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy HH:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
+        }
+        interaction.reply({ embeds: [EmbedBuilder.buildList(Colors.info, 'Reminders', results)]});
       }
-      return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
-        { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
     }
-  },*/
+
+    //  EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
+    //   { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
+
+
+
+
+  },
   // { //timezone
   //   name: 'timezone',
   //   category: 'timezone',
   //   description: 'Get/set your current time zone.',
   //   options: [{ required: true, type: 3, name: 'timezone', description: 'write down an IANA time zone' }],
-  //   async response(interaction: Interaction): Promise<void> {
-  //     if (!interaction.isCommand() || !this.options)
+  //   async response(interaction: CommandInteraction): Promise<void> {
+  //     if (!this.options)
   //       return;
   //     const zone = interaction.options.getString(this.options[0].name, true);
   //     if (zone) {
@@ -304,7 +431,7 @@ export const commands: Command[] = [
   //         console.log('valid zone');
 
   //         await ReminderService.setTimeZone(interaction.user.id, zone);
-  //         interaction.reply({embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')]});
+  //         interaction.reply({ embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')] });
   //         return;
   //       }
   //       //}
@@ -312,7 +439,7 @@ export const commands: Command[] = [
   //       //}
   //     }
   //     //return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
-  //     interaction.reply({embeds: [EmbedBuilder.error('Setting timezone failed!', undefined, 'Timezone error')]});
+  //     interaction.reply({ embeds: [EmbedBuilder.error('Setting timezone failed!', undefined, 'Timezone error')] });
   //   }
   // },
   { // wiki TODO test

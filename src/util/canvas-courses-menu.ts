@@ -46,25 +46,6 @@ export class MenuCourses {
     }
   }
 
-  getCoursePage(page: number): MessageEmbed {
-    const embed: MessageEmbed = new MessageEmbed({
-      'title': 'All your courses!',
-      'description': '`Nr` Course name',
-      'color': '#EF4A25', //Canvas color pallete
-      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
-      'footer': { text: `Page ${page + 1}` }
-    });
-
-    let count = 0;
-    for (let i = page * this.perPage; i < (page + 1) * this.perPage && i < this.courses.length; i++) {
-      embed.setDescription(
-        embed.description + `\n\`${++count}.\` [${this.courses[i].name}](${this.canvasUrl}/courses/${this.courses[i].id}) `
-      );
-    }
-    embed.footer = { text: `Page ${page + 1}` };
-
-    return embed;
-  }
   coursesCollect(interactionButton?: ButtonInteraction): void {
     if (this.actionRowNav.components[2].type == 'BUTTON')
       this.actionRowNav.components[2].setLabel('Stop');
@@ -249,7 +230,25 @@ export class MenuCourses {
     });
   }
 
+  getCoursePage(page: number): MessageEmbed {
+    const embed: MessageEmbed = new MessageEmbed({
+      'title': 'All your courses!',
+      'description': '`Nr` Course name',
+      'color': '#EF4A25', //Canvas color pallete
+      'thumbnail': { url: 'https://pbs.twimg.com/profile_images/1132832989841428481/0Ei3pZ4d_400x400.png' },
+      'footer': { text: `Page ${page + 1}` }
+    });
 
+    let count = 0;
+    for (let i = page * this.perPage; i < (page + 1) * this.perPage && i < this.courses.length; i++) {
+      embed.setDescription(
+        embed.description + `\n\`${++count}.\` [${this.courses[i].name}](${this.canvasUrl}/courses/${this.courses[i].id}) `
+      );
+    }
+    embed.footer = { text: `Page ${page + 1}` };
+
+    return embed;
+  }
 }
 
 export function getCoursePage(courses: CanvasCourse[], page: number, perPage: number, canvasUrl: string): MessageEmbed {
