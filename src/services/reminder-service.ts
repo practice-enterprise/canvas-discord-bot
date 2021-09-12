@@ -39,7 +39,7 @@ export class ReminderService {
     try {
 
       (client.channels.resolve(preventExceed(reminder.target.channel)) as TextChannel)
-        .send({ content: preventExceed(reminder.content)});
+        .send({ content: preventExceed(reminder.content) });
     } catch (err) {
       console.error(err);
     } finally {
@@ -49,7 +49,7 @@ export class ReminderService {
 
   static sendUserReminder(reminder: UserReminder, client: Client): void {
     try {
-      client.users.resolve(reminder.target.user)?.send({ content: preventExceed(reminder.content)});
+      client.users.resolve(reminder.target.user)?.send({ content: preventExceed(reminder.content) });
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,7 +63,7 @@ export class ReminderService {
     if (typeof (data.message) === 'string') {
       user?.send({ content: preventExceed(data.message) });
     } else {
-      user?.send({ embeds: [new MessageEmbed(preventExceed(data.message))]});
+      user?.send({ embeds: [new MessageEmbed(preventExceed(data.message))] });
     }
     await this.updateLastAssignment(data.id, data.assignmentID);
   }
@@ -72,7 +72,7 @@ export class ReminderService {
     await Axios.request<void>({
       method: 'PUT',
       baseURL: process.env.API_URL,
-      url: `/reminders/${userID}/${lastAssignment}`,
+      url: `/reminders/lastAssignments/${userID}/${lastAssignment}`,
     });
   }
 

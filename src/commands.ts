@@ -1,4 +1,4 @@
-import { ButtonInteraction, CommandInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
@@ -14,7 +14,6 @@ import { CanvasService } from './services/canvas-service';
 import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
 
 export const defaultPrefix = '!';
-
 export const timeZones = ['Europe/Brussels', 'Australia/Melbourne', 'America/Detroit'];
 
 export const dateFormates = ['d/M/y h:m', 'd-M-y h:m'];
@@ -287,8 +286,10 @@ export const commands: Command[] = [
           }
         ]
       },
-      { type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'delete', description: 'delete a current reminder, just use to see nrs', options: [
-        { type: ApplicationCommandOptionTypes.INTEGER, name: 'number', description: 'the number of the reminder you want to delete' }] }],
+      {
+        type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'delete', description: 'delete a current reminder, just use to see nrs', options: [
+          { type: ApplicationCommandOptionTypes.INTEGER, name: 'number', description: 'the number of the reminder you want to delete' }]
+      }],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
         return;
@@ -308,7 +309,7 @@ export const commands: Command[] = [
         if (subCommand == this.options[1].options[0].name && this.options[1].options[0].options) {
           const options = this.options[1].options[0].options;
           interaction.options.getInteger(options[1].name);
-          const now = DateTime.now();
+          const now = DateTime.now().setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: false });
           let time = DateTime.fromObject({
             day: interaction.options.getInteger(options[1].name) || now.day,
             month: interaction.options.getInteger(options[2].name) || now.month,
@@ -339,7 +340,7 @@ export const commands: Command[] = [
         //relative
         if (subCommand == this.options[1].options[1].name && this.options[1].options[1].options) {
           const options = this.options[1].options[1].options;
-          let time = DateTime.now();
+          let time = DateTime.now().setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: false });
 
           time = time.plus({
             minute: interaction.options.getInteger(options[1].name) || undefined,
@@ -393,55 +394,70 @@ export const commands: Command[] = [
         for (const r of reminders) {
           results[`${DateTime.fromISO(r.date).toFormat('dd/MM/yyyy HH:mm')}`] = r.content.length <= 64 ? r.content : r.content.substring(0, 64) + '...';
         }
-        interaction.reply({ embeds: [EmbedBuilder.buildList(Colors.info, 'Reminders', results)]});
+        interaction.reply({ embeds: [EmbedBuilder.buildList(Colors.info, 'Reminders', results)] });
       }
     }
 
     //  EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
     //   { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
-
-
-
-
   },
-  // { //timezone
-  //   name: 'timezone',
-  //   category: 'timezone',
-  //   description: 'Get/set your current time zone.',
-  //   options: [{ required: true, type: 3, name: 'timezone', description: 'write down an IANA time zone' }],
-  //   async response(interaction: CommandInteraction): Promise<void> {
-  //     if (!this.options)
-  //       return;
-  //     const zone = interaction.options.getString(this.options[0].name, true);
-  //     if (zone) {
-  //       /*if (tokenizer.tokens[1].content == 'get') {
-  //         const tz = (await ReminderService.getTimeZone(msg.author.id));
-  //         const time = DateTime.fromJSDate(new Date(), { zone: tz });
-  //         return EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your current time zone!');
-  //       }*/
-  //       //if (tokenizer.tokens[1].content == 'set') {
-  //       //if (tokenizer.tokens[2]) {
-  //       /*let tz = timeZones[parseInt(tokenizer.tokens[2].content) - 1];
-  //       if (!tz) {
-  //         tz = tokenizer.tokens[2].content;
-  //       }
-  //       */
-  //       const time = DateTime.fromMillis(Date.now(), { zone: zone });
-  //       if (time.isValid) {
-  //         console.log('valid zone');
+  { //timezone
+    name: 'timezone',
+    category: 'timezone',
+    description: 'Get/set your current time zone.',
+    options: [{ type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'get', description: 'get your current zone' },
+    {
+      type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'set', description: 'set your timezone, opens a list to pick from', options: [
+        { type: ApplicationCommandOptionTypes.STRING, name: 'timezone', description: 'write down an IANA time zone', required: false }]
+    }
+    ],
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options)
+        return;
+      //get
+      if (interaction.options.getSubcommand() == this.options[0].name) {
+        const tz = (await ReminderService.getTimeZone(interaction.user.id));
+        const time = DateTime.fromJSDate(new Date(), { zone: tz });
+        interaction.reply({ embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your current time zone!')] });
+        return;
+      }
+      if (this.options[1].type == ApplicationCommandOptionTypes.SUB_COMMAND && this.options[1].options) {
+        const zone = interaction.options.getString(this.options[1].options[0].name);
+        if (zone) {
+          const time = DateTime.now().setZone(zone);
+          if (time.isValid) {
+            await ReminderService.setTimeZone(interaction.user.id, zone);
+            interaction.reply({ embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')] });
+            return;
+          }
+          //EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
+        }
+        const menu = new MessageSelectMenu({
+          customId: 'timezoneMenu',
+          type: 'SELECT_MENU',
+          options: [{ label: timeZones[0], value: timeZones[0] },
+          { label: timeZones[1], value: timeZones[1] },
+          { label: timeZones[2], value: timeZones[2] }]
+        });
+        interaction.reply({ embeds: [EmbedBuilder.info('If your timezone is not in the list you can select one from this [link](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). copy the corresponding **TZ database name** and paste it in: **/timezone set <your timezone>**.', undefined, 'Select your timezone from the menu.')], components: [new MessageActionRow({ components: [menu] })] });
+        const filter = (i: SelectMenuInteraction) => /*menu.options.map(i => i.customId).includes(i.customId) &&*/ i.user.id == interaction.user.id && i.message.interaction!.id == interaction.id;
+        const collector = interaction.channel?.createMessageComponentCollector({ filter, time: 60000 });
+        collector?.on('collect', (i) => {
+          console.log(i.values[0]);
+          const time = DateTime.now().setZone(i.values[0]);
+          if (time.isValid) {
+            ReminderService.setTimeZone(i.user.id, i.values[0]);
+            i.update({ components: [], embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')] });
+            collector.stop();
+          }
+        });
 
-  //         await ReminderService.setTimeZone(interaction.user.id, zone);
-  //         interaction.reply({ embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')] });
-  //         return;
-  //       }
-  //       //}
-  //       //EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
-  //       //}
-  //     }
-  //     //return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
-  //     interaction.reply({ embeds: [EmbedBuilder.error('Setting timezone failed!', undefined, 'Timezone error')] });
-  //   }
-  // },
+        return;
+        //return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.success, ['get', 'set'], ['set Europe/brussels', 'set 1', 'get']);
+      }
+      interaction.reply({ embeds: [EmbedBuilder.error('Setting timezone failed!', undefined, 'Timezone error')] });
+    }
+  },
   { // wiki TODO test
     name: 'wiki',
     category: 'wiki',
