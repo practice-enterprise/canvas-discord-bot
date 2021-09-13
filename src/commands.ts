@@ -1,4 +1,4 @@
-import { ButtonInteraction, CommandInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction, MessageSelectMenu, MessageSelectMenuOptions, SelectMenuInteraction } from 'discord.js';
 import { Tokenizer } from './util/tokenizer';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
@@ -22,27 +22,34 @@ const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only comman
 
 //TODO check content of respond messages
 export const commands: Command[] = [
-  /*{ // Info
+  { // Info
     name: 'info',
     category: 'info',
-    description: 'Displays more information. Server only.',
-    aliases: ['informatie', 'information'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
+    description: 'Displays more information.',
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!interaction.guild) {
+        interaction.reply({embeds: [EmbedBuilder.error('No guild id found')]});
+        return;
       }
-
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-      for (const reply of guildConfig.info) {
-        if (tokenizer.tokens[1] !== undefined && reply.name === tokenizer.tokens[1].content) {
-          const response = typeof reply.response === 'function' ? await reply.response(msg, guildConfig) : reply.response;
-          return response;
-        }
+      let index = 0;
+      const guildConfig = await GuildService.getForId(interaction.guild.id);
+      if (guildConfig.info.length > 0) {
+        const menu = new MessageSelectMenu({
+          customId: 'timezoneMenu',
+          type: 'SELECT_MENU',
+          options: guildConfig.info.map((i) => { return { label: i.name, value: (index++).toString(), description: i.description }; })
+        });
+        interaction.reply({ components: [new MessageActionRow({ components: [menu] })], embeds: [EmbedBuilder.info('Select a section to learn more about.', undefined, 'Info')] });
+        const filter = (i: SelectMenuInteraction) => /*menu.options.map(i => i.customId).includes(i.customId) &&*/ i.user.id == interaction.user.id && i.message.interaction!.id == interaction.id;
+        const collector = interaction.channel?.createMessageComponentCollector({ filter, time: 60000 });
+        collector?.on('collect', async (i) => {
+          i.update({ components: [], embeds: [await guildConfig.info[parseInt(i.values[0])].response] });
+        });
+        return;
       }
-      return EmbedBuilder.info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
+      interaction.reply({ embeds: [EmbedBuilder.error('No info available')] });
     }
-    return 'disabled';
-  },*/
+  },
   { // ping
     name: 'ping',
     category: 'ping',
