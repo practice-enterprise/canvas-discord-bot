@@ -14,7 +14,7 @@ export class Buzzer {
   //Start Pauze Reset
   readonly buttonsBuzzerControls = [
     new MessageButton({ label: 'Start', customId: 'start', style: 'SUCCESS'}),
-    new MessageButton({ label: 'Pauze', customId: 'pauze', style: 'PRIMARY'}),
+    new MessageButton({ label: 'Pause', customId: 'pause', style: 'PRIMARY'}),
     new MessageButton({ label: 'Reset', customId: 'reset', style: 'DANGER'}),
   ];
 
