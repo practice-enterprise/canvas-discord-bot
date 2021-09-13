@@ -22,27 +22,6 @@ const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only comman
 
 //TODO check content of respond messages
 export const commands: Command[] = [
-  /*{ // help
-    name: 'help',
-    category: 'help',
-    description: 'That\'s this command.',
-    aliases: ['how', 'man', 'get-help'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (guildConfig) {
-        return new MessageEmbed({
-          'title': 'Help is on the way!',
-          'description': commands.concat(guildConfig.modules['customCommands'] === false ? [] : guildConfig.commands).map(c => `\`${guildConfig.prefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
-          'color': '#43B581',
-        });
-      }
-
-      return new MessageEmbed({
-        'title': 'Help is on the way!',
-        'description': commands.map(c => `\`${defaultPrefix}${c.name}\`: ${c.description}`).join('\n') + '\n',
-        'color': '#43B581',
-      });
-    }
-  },*/
   /*{ // Info
     name: 'info',
     category: 'info',
@@ -63,81 +42,6 @@ export const commands: Command[] = [
       return EmbedBuilder.info(guildConfig.info.map(i => `\`${guildConfig?.prefix || defaultPrefix}${this.name} ${i.name}\`: ${i.description}`).join('\n'));
     }
     return 'disabled';
-  },*/
-  /*{ // setup
-    name: 'setup',
-    category: 'setup',
-    description: 'Quick setup and introduction for the bot. Server only.',
-    aliases: [],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
-      }
-      const time = 300000; //300000 = 5 minutes
-      const ePrev = '◀';
-      const eNext = '▶';
-      const reactions = [ePrev, eNext];
-
-      const filter = (reaction: any, user: { id: string; }) => {
-        return reactions.includes(reaction._emoji.name) && user.id === msg.author.id;
-      };
-
-      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true)))
-        return EmbedBuilder.error('No admin permissions!');
-
-      let page = 0;
-      const pages: MessageEmbedOptions[] = [
-        {
-          'title': 'Setup',
-          'description': 'Github repositories for Discan:\nhttps://github.com/practice-enterprise\nhttps://github.com/practice-enterprise/api\nhttps://github.com/practice-enterprise/canvas-discord-bot\nhttps://github.com/practice-enterprise/oauth',
-          'color': '#7289DA',
-
-        },
-        {
-          'title': 'Setup',
-          'description': 'Users need to login with OAuth to start using the services.',
-          'color': '#7289DA',
-        },
-      ];
-
-      pages[page].footer = { text: `Page ${page + 1}` };
-      const botmsg = await msg.channel.send({embeds: [new MessageEmbed(pages[0])]});
-      try {
-        for (const e of reactions) {
-          await botmsg.react(e);
-        }
-      } catch (err) {
-        console.error('One or more reactions failed.');
-      }
-      
-      //TODO fix FILTER
-      const collector = botmsg.createReactionCollector({filter: filter, time: time });
-      collector.on('collect', (reaction, user) => {
-        reaction.users.remove(user.id);
-        const oldPage = page;
-
-        switch (reaction.emoji.name) {
-          case reactions[0]:
-            if (page > 0)
-              page--;
-            break;
-          case reactions[1]:
-            if (page < pages.length - 1)
-              page++;
-            break;
-        }
-
-        if (oldPage !== page) { //Only edit if it's a different page.
-          pages[page].footer = { text: `Page ${page + 1}` };
-          botmsg.edit({embeds: [new MessageEmbed(pages[page])]});
-        }
-      });
-
-      collector.on('end', (reaction, user) => {
-        botmsg.edit(':x:`Session has ended.`\nEnter the command again for a new session.');
-        botmsg.reactions.removeAll().catch(err => console.error('Failed to remove all reactions: ', err));
-      });
-    }
   },*/
   { // ping
     name: 'ping',
@@ -204,30 +108,6 @@ export const commands: Command[] = [
       interaction.reply({ embeds: [embed] });
     }
   },
-  /*{ // prefix
-    name: 'prefix',
-    category: 'prefix',
-    description: 'Set prefix for guild. Server only.',
-    aliases: ['pf'],
-    async response(interaction: Interaction, guildConfig: GuildConfig | undefined): Promise<Response | void> {
-      if (!guildConfig) {
-        return guildOnly;
-      }
-      const tokenizer = new Tokenizer(msg.content, guildConfig.prefix);
-
-      if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true))) {
-        return EmbedBuilder.error('No admin permissions!');
-      }
-
-      if (tokenizer.tokens[1] != undefined && tokenizer.tokens[1].type === 'text' && msg.guild?.id != undefined) {
-        GuildService.setPrefix(tokenizer.tokens[1].content, msg.guild?.id);
-        return EmbedBuilder.success('Prefix updated with: ' + tokenizer.tokens[1].content);
-      }
-      else {
-        return EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.error, { 'prefix': 'the new prefix' }, ['!', '?']);
-      }
-    }
-  },*/
   { // notes
     name: 'notes',
     category: 'notes',
