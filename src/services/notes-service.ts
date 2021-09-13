@@ -77,73 +77,6 @@ export class NotesService {
         break;
       }
     }
-
-    // ////////
-    // const tokenizer = new Tokenizer(msg.content, this.prefix);
-
-    // //!notes - get notes in channel
-    // if (tokenizer.tokens.length === 1) {
-    //   if (guildConfig) {
-    //     return this.getByChannel(msg.channel.id.toString(), guildConfig.id);
-    //   }
-    //   else {
-    //     return this.getByUser(msg.author.id);
-    //   }
-    // }
-
-    // if (guildConfig) {
-    //   //!notes #channel - get notes for a channel
-    //   if (tokenizer.tokens[1]?.type === 'channel') {
-    //     return this.getByChannel(tokenizer.tokens[1].content.substr(2, 18), guildConfig.id);
-    //   }
-    //   //!notes add #channel - adds this note
-    //   if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
-    //     return this.setChannelNote(tokenizer.body(3), tokenizer.tokens[2].content.substr(2, 18), guildConfig.id);
-    //   }
-    //   //!notes add
-    //   if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'text') {
-    //     return this.setChannelNote(tokenizer.body(2), msg.channel.id, guildConfig.id);
-    //   }
-    // }
-    // else {
-    //   // DM/user
-    //   if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1]?.content === 'add' && tokenizer.tokens[2]?.type === 'text') {
-    //     return this.setUserNote(tokenizer.body(2), msg.author.id);
-    //   }
-    // }
-
-    // ////////
-
-    // //!notes remove <channel> <number>
-    // if (guildConfig) {
-    //   if (!(msg.member?.permissions.has(['ADMINISTRATOR'], true))) {
-    //     return 'You have to be an admin to delete notes.';
-    //   }
-
-    //   if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove'
-    //     && tokenizer.tokens[2]?.type === 'channel' && tokenizer.tokens[3]?.type === 'text') {
-    //     const noteNum: number = parseInt(tokenizer.tokens[3].content);
-    //     return this.delChannelNote(noteNum, tokenizer.tokens[2].content.substr(2, 18), guildConfig.id);
-    //   }
-
-    //   if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' &&
-    //     tokenizer.tokens[2]?.type === 'text') {
-    //     const noteNum: number = parseInt(tokenizer.tokens[2].content);
-    //     return this.delChannelNote(noteNum, msg.channel.id, guildConfig.id);
-    //   }
-    // }
-    // else {
-    //   if (tokenizer.tokens[1]?.type === 'text' && tokenizer.tokens[1].content === 'remove' && tokenizer.tokens[2]?.type === 'text') {
-    //     const noteNum: number = parseInt(tokenizer.tokens[2].content);
-    //     return this.delUserNote(noteNum, msg.author.id);
-    //   }
-    // }
-    // When incorrectly used (includes !notes help)
-    // return EmbedBuilder.buildHelp(this.command, this.prefix, Colors.error, {
-    //   '#channel (optional)': 'get notes from a channel or DM.',
-    //   'add #channel (optional)': 'enter a note in a channel or DM.',
-    //   'remove #channel (optional) notenumber': 'remove a note in a channel or DM.'
-    // }, ['add #cooking-stuff Eggs', 'add a note here', 'remove #cooking-stuff 1']);
   }
 
 
@@ -222,6 +155,7 @@ export class NotesService {
     }
   }
 
+  /* Still supported by API and DB but makes mores sense to keep this a Guild command.
   async getByUser(userID: string): Promise<MessageEmbed> {
     const notes = await NotesService.get(userID);
     if (notes == null || !Array.isArray(notes.notes) || notes.notes.length == 0) {
@@ -289,4 +223,5 @@ export class NotesService {
       return EmbedBuilder.error(`'Failed to remove note \`${noteNum}\``, 'Check your note index number.');
     }
   }
+  */
 }
