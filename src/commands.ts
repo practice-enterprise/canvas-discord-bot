@@ -1,8 +1,6 @@
-import { ButtonInteraction, CommandInteraction, Interaction, Message, MessageActionRow, MessageButton, MessageEmbed, MessageEmbedOptions, MessageInteraction, MessageSelectMenu, MessageSelectMenuOptions, SelectMenuInteraction } from 'discord.js';
-import { Tokenizer } from './util/tokenizer';
+import {  CommandInteraction, MessageActionRow, MessageEmbed, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
-import { GuildConfig } from './models/guild';
 import { GuildService } from './services/guild-service';
 import { ReminderService } from './services/reminder-service';
 import { WikiService } from './services/wiki-service';
@@ -12,7 +10,7 @@ import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
 import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
-import { Buzzer, Challenge, Coinflip, DiceRoll, RockPaperScissors } from './games';
+import { Buzzer, Coinflip, DiceRoll } from './games';
 
 export const defaultPrefix = '!';
 export const timeZones = ['Europe/Brussels', 'Australia/Melbourne', 'America/Detroit'];
