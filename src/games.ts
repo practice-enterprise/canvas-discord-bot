@@ -47,7 +47,6 @@ export class Buzzer {
       buzzCollector.resetTimer();
       controlCollector.resetTimer();
       
-      if (this.buttonBuzzer[0].disabled) return;
       if (!(i.member instanceof GuildMember)) return;
 
       if (!this.usersBuzzed.includes(i.member)) {
