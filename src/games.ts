@@ -28,7 +28,6 @@ export class Buzzer {
 
     const buzzFilter = (i: ButtonInteraction) => this.buttonBuzzer
       .map(i => i.customId).includes(i.customId)
-      // && i.user.id == player.id
       && i.message.interaction!.id == this.interaction.id;
     
     const buzzerControlFilter = (i: ButtonInteraction) => this.buttonsBuzzerControls

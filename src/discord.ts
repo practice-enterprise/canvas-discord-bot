@@ -21,7 +21,6 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     }
 
     for (const command of commands) {
-      //console.log(interaction);
       if (command.name == interaction.commandName) {
         await command.response(interaction);
       }
