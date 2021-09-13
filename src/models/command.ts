@@ -15,6 +15,6 @@ export interface InfoCommand {
   category: string,
   description: string;
   options?: ApplicationCommandOptionData[];
-  response: /*Response |*/ MessageEmbedOptions;
+  response: /*Response |*/ MessageEmbedOptions | string;
 }
 

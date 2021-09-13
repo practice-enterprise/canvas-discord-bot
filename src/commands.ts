@@ -28,7 +28,7 @@ export const commands: Command[] = [
     description: 'Displays more information.',
     async response(interaction: CommandInteraction): Promise<void> {
       if (!interaction.guild) {
-        interaction.reply({embeds: [EmbedBuilder.error('No guild id found')]});
+        interaction.reply({ embeds: [EmbedBuilder.error('No guild id found')] });
         return;
       }
       let index = 0;
@@ -43,11 +43,17 @@ export const commands: Command[] = [
         const filter = (i: SelectMenuInteraction) => /*menu.options.map(i => i.customId).includes(i.customId) &&*/ i.user.id == interaction.user.id && i.message.interaction!.id == interaction.id;
         const collector = interaction.channel?.createMessageComponentCollector({ filter, time: 60000 });
         collector?.on('collect', async (i) => {
-          i.update({ components: [], embeds: [await guildConfig.info[parseInt(i.values[0])].response] });
+          const response = await guildConfig.info[parseInt(i.values[0])].response;
+          if (typeof response == 'string') {
+            i.update({components:[], content: response, embeds: []});
+          } else {
+            console.log(new MessageEmbed(response));
+            i.update({ components: [], embeds: [new MessageEmbed(response)] });
+          } 
         });
         return;
       }
-      interaction.reply({ embeds: [EmbedBuilder.error('No info available')] });
+      interaction.reply({ embeds: [EmbedBuilder.error('No info available.')] });
     }
   },
   { // ping
