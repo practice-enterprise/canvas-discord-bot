@@ -1,4 +1,4 @@
-import { ButtonInteraction, CommandInteraction, GuildMember, MessageActionRow, MessageButton, MessageEmbed, User } from 'discord.js';
+import { ButtonInteraction, ColorResolvable, CommandInteraction, GuildMember, MessageActionRow, MessageButton, MessageEmbed, User } from 'discord.js';
 import { Colors } from './util/embed-builder';
 
 export class Buzzer {
@@ -90,7 +90,7 @@ export class Buzzer {
       .setTitle('🅱uzzer')
       .setDescription(userList.join('\n'))
       .setFooter(footer)
-      .setColor(color);
+      .setColor(color as ColorResolvable);
     return embed;
   }
 
