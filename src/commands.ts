@@ -110,18 +110,18 @@ export const commands: Command[] = [
       new Buzzer(interaction).init();
     }
   },
-  { // rps
-    name: 'rps',
-    category: 'misc',
-    description: 'Rock paper scissors',
-    options: [{ required: true, type: 6, name: 'player', description: 'Player you want to challenge'}],
-    async response(interaction: CommandInteraction): Promise<void> {
-      if (!this.options) {
-        return;
-      }
-      new RockPaperScissors(interaction);
-    }
-  },
+  // { // rps
+  //   name: 'rps',
+  //   category: 'misc',
+  //   description: 'Rock paper scissors',
+  //   options: [{ required: true, type: 6, name: 'player', description: 'Player you want to challenge'}],
+  //   async response(interaction: CommandInteraction): Promise<void> {
+  //     if (!this.options) {
+  //       return;
+  //     }
+  //     new RockPaperScissors(interaction);
+  //   }
+  // },
   { // notes
     name: 'notes',
     category: 'notes',
