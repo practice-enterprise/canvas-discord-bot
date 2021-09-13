@@ -108,6 +108,7 @@ export class Buzzer {
   }
 }
 
+// Unused but fully functional
 export class Challenge {
   interaction: CommandInteraction
   readonly challengeName: string
@@ -181,6 +182,8 @@ export class Challenge {
   }
 }
 
+// Unfinished
+/*
 export class RockPaperScissors {
   challenge: Challenge
   interaction: CommandInteraction
@@ -232,7 +235,7 @@ export class RockPaperScissors {
     return embed;
   }
 }
-
+*/
 export class DiceRoll {
   roll(amount: number, faces: number): MessageEmbed {
     const embed = new MessageEmbed;
