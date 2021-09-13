@@ -5,11 +5,11 @@ import { Command } from '../models/command';
 
 export enum Colors {
   info = '#4FAFEF',
-  success = '#43B581',
+  success = '#3BA55D', // old '#43B581',
   warning = '#FAA61A',
-  error = '#F04747',
+  error = '#ED4245', // old '#F04747',
   gray = '#747F8D',
-  discord = '#7289DA',
+  discord = '5865F2', // old accent color '#7289DA',
   canvas = '#E73D30'
 }
 
