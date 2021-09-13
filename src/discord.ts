@@ -1,16 +1,13 @@
 /* eslint-disable no-await-in-loop */
-import { Client, Guild, Intents, Message, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, Intents, MessageEmbed, MessageEmbedOptions } from 'discord.js';
 import { inspect } from 'util';
 import { commands, defaultPrefix } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
-import { command, Formatter, preventExceed } from './util/formatter';
+import { Formatter } from './util/formatter';
 import { Tokenizer } from './util/tokenizer';
-import { EmbedBuilder } from './util/embed-builder';
 import { REST } from '@discordjs/rest';//' //@discordjs/rest/dist/lib/REST
-import { Routes } from 'discord-api-types';
-import { isApplicationCommandDMInteraction } from 'discord-api-types/utils/v9';
 
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
@@ -39,9 +36,8 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     Logger.info(`Logged in as ${client.user?.tag}`);
 
     rest.put(
-      /*Routes.applicationGuildCommands(client.user!.id ,'780572565240414208')*/`/applications/${client.user!.id}/guilds/780572565240414208/commands`,
+      `/applications/${client.user!.id}/guilds/780572565240414208/commands`,
       { body: commands });
-    //client.application?.commands.create()
 
     /*
       Presence updating.
@@ -119,31 +115,6 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
       return;
     }
     return;
-    /*const commandList = commands.concat(guildConfig === undefined || guildConfig.modules['customCommands'] === false ? [] : guildConfig?.commands);
-
-    for (const command of commandList) {
-      if (tokenizer.command() !== command.name && !command.aliases.includes(tokenizer.command()!)) {
-        continue;
-      }
-      if (guildConfig && guildConfig.modules[command.category] === false) {
-        msg.channel.send({ embeds: [EmbedBuilder.error(`The ${command.name} command has been disabled.`, `Enable the ${command.category} module to enable this command.`)] });
-        return;
-      }
-
-      Logger.debug(`received command '${tokenizer.command()}' from guild ${msg.guild?.id || msg.author.id} in channel ${msg.channel.id}`);
-      // eslint-disable-next-line no-await-in-loop
-      //const response = typeof command.response === 'function' ? await command.response(msg, guildConfig) : command.response;
-
-      /* if (typeof response === 'string') {
-         // We might want preventExceed here instead
-         msg.channel.send(response);
-         return;
-       } else if (typeof response !== 'undefined') {
-         msg.channel.send({ embeds: [new MessageEmbed(preventExceed(response))] });
-         return;
-       }/
-    }
-    return;*/
   });
 
   client.on('guildCreate', async guild => {

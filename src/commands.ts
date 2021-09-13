@@ -146,9 +146,7 @@ export const commands: Command[] = [
       }
     ],
     async response(interaction: CommandInteraction): Promise<void> {
-      // return new NotesService(this, guildConfig?.prefix || defaultPrefix).response(msg, guildConfig);
       await new NotesService(interaction).response();
-      // interaction.reply('beep');
     }
   },
   { // reminder TODO test properly
@@ -187,7 +185,6 @@ export const commands: Command[] = [
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
         return;
-      //console.log(interaction.options);
 
       const subCommand = interaction.options.getSubcommand(true);
       //get
@@ -197,8 +194,6 @@ export const commands: Command[] = [
       }
       //set
       if (this.options[1].type == ApplicationCommandOptionTypes.SUB_COMMAND_GROUP && this.options[1].options) {
-
-        //const response = ReminderService.setCommand(tokenizer, msg.author.id, msg.guild?.id, msg.channel.id);
         //absolute
         if (subCommand == this.options[1].options[0].name && this.options[1].options[0].options) {
           const options = this.options[1].options[0].options;
@@ -262,14 +257,9 @@ export const commands: Command[] = [
           }
           return;
         }
-        //return response;
-
       }
       //delete
       if (subCommand == this.options[2].name && this.options[2].type == ApplicationCommandOptionTypes.SUB_COMMAND && this.options[2] && this.options[2].options) {
-
-        //ReminderService.deleteCommand(msg.author.id, tokenizer);
-
         const reminders = await ReminderService.get(interaction.user.id);
         if (!reminders) {
           interaction.reply({ embeds: [EmbedBuilder.info('There are no more reminders set for you.', undefined, 'Reminders')] });
@@ -291,9 +281,6 @@ export const commands: Command[] = [
         interaction.reply({ embeds: [EmbedBuilder.buildList(Colors.info, 'Reminders', results)] });
       }
     }
-
-    //  EmbedBuilder.buildHelp(this, guildConfig?.prefix || defaultPrefix, Colors.info,
-    //   { 'get/list': 'get all your reminders you\'ve set', 'delete/remove': 'remove a reminder', 'date time': 'sets a reminder with date and time' }, ['1/5/2021 8:00', '17-04-21 14:00 buy some juice', '26/11/2021 16:00 movie night in 1 hour #info'], `Supported formats: ${dateFormates.join(', ')}`);
   },
   { //timezone
     name: 'timezone',
@@ -324,7 +311,6 @@ export const commands: Command[] = [
             interaction.reply({ embeds: [EmbedBuilder.info(`${time.toFormat('dd/MM/yyyy HH:mm z')}`, undefined, 'Your new time zone!')] });
             return;
           }
-          //EmbedBuilder.buildList(Colors.info, 'Time zones!', timeZones, 'you can use a IANA standard as timezone. Here are some options:');
         }
         const menu = new MessageSelectMenu({
           customId: 'timezoneMenu',
