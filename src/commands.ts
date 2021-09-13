@@ -285,10 +285,10 @@ export const commands: Command[] = [
     category: 'timezone',
     description: 'Get/set your current time zone.',
     options: [{ type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'get', description: 'get your current zone' },
-    {
-      type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'set', description: 'set your timezone, opens a list to pick from', options: [
-        { type: ApplicationCommandOptionTypes.STRING, name: 'timezone', description: 'write down an IANA time zone', required: false }]
-    }
+      {
+        type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'set', description: 'set your timezone, opens a list to pick from', options: [
+          { type: ApplicationCommandOptionTypes.STRING, name: 'timezone', description: 'write down an IANA time zone', required: false }]
+      }
     ],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
@@ -314,8 +314,8 @@ export const commands: Command[] = [
           customId: 'timezoneMenu',
           type: 'SELECT_MENU',
           options: [{ label: timeZones[0], value: timeZones[0] },
-          { label: timeZones[1], value: timeZones[1] },
-          { label: timeZones[2], value: timeZones[2] }]
+            { label: timeZones[1], value: timeZones[1] },
+            { label: timeZones[2], value: timeZones[2] }]
         });
         interaction.reply({ embeds: [EmbedBuilder.info('If your timezone is not in the list you can select one from this [link](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). copy the corresponding **TZ database name** and paste it in: **/timezone set <your timezone>**.', undefined, 'Select your timezone from the menu.')], components: [new MessageActionRow({ components: [menu] })] });
         const filter = (i: SelectMenuInteraction) => /*menu.options.map(i => i.customId).includes(i.customId) &&*/ i.user.id == interaction.user.id && i.message.interaction!.id == interaction.id;
