@@ -1,6 +1,112 @@
-import { ButtonInteraction, Client, CommandInteraction, Interaction, InteractionButtonOptions, Message, MessageActionRow, MessageButton, MessageEmbed, MessageReaction, User } from 'discord.js';
-import { Command } from "./models/command";
-import { Colors } from "./util/embed-builder";
+import { ButtonInteraction, CommandInteraction, GuildMember, MessageActionRow, MessageButton, MessageEmbed, User } from 'discord.js';
+import { Colors } from './util/embed-builder';
+
+export class Buzzer {
+  interaction: CommandInteraction
+  readonly expireTime = 60000*5
+  usersBuzzed: GuildMember[] = [];
+  
+  //Buzzer
+  readonly buttonBuzzer = [
+    new MessageButton({ label: 'Buzz', customId: 'buzz', style: 'DANGER', emoji: '🐝', disabled: true }),
+  ];
+
+  //Start Pauze Reset
+  readonly buttonsBuzzerControls = [
+    new MessageButton({ label: 'Start', customId: 'start', style: 'SUCCESS'}),
+    new MessageButton({ label: 'Pauze', customId: 'pauze', style: 'PRIMARY'}),
+    new MessageButton({ label: 'Reset', customId: 'reset', style: 'DANGER'}),
+  ];
+
+  constructor(interaction: CommandInteraction) {
+    this.interaction = interaction;
+  }
+
+  init(): void {
+    this.interaction.reply({embeds: [this.createEmbed(Colors.warning, 'Buzzer hasn\'t started yet')],
+      components: [new MessageActionRow({components: this.buttonBuzzer}), new MessageActionRow({components: this.buttonsBuzzerControls})]});
+
+    const buzzFilter = (i: ButtonInteraction) => this.buttonBuzzer
+      .map(i => i.customId).includes(i.customId)
+      // && i.user.id == player.id
+      && i.message.interaction!.id == this.interaction.id;
+    
+    const buzzerControlFilter = (i: ButtonInteraction) => this.buttonsBuzzerControls
+      .map(i => i.customId).includes(i.customId)
+      && i.user.id == this.interaction.user.id
+      && i.message.interaction!.id == this.interaction.id;
+
+    const buzzCollector = this.interaction.channel?.createMessageComponentCollector({ filter: buzzFilter, time: this.expireTime });
+    const controlCollector = this.interaction.channel?.createMessageComponentCollector({ filter: buzzerControlFilter, time: this.expireTime });
+
+    if (!buzzCollector) return;
+    if (!controlCollector) return;
+    
+    // Collectors
+    buzzCollector.on('collect', i => {
+      buzzCollector.resetTimer();
+      controlCollector.resetTimer();
+      
+      if (this.buttonBuzzer[0].disabled) return;
+      if (!(i.member instanceof GuildMember)) return;
+
+      if (!this.usersBuzzed.includes(i.member)) {
+        this.usersBuzzed.push(i.member);
+      }
+
+      this.updateButtonInteraction(i, Colors.success, i.member.displayName + ' buzzed!');
+    });
+
+    controlCollector.on('collect', i => {
+      buzzCollector.resetTimer();
+      controlCollector.resetTimer();
+
+      switch (i.customId) {
+        case this.buttonsBuzzerControls[0].customId: // start
+          this.buttonBuzzer[0].setDisabled(false);
+          this.updateButtonInteraction(i, Colors.success, 'Buzzer started!');
+          break;
+        case this.buttonsBuzzerControls[1].customId: // pauze
+          this.buttonBuzzer[0].setDisabled(true);
+          this.updateButtonInteraction(i, Colors.warning, 'Buzzer pauzed');
+          break;
+        case this.buttonsBuzzerControls[2].customId: // reset
+          this.buttonBuzzer[0].setDisabled(true);
+          this.usersBuzzed = []; // Empty users
+          this.updateButtonInteraction(i, Colors.warning, 'Buzzer reset');
+          break;
+      }
+    });
+
+    // End of collectors
+    buzzCollector.on('end', () => this.endInteraction());
+    controlCollector.on('end', () => this.endInteraction());
+  }
+  
+  createEmbed(color: Colors, footer: string): MessageEmbed {
+    const userList: string[] = this.usersBuzzed.map((u, i) => `${++i}. ${u.displayName}`);
+    if (userList.length > 0) {
+      userList[0] = '**' + userList[0] + '**';
+    }
+    const embed = new MessageEmbed()
+      .setTitle('🅱uzzer')
+      .setDescription(userList.join('\n'))
+      .setFooter(footer)
+      .setColor(color);
+    return embed;
+  }
+
+  updateButtonInteraction(i: ButtonInteraction, color: Colors, footer: string): void {
+    i.update({embeds: [this.createEmbed(color, footer)],
+      components: [new MessageActionRow({components: this.buttonBuzzer}), new MessageActionRow({components: this.buttonsBuzzerControls})]});
+  }
+
+  endInteraction(): void {
+    this.interaction.editReply({embeds: [
+      this.createEmbed(Colors.warning, 'Buzzer has timed out, you can always start a new one').setTitle('No more 🅱uzz 🐝')
+    ], components: []});
+  }
+}
 
 export class Challenge {
   interaction: CommandInteraction

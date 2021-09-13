@@ -12,7 +12,7 @@ import { Colors, EmbedBuilder } from './util/embed-builder';
 import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
 import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
-import { Challenge, Coinflip, DiceRoll, RockPaperScissors } from './games';
+import { Buzzer, Challenge, Coinflip, DiceRoll, RockPaperScissors } from './games';
 
 export const defaultPrefix = '!';
 
@@ -180,6 +180,18 @@ export const commands: Command[] = [
         return;
       }
       interaction.reply({ embeds: [new Coinflip().flip(interaction.options.getInteger(this.options[0].name))] });
+    }
+  },
+  { // Buzzer
+    name: 'buzzer',
+    category: 'misc',
+    description: 'Create a buzzer for everyone',
+    options: [],
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!this.options) {
+        return;
+      }
+      new Buzzer(interaction).init();
     }
   },
   { // rps
