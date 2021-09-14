@@ -9,8 +9,7 @@ import { ReminderService } from './reminder-service';
 import { RoleUpdateData } from '../models/role-update-data';
 import { RoleAssignmentService } from './role-assignment-service';
 import { AnnouncementData } from '../models/announcement-data';
-import { preventExceed } from '../util/formatter';
-import { UserDM, UserEmbedDM } from '../models/users';
+import { UserEmbedDM } from '../models/users';
 
 
 export class ShardService {
@@ -79,6 +78,7 @@ export class ShardService {
     });
     // ^v blantant copy of userreminder
     this.socket.on('sendEmbedDM', (data: UserEmbedDM) => {
+      console.log('woo');
       if (this.client !== undefined)
         try {
           this.client.users.resolve(data.target.user)?.send({embeds: [data.content]});
