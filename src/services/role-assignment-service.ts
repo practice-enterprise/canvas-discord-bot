@@ -16,7 +16,7 @@ export class RoleAssignmentService {
         if (!hasRole) {
           member.roles.add(data.configRoles[roleType])
             .catch(async () => {
-              const role = await guild.roles.create({ data: { name: roleType } });
+              const role = await guild.roles.create({ name: roleType });
               member.roles.add(role);
               GuildService.updateRole(guild.id, role.id, roleType);
             });

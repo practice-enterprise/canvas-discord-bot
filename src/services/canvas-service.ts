@@ -31,6 +31,17 @@ export class CanvasService {
     });
   }
 
+  static async getInstanceId(discordUserID: string): Promise<string | undefined> {
+    return Axios.request<string>({
+      method: 'GET',
+      baseURL: process.env.API_URL,
+      url: `/canvas/${discordUserID}/instanceId`,
+      validateStatus: () => true,
+    }).then((res) => {
+      return res.status === 200 ? res.data : undefined;
+    });
+  }
+
   static async getModules(discordUserID: string, courseID: number): Promise<CanvasModule[] | undefined> {
     return Axios.request<CanvasModule[]>({
       method: 'GET',
