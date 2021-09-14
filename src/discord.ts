@@ -55,66 +55,6 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     }, interval);
   });
 
-  client.on('message', async (msg): Promise<void> => {
-    if (msg.author.bot) {
-      return; // ignore messages by bots and as a result itself
-    }
-
-    const guildConfig = msg.guild ? await GuildService.getForId(msg.guild.id) : undefined;
-    const tokenizer = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix);
-
-    if (!tokenizer.command()) {
-      return; // not a valid command
-    }
-
-    if (tokenizer.command() === 'eval') {
-      // Eval is a dangerous command since it executes code on the node itself. Make sure no one that shouldnt use this command can.
-      if (process.env.NODE_ENV != 'development' || !(msg.member?.permissions.has(['ADMINISTRATOR'], true)) || !(msg.member?.roles.cache.has('817824554616487946'))) {
-        return;
-      }
-
-      const content = new Tokenizer(msg.content, guildConfig?.prefix || defaultPrefix).body();
-      try {
-        const evalres = await eval(content);
-
-        let desc = new Formatter()
-          .bold('Eval content:', true)
-          .codeblock('ts', content)
-          .bold('Result/output:', true)
-          .codeblock('ts', inspect(evalres))
-          .build();
-
-        // Max msg length is 2048, 1500 for readability.
-        if (desc.length > 1500) {
-          desc = desc.substr(0, 1500);
-          desc += '\n...\n```';
-        }
-
-        const embed: MessageEmbedOptions = {
-          'title': 'Evaluation',
-          'description': desc,
-          'color': '#43B581',
-        };
-        msg.channel.send({ embeds: [embed] });
-      }
-      catch (err) {
-        console.error(err);
-        const embed: MessageEmbedOptions = {
-          title: 'Evaluation',
-          description: new Formatter()
-            .bold('Eval content:', true)
-            .codeblock('ts', content)
-            .bold('Result/output:', true)
-            .codeblock('ts', err)
-            .build(),
-          color: '#ff0000'
-        };
-        msg.channel.send({ embeds: [new MessageEmbed(embed)] });
-      }
-      return;
-    }
-    return;
-  });
 
   client.on('guildCreate', async guild => {
     const roleNames = ['student', 'teacher'];

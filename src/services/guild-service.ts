@@ -42,10 +42,8 @@ export class GuildService {
       url: '/guilds/create',
       data: {
         id: guildID,
-        commands: [],
         canvasInstanceID: '',
         info: [],
-        prefix: '!',
         roles: roles,
         modules: this.getModules(),
         courseChannels: {
