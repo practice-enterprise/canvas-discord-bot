@@ -1,12 +1,11 @@
 /* eslint-disable no-await-in-loop */
-import { Client, Intents, MessageEmbed, MessageEmbedOptions } from 'discord.js';
+import { Client, Intents } from 'discord.js';
 import { inspect } from 'util';
-import { commands, defaultPrefix } from './commands';
+import { commands } from './commands';
 import { ConfigService } from './services/config-service';
 import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
-import { Tokenizer } from './util/tokenizer';
 import { REST } from '@discordjs/rest';//' //@discordjs/rest/dist/lib/REST
 
 
@@ -14,22 +13,21 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
   const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.DIRECT_MESSAGES], partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'], shards: shard, shardCount: shardCount });
   const config = await ConfigService.get();
 
-  client.on('interactionCreate', async (interaction) => {
 
+  if (!process.env.DISCORD_TOKEN) throw new Error('discord token undefined');
+  const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
+
+  client.on('interactionCreate', async (interaction) => {
     if (!interaction.isCommand()) {
       return;
     }
-
+    console.log(`${interaction.user.username} used ${interaction.commandName}`);
     for (const command of commands) {
       if (command.name == interaction.commandName) {
         await command.response(interaction);
       }
     }
-
   });
-  if (!process.env.DISCORD_TOKEN) throw new Error('discord token undefined');
-  const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
-
 
   client.on('ready', async () => {
     Logger.info(`Logged in as ${client.user?.tag}`);
@@ -55,7 +53,6 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     }, interval);
   });
 
-
   client.on('guildCreate', async guild => {
     const roleNames = ['student', 'teacher'];
 
@@ -67,6 +64,10 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     GuildService.createDefault(guild.id, roleIDs);
   });
 
+  client.on('guildDelete', (i)=>{
+    GuildService.delete(i.id);
+  });
   await client.login(process.env.DISCORD_TOKEN);
   return client;
+
 }

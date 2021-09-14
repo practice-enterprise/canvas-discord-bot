@@ -55,6 +55,15 @@ export class GuildService {
     }).then((res) => res.data);
   }
 
+  static async delete(guildId: string) {
+    Axios.request<void>({
+      method: 'DELETE',
+      baseURL: process.env.API_URL,
+      url: '/guilds/delete',
+      data: {guildId: guildId}
+    });
+  }
+
   static async updateModules(guildID: string): Promise<Record<string, boolean>> {
     const modules: Record<string, boolean> = this.getModules();
     Axios.request<number>({
