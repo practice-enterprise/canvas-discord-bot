@@ -77,11 +77,11 @@ export class ShardService {
       ReminderService.sendUserReminder(data, this.client);
     });
     // ^v blantant copy of userreminder
-    this.socket.on('sendEmbedDM', (data: UserEmbedDM) => {
+    this.socket.on('sendEmbedDM', async (data: UserEmbedDM) => {
       console.log('woo');
       if (this.client !== undefined)
         try {
-          this.client.users.resolve(data.target.user)?.send({embeds: [data.content]});
+          (await this.client.users.fetch(data.target.user)).send({embeds: [data.content]});
         } catch (err) {
           console.error(err); //Maybe DMs are off, oh well
         }
