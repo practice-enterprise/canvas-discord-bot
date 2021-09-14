@@ -65,7 +65,7 @@ export class EmbedBuilder {
     }
 
     return new MessageEmbed({
-      color: typeColor,
+      color: typeColor as ColorResolvable,
       title: `Help for ${prefix}${command.name}`,
       description: command.description,
       fields: [
