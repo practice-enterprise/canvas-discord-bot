@@ -1,4 +1,4 @@
-import { MessageEmbed, MessageEmbedOptions } from "discord.js";
+import { MessageEmbed } from "discord.js";
 
 export interface User {
   _id: string,
@@ -16,7 +16,7 @@ export interface User {
 export interface UserEmbedDM {
   userId: string;
   date: string,
-  content: MessageEmbedOptions;
+  content: MessageEmbed;
   target: {
     user: string
   }
