@@ -42,10 +42,8 @@ export class GuildService {
       url: '/guilds/create',
       data: {
         id: guildID,
-        commands: [],
         canvasInstanceID: '',
         info: [],
-        prefix: '!',
         roles: roles,
         modules: this.getModules(),
         courseChannels: {
@@ -55,6 +53,15 @@ export class GuildService {
 
       }
     }).then((res) => res.data);
+  }
+
+  static async delete(guildId: string) {
+    Axios.request<void>({
+      method: 'DELETE',
+      baseURL: process.env.API_URL,
+      url: '/guilds/delete',
+      data: {guildId: guildId}
+    });
   }
 
   static async updateModules(guildID: string): Promise<Record<string, boolean>> {

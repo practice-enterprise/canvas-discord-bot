@@ -1,16 +1,14 @@
-import { MessageEmbed } from 'discord.js';
+import { ColorResolvable, MessageEmbed } from 'discord.js';
 import { Command } from '../models/command';
 
-//type Color = 'info' | 'success' | 'warning' | 'error' | 'gray' | 'discord' | 'canvas';
-
 export enum Colors {
-  info = '4FAFEF',
-  success = '43B581',
-  warning = 'FAA61A',
-  error = 'F04747',
-  gray = '747F8D',
-  discord = '7289DA',
-  canvas = 'E73D30'
+  info = '#4FAFEF',
+  success = '#3BA55D', // old '#43B581',
+  warning = '#FAA61A',
+  error = '#ED4245', // old '#F04747',
+  gray = '#747F8D',
+  discord = '5865F2', // old accent color '#7289DA',
+  canvas = '#E73D30'
 }
 
 export class EmbedBuilder {
@@ -67,7 +65,7 @@ export class EmbedBuilder {
     }
 
     return new MessageEmbed({
-      color: typeColor,
+      color: typeColor as ColorResolvable,
       title: `Help for ${prefix}${command.name}`,
       description: command.description,
       fields: [
@@ -78,7 +76,7 @@ export class EmbedBuilder {
     });
   }
 
-  static buildList(typeColor: Colors, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
+  static buildList(typeColor: Colors | ColorResolvable, title: string, items: Record<string, string> | string[], description?: string, footer?: string, url?: string): MessageEmbed {
     let i = 0;
     if (description == null) {
       description = '';

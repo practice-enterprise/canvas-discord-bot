@@ -5,8 +5,8 @@ import { preventExceed } from '../util/formatter';
 export class AnnouncementService {
   static async postAnnouncement(announcement: AnnouncementData, client: Client): Promise<void> {
     const channel = await client.channels.fetch(announcement.channelID);
-    if (channel.isText()) {
-      channel.send(new MessageEmbed(preventExceed(announcement.embed)));
+    if (channel && channel.isText()) {
+      channel.send({ embeds: [new MessageEmbed(preventExceed(announcement.embed))]});
     }
   }
 }
