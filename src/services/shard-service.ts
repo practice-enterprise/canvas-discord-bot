@@ -1,4 +1,4 @@
-import { Client } from 'discord.js';
+import { Client, MessageEmbed } from 'discord.js';
 import { connect } from 'socket.io-client';
 import { buildClient } from '../discord';
 import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
@@ -9,6 +9,7 @@ import { ReminderService } from './reminder-service';
 import { RoleUpdateData } from '../models/role-update-data';
 import { RoleAssignmentService } from './role-assignment-service';
 import { AnnouncementData } from '../models/announcement-data';
+import { UserEmbedDM } from '../models/users';
 
 
 export class ShardService {
@@ -53,6 +54,8 @@ export class ShardService {
 
     this.socket.connect();
 
+   
+
     this.socket.on('updateRoles', (data: RoleUpdateData) => {
       if (this.client !== undefined)
         RoleAssignmentService.updateRoles(data, this.client)
@@ -68,10 +71,20 @@ export class ShardService {
       if (this.client !== undefined)
         ReminderService.sendGuildReminder(data, this.client);
     });
-
+    
     this.socket.on('reminderUser', (data: UserReminder) => {
       if (this.client !== undefined)
-        ReminderService.sendUserReminder(data, this.client);
+      ReminderService.sendUserReminder(data, this.client);
+    });
+    // ^v blantant copy of userreminder
+    this.socket.on('sendEmbedDM', async (data: UserEmbedDM) => {
+      console.log('woo');
+      if (this.client !== undefined)
+        try {
+          (await this.client.users.fetch(data.target.user)).send({embeds: [data.content]});
+        } catch (err) {
+          console.error(err); //Maybe DMs are off, oh well
+        }
     });
 
     this.socket.on('assignmentDM', (data: AssignmentDM) => {

@@ -1,3 +1,5 @@
+import { MessageEmbed } from "discord.js";
+
 export interface User {
   _id: string,
   discord: {
@@ -9,4 +11,13 @@ export interface User {
     token?: string,
   },
   courses?: string[],
+}
+
+export interface UserEmbedDM {
+  userId: string;
+  date: string,
+  content: MessageEmbed;
+  target: {
+    user: string
+  }
 }
