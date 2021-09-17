@@ -1,4 +1,4 @@
-import {  CommandInteraction, MessageActionRow, MessageEmbed, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
+import {  ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildService } from './services/guild-service';
@@ -11,6 +11,8 @@ import { ConfigService } from './services/config-service';
 import { CanvasService } from './services/canvas-service';
 import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
 import { Buzzer, Coinflip, DiceRoll } from './games';
+import token from '../token.json';
+import Axios from 'axios';
 
 export const defaultPrefix = '!';
 export const timeZones = ['Europe/Brussels', 'Australia/Melbourne', 'America/Detroit'];
@@ -21,6 +23,75 @@ const guildOnly: MessageEmbed = EmbedBuilder.error('This is a server only comman
 
 //TODO check content of respond messages
 export const commands: Command[] = [
+  { // Logout
+    name: 'logout',
+    category: 'misc',
+    description: 'Logs you out of our services.',
+    async response(interaction: CommandInteraction): Promise<void> {
+      if (!interaction.guild) {
+        interaction.reply({ embeds: [EmbedBuilder.error('No guild id found')] });
+        return;
+      }
+      
+      const buttonsChallenge = [
+        new MessageButton({ label: 'Yes', customId: 'yes', style: 'SUCCESS' }),
+        new MessageButton({ label: 'No', customId: 'no', style: 'DANGER' })
+      ];
+      const actionRowChallenge = new MessageActionRow({
+        components: buttonsChallenge
+      });
+
+      interaction.reply({
+        embeds:[new MessageEmbed()
+          .setTitle('Are you sure you want to log out?')
+          .setDescription('This will delete you out of our database. Settings, reminders, last received assignment etc. will be removed.')
+          .setColor(Colors.error)
+        ], components: [actionRowChallenge]});
+  
+      const filter = (i: ButtonInteraction) => buttonsChallenge
+        .map(i => i.customId).includes(i.customId)
+        && i.user.id == interaction.user.id
+        && i.message.interaction!.id == interaction.id;
+      const collector = interaction.channel?.createMessageComponentCollector({ filter: filter, time: 60000 });
+      if (!collector) return;
+      collector.on('collect', i => {
+        switch(i.customId) {
+          case buttonsChallenge[0].customId:
+            Axios.request({
+              headers: {
+                Authorization: `bearer ${token.token}`
+              },
+              params: {
+                discordid: interaction.user.id
+              },
+              method: 'POST',
+              baseURL: process.env.API_URL,
+              url: '/oauth/logout/discord',
+            });
+            collector.stop('yes');
+            break;
+          case buttonsChallenge[1].customId:
+            collector.stop('no');
+            break;
+        }
+      });
+
+      collector.on('end', (collected, reason) => {
+        const embed = new MessageEmbed();
+        if (reason == 'yes') {
+          embed.setTitle('Logged out!')
+            .setDescription('You can log back in on our oauth website.')
+            .setColor(Colors.success);
+          interaction.editReply({embeds: [embed], components: []});
+        }
+        if (reason == 'no') {
+          embed.setTitle('Logout cancelled')
+            .setColor(Colors.warning);
+          interaction.editReply({embeds: [embed], components: []});
+        }
+      });
+    }
+  },
   { // Info
     name: 'info',
     category: 'info',
