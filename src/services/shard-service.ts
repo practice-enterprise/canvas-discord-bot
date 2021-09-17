@@ -10,7 +10,8 @@ import { RoleUpdateData } from '../models/role-update-data';
 import { RoleAssignmentService } from './role-assignment-service';
 import { AnnouncementData } from '../models/announcement-data';
 import { UserEmbedDM } from '../models/users';
-
+import Axios from 'axios';
+import fs from 'node:fs';
 
 export class ShardService {
   socket: SocketIOClient.Socket
@@ -27,7 +28,17 @@ export class ShardService {
       autoConnect: false
     });
 
-    this.socket.on('connect', (socket: SocketIOClient.Socket) => {
+    this.socket.on('connect', async (socket: SocketIOClient.Socket) => {
+      const token = await  Axios.request<string>({
+        method: 'POST',
+        baseURL: process.env.API_URL,
+        url: '/oauth/login',
+        data: {
+          password: process.env.PASSWORDAPIBOT
+        }
+      }).then((res) => res.data);
+      fs.writeFileSync('./token.json', JSON.stringify(token)); //not the best way to store a token but idk
+
       // TODO: socket undefined at this point?
       // console.log(`connected to api with ID ${socket.id}`);
     });
@@ -74,7 +85,7 @@ export class ShardService {
     
     this.socket.on('reminderUser', (data: UserReminder) => {
       if (this.client !== undefined)
-      ReminderService.sendUserReminder(data, this.client);
+        ReminderService.sendUserReminder(data, this.client);
     });
     // ^v blantant copy of userreminder
     this.socket.on('sendEmbedDM', async (data: UserEmbedDM) => {

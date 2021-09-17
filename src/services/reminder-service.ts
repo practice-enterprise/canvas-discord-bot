@@ -6,10 +6,14 @@ import { AssignmentDM, GuildReminder, UserReminder } from '../models/reminder';
 import { Colors, EmbedBuilder } from '../util/embed-builder';
 import { preventExceed } from '../util/formatter';
 import { Tokenizer } from '../util/tokenizer';
+import token from '../../token.json';
 
 export class ReminderService {
   static async delete(reminder: GuildReminder | UserReminder): Promise<void> {
     await Axios.request<GuildReminder | UserReminder>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'DELETE',
       baseURL: process.env.API_URL,
       url: '/reminders',
@@ -19,6 +23,9 @@ export class ReminderService {
 
   static async create(reminder: Omit<GuildReminder | UserReminder, 'id'>): Promise<void> {
     await Axios.request<void>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'POST',
       baseURL: process.env.API_URL,
       url: '/reminders',
@@ -28,6 +35,9 @@ export class ReminderService {
 
   static async get(discordID: string): Promise<(UserReminder | GuildReminder)[] | undefined> {
     return await Axios.request<(UserReminder | GuildReminder)[] | undefined>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/reminders/${discordID}`
@@ -70,6 +80,9 @@ export class ReminderService {
 
   static async updateLastAssignment(userID: string, lastAssignment: string): Promise<void> {
     await Axios.request<void>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: `/reminders/lastAssignments/${userID}/${lastAssignment}`,
@@ -78,6 +91,9 @@ export class ReminderService {
 
   static async getTimeZone(discordID: string): Promise<string> {
     return await Axios.request<string>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/reminders/timezone/${discordID}`
@@ -85,6 +101,9 @@ export class ReminderService {
   }
   static async setTimeZone(discordID: string, tz: string) {
     await Axios.request<void>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: `/reminders/timezone/${discordID}`,
