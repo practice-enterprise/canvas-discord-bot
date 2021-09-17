@@ -210,7 +210,7 @@ export const commands: Command[] = [
             //DM reminder VS guild reminder -> TODO DM reminder
             ReminderService.create({
               content: interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`,
-              date: time.toISO(),
+              date: time.setZone('UTC', { keepLocalTime: true }).toISO(),
               target: {
                 channel: interaction.channel?.id,
                 guild: interaction.guild!.id,
@@ -240,7 +240,7 @@ export const commands: Command[] = [
           if (time.isValid) {
             ReminderService.create({
               content: interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`,
-              date: time.toISO(),
+              date: time.setZone('UTC', { keepLocalTime: true }).toISO(),
               target: {
                 channel: interaction.channel?.id,
                 guild: interaction.guild!.id,

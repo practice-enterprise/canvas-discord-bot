@@ -7,6 +7,7 @@ import { GuildService } from './services/guild-service';
 import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
 import { REST } from '@discordjs/rest';//' //@discordjs/rest/dist/lib/REST
+import { loggers } from 'winston';
 
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
@@ -21,7 +22,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     if (!interaction.isCommand()) {
       return;
     }
-    console.log(`${interaction.user.username} used ${interaction.commandName}`);
+    Logger.info(`${interaction.user.username} used ${interaction.commandName}`);
     for (const command of commands) {
       if (command.name == interaction.commandName) {
         await command.response(interaction);
