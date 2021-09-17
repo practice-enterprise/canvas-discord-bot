@@ -1,13 +1,14 @@
 import Axios from 'axios';
 import { CourseChannels, GuildConfig } from '../models/guild';
 import { commands } from '../commands';
-
-//default modules
-
+import token from '../../token.json';
 
 export class GuildService {
   static async getForId(id: string): Promise<GuildConfig> {
     return Axios.request<GuildConfig>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/guilds/${id}`
@@ -16,6 +17,9 @@ export class GuildService {
 
   static async update(config: GuildConfig): Promise<string> {
     return Axios.request<string>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: '/guilds',
@@ -37,6 +41,9 @@ export class GuildService {
 
   static async createDefault(guildID: string, roles: Record<string, string>): Promise<string> {
     return Axios.request<string>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: '/guilds/create',
@@ -57,6 +64,9 @@ export class GuildService {
 
   static async delete(guildId: string) {
     Axios.request<void>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'DELETE',
       baseURL: process.env.API_URL,
       url: '/guilds/delete',
@@ -67,6 +77,9 @@ export class GuildService {
   static async updateModules(guildID: string): Promise<Record<string, boolean>> {
     const modules: Record<string, boolean> = this.getModules();
     Axios.request<number>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: '/guilds/modules',

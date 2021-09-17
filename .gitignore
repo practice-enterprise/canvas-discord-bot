@@ -5,3 +5,4 @@ yarn-error.log
 **/*.env*
 .vscode/
 *.auth.json
+token.json

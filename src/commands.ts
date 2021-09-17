@@ -46,7 +46,6 @@ export const commands: Command[] = [
           if (typeof response == 'string') {
             i.update({components:[], content: response, embeds: []});
           } else {
-            console.log(new MessageEmbed(response));
             i.update({ components: [], embeds: [new MessageEmbed(response)] });
           } 
         });
@@ -236,7 +235,6 @@ export const commands: Command[] = [
             month: interaction.options.getInteger(options[4].name) || undefined,
             year: interaction.options.getInteger(options[5].name) || undefined,
           });
-          console.log(time);
 
           time = time.setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: true });
           if (time.isValid) {
@@ -321,7 +319,6 @@ export const commands: Command[] = [
         const filter = (i: SelectMenuInteraction) => /*menu.options.map(i => i.customId).includes(i.customId) &&*/ i.user.id == interaction.user.id && i.message.interaction!.id == interaction.id;
         const collector = interaction.channel?.createMessageComponentCollector({ filter, time: 60000 });
         collector?.on('collect', (i) => {
-          console.log(i.values[0]);
           const time = DateTime.now().setZone(i.values[0]);
           if (time.isValid) {
             ReminderService.setTimeZone(i.user.id, i.values[0]);

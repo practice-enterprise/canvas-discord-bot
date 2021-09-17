@@ -6,6 +6,7 @@ import { GuildConfig } from '../models/guild';
 import { Logger } from '../util/logger';
 import { Tokenizer } from '../util/tokenizer';
 import { Colors, EmbedBuilder } from '../util/embed-builder';
+import token from '../../token.json';
 
 export class NotesService {
   private interaction: CommandInteraction;
@@ -16,6 +17,9 @@ export class NotesService {
 
   static async get(id: string): Promise<Notes | undefined> {
     return Axios.request<Notes | undefined>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'GET',
       baseURL: process.env.API_URL,
       url: `/notes/${id}`
@@ -25,6 +29,9 @@ export class NotesService {
 
   static async create(notes: Notes): Promise<void> {
     await Axios.request<void>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'POST',
       baseURL: process.env.API_URL,
       url: '/notes',
@@ -34,6 +41,9 @@ export class NotesService {
 
   static async update(notes: Notes): Promise<void> {
     return Axios.request<void>({
+      headers: {
+        Authorization: `bearer ${token.token}`
+      },
       method: 'PUT',
       baseURL: process.env.API_URL,
       url: '/notes',
