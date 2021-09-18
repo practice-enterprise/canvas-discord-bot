@@ -8,6 +8,7 @@ import { Logger } from './util/logger';
 import { Formatter } from './util/formatter';
 import { REST } from '@discordjs/rest';//' //@discordjs/rest/dist/lib/REST
 import { loggers } from 'winston';
+import { Routes } from 'discord-api-types';
 
 
 export async function buildClient(shard: number, shardCount: number): Promise<Client> {
@@ -34,9 +35,10 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     Logger.info(`Logged in as ${client.user?.tag}`);
 
     rest.put(
-      `/applications/${client.user!.id}/guilds/780572565240414208/commands`,
+      ///applications/${client.user!.id}/guilds/780572565240414208/commands
+      `/applications/${client.user!.id}/commands`,
       { body: commands });
-
+      
     /*
       Presence updating.
       Value may not be below 15000 (rate-limit Discord API = 5/60s).
