@@ -35,7 +35,7 @@ export async function buildClient(shard: number, shardCount: number): Promise<Cl
     Logger.info(`Logged in as ${client.user?.tag}`);
 
     rest.put(
-      ///applications/${client.user!.id}/guilds/780572565240414208/commands
+      //`/applications/${client.user!.id}/guilds/780572565240414208/commands`,
       `/applications/${client.user!.id}/commands`,
       { body: commands });
       

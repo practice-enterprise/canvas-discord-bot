@@ -7,7 +7,7 @@ export class MenuCourses {
   readonly buttonsNav: MessageButton[] = [
     new MessageButton({ style: 'SUCCESS', label: '< Prev', customId: 'prev' }),
     new MessageButton({ style: 'SUCCESS', label: 'Next >', customId: 'next' }),
-    new MessageButton({ style: 'DANGER', label: 'Back', customId: 'back' })
+    new MessageButton({ style: 'DANGER', label: 'Stop', customId: 'back' })
   ];
   readonly buttonsSelect: MessageButton[] = [
     new MessageButton({ style: 'PRIMARY', label: '1', customId: '1' }),
@@ -62,8 +62,8 @@ export class MenuCourses {
     const collector = this.interaction.channel?.createMessageComponentCollector({ filter: filter, time: this.expireTime });
     let courseNr;
     if (!collector) return;
-    collector.on('collect', async i => {
 
+    collector.on('collect', async i => {
       this.actionRowNav.components[0].disabled = false;
       this.actionRowNav.components[1].disabled = false;
       collector.resetTimer();
@@ -79,7 +79,7 @@ export class MenuCourses {
           break;
         case this.buttonsNav[1].customId:
           this.page++;
-          if (this.page > (this.courses.length / this.perPage) - 1) {
+          if (this.page >= (this.courses.length / this.perPage) - 1) {
             this.actionRowNav.components[1].disabled = true;
             disabled = ((this.courses.length / this.perPage) % 1) * this.perPage - .5;
             for (let i = this.perPage - 1; i > disabled; i--)
@@ -158,7 +158,7 @@ export class MenuCourses {
           break;
         case this.buttonsNav[1].customId:
           this.page++;
-          if (this.page > (modules.length / this.perPage) - 1) {
+          if (this.page >= (modules.length / this.perPage) - 1) {
             this.actionRowNav.components[1].disabled = true;
             disabled = ((modules.length / this.perPage) % 1) * this.perPage - .5;
             for (let i = this.perPage - 1; i > disabled; i--)
