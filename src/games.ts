@@ -77,7 +77,6 @@ export class Buzzer {
     });
 
     // End of collectors
-    buzzCollector.on('end', () => this.endInteraction());
     controlCollector.on('end', () => this.endInteraction());
   }
   
