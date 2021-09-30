@@ -255,9 +255,12 @@ export const commands: Command[] = [
           { type: ApplicationCommandOptionTypes.INTEGER, name: 'number', description: 'the number of the reminder you want to delete' }]
       }],
     async response(interaction: CommandInteraction): Promise<void> {
+      if(!interaction.guild){
+        interaction.reply({embeds: [EmbedBuilder.error('This command can not be used outside of servers')]});
+        return;
+      }
       if (!this.options)
         return;
-
       const subCommand = interaction.options.getSubcommand(true);
       //get
       if (subCommand == this.options[0].name) {
@@ -283,8 +286,9 @@ export const commands: Command[] = [
 
           if (time.isValid) {
             //DM reminder VS guild reminder -> TODO DM reminder
+            const msg = interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`;
             ReminderService.create({
-              content: interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`,
+              content: msg,
               date: time.setZone('UTC', { keepLocalTime: true }).toISO(),
               target: {
                 channel: interaction.channel?.id,
@@ -292,7 +296,7 @@ export const commands: Command[] = [
                 user: interaction.user.id
               },
             });
-            interaction.reply({ embeds: [EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`, 'changing your time zone won\'t change your reminders time')] });
+            interaction.reply({ embeds: [EmbedBuilder.success(`Your reminder: \n${msg}`, `has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}\nchanging your time zone won't change your reminders time`)] });
           } else {
             interaction.reply('not valid');
           }
@@ -302,7 +306,6 @@ export const commands: Command[] = [
         if (subCommand == this.options[1].options[1].name && this.options[1].options[1].options) {
           const options = this.options[1].options[1].options;
           let time = DateTime.now().setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: false });
-
           time = time.plus({
             minute: interaction.options.getInteger(options[1].name) || undefined,
             hour: interaction.options.getInteger(options[2].name) || undefined,
@@ -310,11 +313,12 @@ export const commands: Command[] = [
             month: interaction.options.getInteger(options[4].name) || undefined,
             year: interaction.options.getInteger(options[5].name) || undefined,
           });
-
+          const msg = interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`;
+          
           time = time.setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: true });
           if (time.isValid) {
             ReminderService.create({
-              content: interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`,
+              content: msg,
               date: time.setZone('UTC', { keepLocalTime: true }).toISO(),
               target: {
                 channel: interaction.channel?.id,
@@ -322,7 +326,7 @@ export const commands: Command[] = [
                 user: interaction.user.id
               },
             });
-            interaction.reply({ embeds: [EmbedBuilder.success(`Your reminder has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`, 'changing your time zone won\'t change your reminders time')] });
+            interaction.reply({ embeds: [EmbedBuilder.success(`Your reminder: \n${msg}`, `has been set at: ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}\nchanging your time zone won't change your reminders time`)] });
           } else {
             interaction.reply('not valid');
           }
