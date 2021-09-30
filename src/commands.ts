@@ -1,4 +1,4 @@
-import {  ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, MessageActionRow, MessageButton, MessageEmbed, MessageSelectMenu, SelectMenuInteraction } from 'discord.js';
 import { DateTime } from 'luxon';
 import { Command, Response } from './models/command';
 import { GuildService } from './services/guild-service';
@@ -32,7 +32,7 @@ export const commands: Command[] = [
         interaction.reply({ embeds: [EmbedBuilder.error('No guild id found')] });
         return;
       }
-      
+
       const buttonsChallenge = [
         new MessageButton({ label: 'Yes', customId: 'yes', style: 'SUCCESS' }),
         new MessageButton({ label: 'No', customId: 'no', style: 'DANGER' })
@@ -42,12 +42,13 @@ export const commands: Command[] = [
       });
 
       interaction.reply({
-        embeds:[new MessageEmbed()
+        embeds: [new MessageEmbed()
           .setTitle('Are you sure you want to log out?')
           .setDescription('This will delete you out of our database. Settings, reminders, last received assignment etc. will be removed.')
           .setColor(Colors.error)
-        ], components: [actionRowChallenge]});
-  
+        ], components: [actionRowChallenge]
+      });
+
       const filter = (i: ButtonInteraction) => buttonsChallenge
         .map(i => i.customId).includes(i.customId)
         && i.user.id == interaction.user.id
@@ -55,7 +56,7 @@ export const commands: Command[] = [
       const collector = interaction.channel?.createMessageComponentCollector({ filter: filter, time: 60000 });
       if (!collector) return;
       collector.on('collect', i => {
-        switch(i.customId) {
+        switch (i.customId) {
           case buttonsChallenge[0].customId:
             Axios.request({
               headers: {
@@ -67,7 +68,7 @@ export const commands: Command[] = [
               method: 'POST',
               baseURL: process.env.API_URL,
               url: '/oauth/logout/discord',
-            });
+            }).catch(() => collector.stop('error'));
             collector.stop('yes');
             break;
           case buttonsChallenge[1].customId:
@@ -82,12 +83,17 @@ export const commands: Command[] = [
           embed.setTitle('Logged out!')
             .setDescription('You can log back in on our oauth website.')
             .setColor(Colors.success);
-          interaction.editReply({embeds: [embed], components: []});
+          interaction.editReply({ embeds: [embed], components: [] });
         }
         if (reason == 'no') {
           embed.setTitle('Logout cancelled')
             .setColor(Colors.warning);
-          interaction.editReply({embeds: [embed], components: []});
+          interaction.editReply({ embeds: [embed], components: [] });
+        }
+        if (reason == 'error') {
+          embed.setTitle('Logout failed or already logged out')
+            .setColor(Colors.warning);
+          interaction.editReply({ embeds: [embed], components: [] });
         }
       });
     }
@@ -115,10 +121,10 @@ export const commands: Command[] = [
         collector?.on('collect', async (i) => {
           const response = await guildConfig.info[parseInt(i.values[0])].response;
           if (typeof response == 'string') {
-            i.update({components:[], content: response, embeds: []});
+            i.update({ components: [], content: response, embeds: [] });
           } else {
             i.update({ components: [], embeds: [new MessageEmbed(response)] });
-          } 
+          }
         });
         return;
       }
@@ -140,7 +146,7 @@ export const commands: Command[] = [
     category: 'misc',
     description: 'Rolls a die or dice.',
     options: [{ required: false, type: 4, name: 'faces', description: 'Amount of faces for your dice/die (default 6)' },
-      { required: false, type: 4, name: 'amount', description: 'Amount of dice/die (default 1)' }],
+    { required: false, type: 4, name: 'amount', description: 'Amount of dice/die (default 1)' }],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
         return;
@@ -151,7 +157,7 @@ export const commands: Command[] = [
       if (!faces)
         faces = 6;
 
-      interaction.reply({embeds: [new DiceRoll().roll(times, faces)]});
+      interaction.reply({ embeds: [new DiceRoll().roll(times, faces)] });
     }
   },
   { // coinflip
@@ -172,8 +178,8 @@ export const commands: Command[] = [
     description: 'Create a buzzer for everyone',
     options: [],
     async response(interaction: CommandInteraction): Promise<void> {
-      if(!interaction.guild){
-        interaction.reply({embeds: [EmbedBuilder.error('This command can not be used outside of servers')]});
+      if (!interaction.guild) {
+        interaction.reply({ embeds: [EmbedBuilder.error('This command can not be used outside of servers')] });
         return;
       }
       if (!this.options) {
@@ -255,8 +261,8 @@ export const commands: Command[] = [
           { type: ApplicationCommandOptionTypes.INTEGER, name: 'number', description: 'the number of the reminder you want to delete' }]
       }],
     async response(interaction: CommandInteraction): Promise<void> {
-      if(!interaction.guild){
-        interaction.reply({embeds: [EmbedBuilder.error('This command can not be used outside of servers')]});
+      if (!interaction.guild) {
+        interaction.reply({ embeds: [EmbedBuilder.error('This command can not be used outside of servers')] });
         return;
       }
       if (!this.options)
@@ -314,7 +320,7 @@ export const commands: Command[] = [
             year: interaction.options.getInteger(options[5].name) || undefined,
           });
           const msg = interaction.options.getString(options[0].name) || `<@${interaction.user.id}> here's your reminder for ${time.toFormat('dd/MM/yyyy HH:mm')} ${time.zoneName}`;
-          
+
           time = time.setZone(await ReminderService.getTimeZone(interaction.user.id) || timeZones[0], { keepLocalTime: true });
           if (time.isValid) {
             ReminderService.create({
@@ -362,10 +368,10 @@ export const commands: Command[] = [
     category: 'timezone',
     description: 'Get/set your current time zone.',
     options: [{ type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'get', description: 'get your current zone' },
-      {
-        type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'set', description: 'set your timezone, opens a list to pick from', options: [
-          { type: ApplicationCommandOptionTypes.STRING, name: 'timezone', description: 'write down an IANA time zone', required: false }]
-      }
+    {
+      type: ApplicationCommandOptionTypes.SUB_COMMAND, name: 'set', description: 'set your timezone, opens a list to pick from', options: [
+        { type: ApplicationCommandOptionTypes.STRING, name: 'timezone', description: 'write down an IANA time zone', required: false }]
+    }
     ],
     async response(interaction: CommandInteraction): Promise<void> {
       if (!this.options)
@@ -391,8 +397,8 @@ export const commands: Command[] = [
           customId: 'timezoneMenu',
           type: 'SELECT_MENU',
           options: [{ label: timeZones[0], value: timeZones[0] },
-            { label: timeZones[1], value: timeZones[1] },
-            { label: timeZones[2], value: timeZones[2] }]
+          { label: timeZones[1], value: timeZones[1] },
+          { label: timeZones[2], value: timeZones[2] }]
         });
         interaction.reply({ embeds: [EmbedBuilder.info('If your timezone is not in the list you can select one from this [link](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). copy the corresponding **TZ database name** and paste it in: **/timezone set <your timezone>**.', undefined, 'Select your timezone from the menu.')], components: [new MessageActionRow({ components: [menu] })] });
         const filter = (i: SelectMenuInteraction) => /*menu.options.map(i => i.customId).includes(i.customId) &&*/ i.user.id == interaction.user.id && i.message.interaction!.id == interaction.id;
