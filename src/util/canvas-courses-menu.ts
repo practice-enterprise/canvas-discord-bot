@@ -7,7 +7,7 @@ export class MenuCourses {
   readonly buttonsNav: MessageButton[] = [
     new MessageButton({ style: 'SUCCESS', label: '< Prev', customId: 'prev' }),
     new MessageButton({ style: 'SUCCESS', label: 'Next >', customId: 'next' }),
-    new MessageButton({ style: 'DANGER', label: 'Stop', customId: 'back' })
+    new MessageButton({ style: 'DANGER', label: 'Back', customId: 'back' })
   ];
   readonly buttonsSelect: MessageButton[] = [
     new MessageButton({ style: 'PRIMARY', label: '1', customId: '1' }),
@@ -42,6 +42,8 @@ export class MenuCourses {
         this.actionRowNav.components[1].disabled = false;
       else
         this.actionRowNav.components[1].disabled = true;
+      if (this.actionRowNav.components[2].type == 'BUTTON')
+        this.actionRowNav.components[2].setLabel('Stop');
       await this.interaction.reply({ components: [this.actionRowNav, this.actionRowSelect], embeds: [this.getCoursePage(this.page)] });
     }
   }
