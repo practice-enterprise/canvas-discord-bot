@@ -172,6 +172,10 @@ export const commands: Command[] = [
     description: 'Create a buzzer for everyone',
     options: [],
     async response(interaction: CommandInteraction): Promise<void> {
+      if(!interaction.guild){
+        interaction.reply({embeds: [EmbedBuilder.error('This command can not be used outside of servers')]});
+        return;
+      }
       if (!this.options) {
         return;
       }
