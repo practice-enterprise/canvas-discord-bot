@@ -1,11 +1,12 @@
 import { ButtonInteraction, ColorResolvable, CommandInteraction, GuildMember, MessageActionRow, MessageButton, MessageEmbed, User } from 'discord.js';
 import { Colors } from './util/embed-builder';
+import { Logger } from './util/logger';
 
 export class Buzzer {
   interaction: CommandInteraction
-  readonly expireTime = 60000*5
+  readonly expireTime = 60000 * 5;
   usersBuzzed: GuildMember[] = [];
-  
+
   //Buzzer
   readonly buttonBuzzer = [
     new MessageButton({ label: 'Buzz', customId: 'buzz', style: 'DANGER', emoji: '🐝', disabled: true }),
@@ -13,9 +14,9 @@ export class Buzzer {
 
   //Start Pauze Reset
   readonly buttonsBuzzerControls = [
-    new MessageButton({ label: 'Start', customId: 'start', style: 'SUCCESS'}),
-    new MessageButton({ label: 'Pause', customId: 'pause', style: 'PRIMARY'}),
-    new MessageButton({ label: 'Reset', customId: 'reset', style: 'DANGER'}),
+    new MessageButton({ label: 'Start', customId: 'start', style: 'SUCCESS' }),
+    new MessageButton({ label: 'Pause', customId: 'pause', style: 'PRIMARY' }),
+    new MessageButton({ label: 'Reset', customId: 'reset', style: 'DANGER' }),
   ];
 
   constructor(interaction: CommandInteraction) {
@@ -23,13 +24,15 @@ export class Buzzer {
   }
 
   init(): void {
-    this.interaction.reply({embeds: [this.createEmbed(Colors.warning, 'Buzzer hasn\'t started yet')],
-      components: [new MessageActionRow({components: this.buttonBuzzer}), new MessageActionRow({components: this.buttonsBuzzerControls})]});
+    this.interaction.reply({
+      embeds: [this.createEmbed(Colors.warning, 'Buzzer hasn\'t started yet')],
+      components: [new MessageActionRow({ components: this.buttonBuzzer }), new MessageActionRow({ components: this.buttonsBuzzerControls })]
+    });
 
     const buzzFilter = (i: ButtonInteraction) => this.buttonBuzzer
       .map(i => i.customId).includes(i.customId)
       && i.message.interaction!.id == this.interaction.id;
-    
+
     const buzzerControlFilter = (i: ButtonInteraction) => this.buttonsBuzzerControls
       .map(i => i.customId).includes(i.customId)
       && i.user.id == this.interaction.user.id
@@ -40,12 +43,12 @@ export class Buzzer {
 
     if (!buzzCollector) return;
     if (!controlCollector) return;
-    
+
     // Collectors
     buzzCollector.on('collect', i => {
       buzzCollector.resetTimer();
       controlCollector.resetTimer();
-      
+
       if (!(i.member instanceof GuildMember)) return;
 
       if (!this.usersBuzzed.includes(i.member)) {
@@ -79,7 +82,7 @@ export class Buzzer {
     // End of collectors
     controlCollector.on('end', () => this.endInteraction());
   }
-  
+
   createEmbed(color: Colors, footer: string): MessageEmbed {
     const userList: string[] = this.usersBuzzed.map((u, i) => `${++i}. ${u.displayName}`);
     if (userList.length > 0) {
@@ -94,14 +97,19 @@ export class Buzzer {
   }
 
   updateButtonInteraction(i: ButtonInteraction, color: Colors, footer: string): void {
-    i.update({embeds: [this.createEmbed(color, footer)],
-      components: [new MessageActionRow({components: this.buttonBuzzer}), new MessageActionRow({components: this.buttonsBuzzerControls})]});
+    i.update({
+      embeds: [this.createEmbed(color, footer)],
+      components: [new MessageActionRow({ components: this.buttonBuzzer }), new MessageActionRow({ components: this.buttonsBuzzerControls })]
+    });
   }
 
-  endInteraction(): void {
-    this.interaction.editReply({embeds: [
-      this.createEmbed(Colors.warning, 'Buzzer has timed out, you can always start a new one').setTitle('No more 🅱uzz 🐝')
-    ], components: []});
+  async endInteraction(): Promise<void> {
+    this.interaction.editReply({
+      embeds: [
+        this.createEmbed(Colors.warning, 'Buzzer has timed out, you can always start a new one').setTitle('No more 🅱uzz 🐝')
+      ], components: []
+    }).catch(() => Logger.error("could not edit reply, message probably deleted games:l111"));
+
   }
 }
 
@@ -136,16 +144,17 @@ export class Challenge {
 
     this.interaction.reply({
       content: `<@!${player.id}>`,
-      embeds:[new MessageEmbed()
+      embeds: [new MessageEmbed()
         .setTitle(`${player.username} has been challenged by ${this.interaction.user.username}`)
         .setDescription(`${this.interaction.user.username} has you challenged you for \`${this.challengeName}\`.\nWill you accept this challenge?`)
         .setColor(Colors.success)
-      ], components: [actionRowChallenge]});
-    
+      ], components: [actionRowChallenge]
+    });
+
 
     if (!collector) return;
     collector.on('collect', i => {
-      switch(i.customId) {
+      switch (i.customId) {
         case buttonsChallenge[0].customId:
           collector.stop('accept');
           callback();
@@ -165,15 +174,18 @@ export class Challenge {
         embed
           .setTitle(`${player.username} was too afraid to accept this challenge!`)
           .setColor(Colors.error);
-        this.interaction.editReply({embeds: [embed], components: []});
+        this.interaction.editReply({ embeds: [embed], components: [] })
+          .catch(() => Logger.error("could not edit reply, message probably deleted games:l111"));;
       }
       else {
         embed
           .setTitle(`${player.username} was too scared or slow to respond to this challenge.`)
           .setColor(Colors.warning);
-        this.interaction.editReply({embeds: [embed], components: [
-          new MessageActionRow({components: actionRowChallenge.components.map(i => i.setDisabled(true))})
-        ]});
+        this.interaction.editReply({
+          embeds: [embed], components: [
+            new MessageActionRow({ components: actionRowChallenge.components.map(i => i.setDisabled(true)) })
+          ]
+        }).catch(() => Logger.error("could not edit reply, message probably deleted games:l111"));
       }
     });
   }

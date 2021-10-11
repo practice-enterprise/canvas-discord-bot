@@ -13,6 +13,7 @@ import { ApplicationCommandOptionTypes } from 'discord.js/typings/enums';
 import { Buzzer, Coinflip, DiceRoll } from './games';
 import token from '../token.json';
 import Axios from 'axios';
+import { Logger } from './util/logger';
 
 export const defaultPrefix = '!';
 export const timeZones = ['Europe/Brussels', 'Australia/Melbourne', 'America/Detroit'];
@@ -83,17 +84,20 @@ export const commands: Command[] = [
           embed.setTitle('Logged out!')
             .setDescription('You can log back in on our oauth website.')
             .setColor(Colors.success);
-          interaction.editReply({ embeds: [embed], components: [] });
+          interaction.editReply({ embeds: [embed], components: [] })
+            .catch(() => Logger.error("could not edit reply, message probably deleted games:l111"));;
         }
         if (reason == 'no') {
           embed.setTitle('Logout cancelled')
             .setColor(Colors.warning);
-          interaction.editReply({ embeds: [embed], components: [] });
+          interaction.editReply({ embeds: [embed], components: [] })
+            .catch(() => Logger.error("could not edit reply, message probably deleted games:l111"));;
         }
         if (reason == 'error') {
           embed.setTitle('Logout failed or already logged out')
             .setColor(Colors.warning);
-          interaction.editReply({ embeds: [embed], components: [] });
+          interaction.editReply({ embeds: [embed], components: [] })
+            .catch(() => Logger.error("could not edit reply, message probably deleted games:l111"));;
         }
       });
     }

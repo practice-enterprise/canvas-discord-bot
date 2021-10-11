@@ -2,6 +2,7 @@ import { ButtonInteraction, Client, CommandInteraction, Interaction, Interaction
 import { CanvasCourse, CanvasModule } from '../models/canvas';
 import { CanvasService } from '../services/canvas-service';
 import { EmbedBuilder } from './embed-builder';
+import { Logger } from './logger';
 
 export class MenuCourses {
   readonly buttonsNav: MessageButton[] = [
@@ -135,7 +136,7 @@ export class MenuCourses {
     if (modules.length == 0) {
       this.actionRowNav.components[0].disabled = true;
       this.actionRowNav.components[1].disabled = true;
-      interactionButton.update({components: [this.actionRowNav], embeds: [new MessageEmbed({ title: 'no modules' })] });
+      interactionButton.update({ components: [this.actionRowNav], embeds: [new MessageEmbed({ title: 'no modules' })] });
     } else {
       this.actionRowNav.components[0].disabled = true;
       if (modules.length / this.perPage > 1)
@@ -164,7 +165,7 @@ export class MenuCourses {
             this.actionRowNav.components[1].disabled = true;
             disabled = ((modules.length / this.perPage) % 1) * this.perPage - .5;
             for (let i = this.perPage - 1; i > disabled; i--)
-              this.actionRowSelect.components[i].disabled = true;        
+              this.actionRowSelect.components[i].disabled = true;
           }
           break;
         case this.buttonsNav[2].customId:
@@ -187,7 +188,7 @@ export class MenuCourses {
         const modulePage = (await getModulesPage(this.interaction.user.id,
           this.courses, modules, this.page, this.perPage, courseNr, this.canvasUrl).catch(() => console.log('modules')));
         if (modulePage === undefined) return;
-        interaction.update({components: [this.actionRowNav, this.actionRowSelect], embeds: [modulePage] });
+        interaction.update({ components: [this.actionRowNav, this.actionRowSelect], embeds: [modulePage] });
         if (disabled)
           for (let i = this.perPage - 1; i > disabled; i--) {
             this.actionRowSelect.components[i].disabled = false;
@@ -206,7 +207,8 @@ export class MenuCourses {
   async end() {
     const message = (await this.interaction.fetchReply()).embeds[0] as MessageEmbed;
     message.setFooter('Command has expired');
-    this.interaction.editReply({ components: [], embeds: [message] });
+    this.interaction.editReply({ components: [], embeds: [message] })
+      .catch(() => Logger.error("could not edit reply, message probably deleted coursesMenu:l211"));
   }
 
   async itemsCollect(interactionButton: ButtonInteraction, modules: CanvasModule[], moduleNr: number, courseNr: number) {
