@@ -151,7 +151,7 @@ export class NotesService {
     }
 
     // Checks if notes exist, checks if noteNum is in range
-    if (noteNum > 0 && noteNum <= notes.notes[channelID].length) {
+    if (noteNum > 0 && notes.notes[channelID] && noteNum <= notes.notes[channelID].length) {
       notes.notes[channelID].splice(noteNum - 1, 1);
       return NotesService.update(notes)
         .then(() => EmbedBuilder.success(`Removed note \`${noteNum}\`.`))
